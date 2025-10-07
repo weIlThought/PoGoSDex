@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pokémon GO Compatible Devices</title>
+    <meta
+      name="description"
+      content="A searchable collection of phones and tablets compatible with Pokémon GO, including filters, manufacturer links, and PGSharp information."
+    />
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <div class="mark">PG</div>
+          <div>
+            <h1>Pokémon GO — Compatible Devices</h1>
+            <p class="lead">
+              A searchable list of phones & tablets with model info, OS,
+              compatibility, and official links.
+            </p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="search" role="search" aria-label="Search devices">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              style="opacity: 0.7"
+            >
+              <path
+                d="M21 21l-4.35-4.35"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                cx="11"
+                cy="11"
+                r="6"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+            </svg>
+            <input
+              id="searchInput"
+              placeholder="Search model, brand, OS, or note — e.g. 'Pixel 7'"
+            />
+          </div>
+
+          <select id="brandSelect" class="select" aria-label="Filter by brand">
+            <option value="">All brands</option>
+            <!-- Populated by JS -->
+          </select>
+
+          <select
+            id="typeSelect"
+            class="select"
+            aria-label="Filter by device type"
+          >
+            <option value="">All types</option>
+            <option value="Phone">Phone</option>
+            <option value="Tablet">Tablet</option>
+          </select>
+
+          <button id="clearBtn" class="btn" title="Reset filters">Reset</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="card">
+          <h3 style="margin-top: 0">
+            Device List <span class="chip" id="countChip">0 items</span>
+          </h3>
+          <div style="overflow: auto; margin-top: 12px">
+            <table id="devicesTable" aria-label="List of compatible devices">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Brand</th>
+                  <th>Type</th>
+                  <th>OS</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <footer>
+            <small class="muted"
+              >Device behavior may vary — always verify with the official app
+              and manufacturer requirements.</small
+            >
+          </footer>
+        </section>
+
+        <aside class="card sidebar">
+          <h3>About PGSharp</h3>
+          <p class="muted">
+            PGSharp is a well-known GPS spoofing tool for Pokémon GO. Be aware
+            that using such tools may violate Niantic’s Terms of Service and
+            could result in account sanctions.
+          </p>
+          <ul class="muted" style="padding-left: 16px">
+            <li>Unofficial downloads may contain malware or security risks.</li>
+            <li>
+              This page does <strong>not</strong> provide downloads or
+              instructions for spoofing.
+            </li>
+          </ul>
+
+          <h4 style="margin-top: 12px">Tips</h4>
+          <p class="muted">
+            Consider legitimate alternatives — local events, community meetups,
+            and in-game travel features.
+          </p>
+
+          <h4 style="margin-top: 12px">Resources</h4>
+          <p class="muted">
+            Check Niantic’s official Terms of Service and device manufacturer
+            support pages for accurate info.
+          </p>
+
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid rgba(255, 255, 255, 0.04);
+              margin: 12px 0;
+            "
+          />
+
+          <h4>Site Features</h4>
+          <ul class="muted" style="padding-left: 16px">
+            <li>Search & filter by model, brand, or type</li>
+            <li>Device detail modal with manufacturer links</li>
+            <li>JSON-based data — easy to expand</li>
+          </ul>
+
+          <div style="display: flex; gap: 8px; margin-top: 12px">
+            <button id="exportCsv" class="btn" title="Export as CSV">
+              Export CSV
+            </button>
+            <button id="addSample" class="select" title="Add sample entries">
+              Add Samples
+            </button>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <!-- Modal -->
+    <div
+      id="modalBackdrop"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="modal" role="document">
+        <button
+          id="closeModal"
+          style="
+            float: right;
+            background: transparent;
+            border: 0;
+            color: var(--muted);
+            font-weight: 700;
+            cursor: pointer;
+          "
+        >
+          ✕
+        </button>
+        <h2 id="modalTitle">Device</h2>
+        <div class="meta" id="modalMeta">Brand • Type • OS</div>
+        <div class="row">
+          <div class="col">
+            <p id="modalDesc" class="muted"></p>
+            <p style="margin-top: 8px">
+              <a
+                id="manufacturerLink"
+                class="link"
+                target="_blank"
+                rel="noopener"
+                >Open manufacturer site</a
+              >
+            </p>
+          </div>
+          <div class="col">
+            <p class="muted"><strong>Notes:</strong></p>
+            <ul
+              class="muted"
+              style="padding-left: 16px"
+              id="modalNotesList"
+            ></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main script -->
+    <script src="assets/js/main.js" type="module"></script>
+  </body>
+</html>
