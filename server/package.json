@@ -1,7 +1,7 @@
 {
   "name": "pokemon-go-compatibility-backend",
   "version": "2.2.0",
-  "description": "Backend for PG Compatibility (Railway-ready)",
+  "description": "Backend for PoGoSDex (Railway-ready)",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
