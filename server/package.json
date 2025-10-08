@@ -15,11 +15,11 @@
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "express-session": "^1.18.1",
+    "express-validator": "^7.1.0",
     "helmet": "^8.1.0",
     "lowdb": "^3.0.0",
-    "nanoid": "^4.0.2",
-    "xss-clean": "^0.1.4",
-    "express-validator": "^7.1.0"
+    "nanoid": "^5.1.6",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
