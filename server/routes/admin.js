@@ -1,10 +1,11 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const { nanoid } = require("nanoid");
-const { db } = require("../db");
-const { body, validationResult } = require("express-validator");
-const { loginLimiter } = require("../security/rate-limit");
+import express from "express";
+import bcrypt from "bcrypt";
+import { nanoid } from "nanoid";
+import db from "../db.js";
+import { body, validationResult } from "express-validator";
+import { loginLimiter } from "../security/rate-limit.js";
 const router = express.Router();
+
 function requireAuth(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.status(401).json({ error: "Unauthorized" });
