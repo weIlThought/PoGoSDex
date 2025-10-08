@@ -6,14 +6,9 @@
     "type": "Phone",
     "os": "Android 13",
     "compatible": true,
-    "notes": [
-      "Good GPS accuracy",
-      "Stable performance"
-    ],
+    "notes": ["Good GPS accuracy", "Stable performance"],
     "manufacturerUrl": "https://www.samsung.com/",
-    "rootLinks": [
-      "https://forum.xda-developers.com/"
-    ]
+    "rootLinks": ["https://forum.xda-developers.com/"]
   },
   {
     "id": "2",
@@ -22,14 +17,9 @@
     "type": "Phone",
     "os": "Android 13",
     "compatible": true,
-    "notes": [
-      "ARCore supported",
-      "Excellent GPS"
-    ],
+    "notes": ["ARCore supported", "Excellent GPS"],
     "manufacturerUrl": "https://store.google.com/product/pixel_7",
-    "rootLinks": [
-      "https://forum.xda-developers.com/"
-    ]
+    "rootLinks": ["https://forum.xda-developers.com/"]
   },
   {
     "id": "3",
@@ -38,10 +28,7 @@
     "type": "Tablet",
     "os": "Android 12",
     "compatible": false,
-    "notes": [
-      "Wi-Fi GPS can be spotty",
-      "Tablet form factor"
-    ],
+    "notes": ["Wi-Fi GPS can be spotty", "Tablet form factor"],
     "manufacturerUrl": "https://www.lenovo.com/",
     "rootLinks": []
   }

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | PG Compatibility</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-100">
+    <header
+      class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950"
+    >
+      <h1 class="text-xl font-semibold">Admin Dashboard</h1>
+      <button
+        id="logoutBtn"
+        class="px-4 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
+      >
+        Logout
+      </button>
+    </header>
+
+    <main class="p-4 max-w-5xl mx-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Device Management</h2>
+        <button
+          id="addDeviceBtn"
+          class="bg-sky-500 hover:bg-sky-600 text-black px-3 py-1 rounded text-sm"
+        >
+          + Add Device
+        </button>
+      </div>
+
+      <div
+        id="deviceTableContainer"
+        class="overflow-x-auto border border-slate-800 rounded-lg"
+      >
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-slate-800 text-slate-300">
+            <tr>
+              <th class="px-3 py-2">Brand</th>
+              <th class="px-3 py-2">Model</th>
+              <th class="px-3 py-2">OS</th>
+              <th class="px-3 py-2">Type</th>
+              <th class="px-3 py-2">Compatible</th>
+              <th class="px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="deviceTable" class="divide-y divide-slate-800"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div id="deviceModal" class="modal-backdrop hidden">
+      <div class="modal bg-slate-800 p-6 rounded-xl max-w-md w-full">
+        <h3 id="modalTitle" class="text-lg font-semibold mb-4">Add Device</h3>
+        <form id="deviceForm" class="flex flex-col gap-2">
+          <input type="hidden" id="deviceId" />
+          <input
+            class="input"
+            type="text"
+            id="brand"
+            placeholder="Brand"
+            required
+          />
+          <input
+            class="input"
+            type="text"
+            id="model"
+            placeholder="Model"
+            required
+          />
+          <input
+            class="input"
+            type="text"
+            id="os"
+            placeholder="Operating System"
+          />
+          <input
+            class="input"
+            type="text"
+            id="type"
+            placeholder="Type (Phone/Tablet)"
+          />
+          <label class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="compatible" /> Compatible
+          </label>
+          <textarea
+            class="input"
+            id="notes"
+            placeholder="Notes (comma separated)"
+          ></textarea>
+          <textarea
+            class="input"
+            id="rootLinks"
+            placeholder="Root Links (comma separated URLs)"
+          ></textarea>
+          <div class="flex justify-end gap-2 mt-4">
+            <button type="button" id="cancelBtn" class="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/admin/dashboard.js"></script>
+  </body>
+</html>
