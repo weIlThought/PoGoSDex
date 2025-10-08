@@ -1,188 +1,48 @@
 [
   {
     "id": "1",
+    "model": "Samsung Galaxy S21",
+    "brand": "Samsung",
+    "type": "Phone",
+    "os": "Android 13",
+    "compatible": true,
+    "notes": [
+      "Good GPS accuracy",
+      "Stable performance"
+    ],
+    "manufacturerUrl": "https://www.samsung.com/",
+    "rootLinks": [
+      "https://forum.xda-developers.com/"
+    ]
+  },
+  {
+    "id": "2",
     "model": "Google Pixel 7",
     "brand": "Google",
     "type": "Phone",
     "os": "Android 13",
     "compatible": true,
-    "notes": ["Excellent GPS accuracy", "ARCore supported"],
+    "notes": [
+      "ARCore supported",
+      "Excellent GPS"
+    ],
     "manufacturerUrl": "https://store.google.com/product/pixel_7",
     "rootLinks": [
-      "https://forum.xda-developers.com/t/guide-root-google-pixel-7-magisk.4500011/",
-      "https://magiskmanager.com/"
+      "https://forum.xda-developers.com/"
     ]
-  },
-  {
-    "id": "2",
-    "model": "Google Pixel 6a",
-    "brand": "Google",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Affordable, good AR performance"],
-    "manufacturerUrl": "https://store.google.com/product/pixel_6a",
-    "rootLinks": ["https://forum.xda-developers.com/f/google-pixel-6a.12969/"]
   },
   {
     "id": "3",
-    "model": "Apple iPhone 15",
-    "brand": "Apple",
-    "type": "Phone",
-    "os": "iOS 17",
-    "compatible": true,
-    "notes": ["Latest iOS, smooth AR support"],
-    "manufacturerUrl": "https://www.apple.com/iphone-15/",
-    "rootLinks": ["https://www.reddit.com/r/jailbreak/"]
-  },
-  {
-    "id": "4",
-    "model": "Apple iPhone 12",
-    "brand": "Apple",
-    "type": "Phone",
-    "os": "iOS 16",
-    "compatible": true,
-    "notes": ["Good performance for Pokémon GO"],
-    "manufacturerUrl": "https://www.apple.com/iphone-12/",
-    "rootLinks": [
-      "https://ios.cfw.guide/",
-      "https://www.reddit.com/r/jailbreak/"
-    ]
-  },
-  {
-    "id": "5",
-    "model": "Samsung Galaxy S23",
-    "brand": "Samsung",
-    "type": "Phone",
-    "os": "Android 14",
-    "compatible": true,
-    "notes": ["Flagship device, stable gameplay"],
-    "manufacturerUrl": "https://www.samsung.com/galaxy-s23/",
-    "rootLinks": [
-      "https://forum.xda-developers.com/f/samsung-galaxy-s23.13207/",
-      "https://xdaforums.com/"
-    ]
-  },
-  {
-    "id": "6",
-    "model": "Samsung Galaxy A54",
-    "brand": "Samsung",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Mid-range, good GPS accuracy"],
-    "manufacturerUrl": "https://www.samsung.com/galaxy-a54/",
-    "rootLinks": [
-      "https://forum.xda-developers.com/f/samsung-galaxy-a54.13212/"
-    ]
-  },
-  {
-    "id": "7",
-    "model": "Samsung Galaxy Tab S9",
-    "brand": "Samsung",
-    "type": "Tablet",
-    "os": "Android 14",
-    "compatible": true,
-    "notes": ["Large screen for raids and maps"],
-    "manufacturerUrl": "https://www.samsung.com/galaxy-tab-s9/",
-    "rootLinks": [
-      "https://forum.xda-developers.com/f/samsung-galaxy-tab-s9.13222/"
-    ]
-  },
-  {
-    "id": "8",
-    "model": "OnePlus 11",
-    "brand": "OnePlus",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Fast processor, minimal lag"],
-    "manufacturerUrl": "https://www.oneplus.com/oneplus-11",
-    "rootLinks": [
-      "https://forum.xda-developers.com/f/oneplus-11.13199/",
-      "https://magiskmanager.com/"
-    ]
-  },
-  {
-    "id": "9",
-    "model": "OnePlus Nord 3",
-    "brand": "OnePlus",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Affordable and smooth gameplay"],
-    "manufacturerUrl": "https://www.oneplus.com/nord-3",
-    "rootLinks": ["https://forum.xda-developers.com/f/oneplus-nord-3.13205/"]
-  },
-  {
-    "id": "10",
-    "model": "Xiaomi 13 Pro",
-    "brand": "Xiaomi",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Excellent performance", "AR stable"],
-    "manufacturerUrl": "https://www.mi.com/global/product/xiaomi-13-pro/",
-    "rootLinks": ["https://forum.xda-developers.com/f/xiaomi-13-pro.13193/"]
-  },
-  {
-    "id": "11",
-    "model": "Xiaomi Pad 6",
-    "brand": "Xiaomi",
-    "type": "Tablet",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Wi-Fi only GPS issues", "Great display"],
-    "manufacturerUrl": "https://www.mi.com/global/product/xiaomi-pad-6/",
-    "rootLinks": ["https://forum.xda-developers.com/f/xiaomi-pad-6.13219/"]
-  },
-  {
-    "id": "12",
-    "model": "Asus ROG Phone 7",
-    "brand": "ASUS",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["Gaming optimized", "Strong cooling system"],
-    "manufacturerUrl": "https://rog.asus.com/phones/rog-phone-7-model/",
-    "rootLinks": ["https://forum.xda-developers.com/f/asus-rog-phone-7.13209/"]
-  },
-  {
-    "id": "13",
-    "model": "Sony Xperia 1 V",
-    "brand": "Sony",
-    "type": "Phone",
-    "os": "Android 13",
-    "compatible": true,
-    "notes": ["High-quality display", "Stable GPS"],
-    "manufacturerUrl": "https://www.sony.com/electronics/smartphones/xperia-1m5",
-    "rootLinks": ["https://forum.xda-developers.com/f/sony-xperia-1-v.13220/"]
-  },
-  {
-    "id": "14",
-    "model": "Huawei P40 Pro",
-    "brand": "Huawei",
-    "type": "Phone",
-    "os": "Android 10 (EMUI)",
-    "compatible": false,
-    "notes": [
-      "May not support Google Play Services",
-      "Not officially supported"
-    ],
-    "manufacturerUrl": "https://consumer.huawei.com/en/phones/p40-pro/",
-    "rootLinks": ["https://forum.xda-developers.com/f/huawei-p40-pro.12731/"]
-  },
-  {
-    "id": "15",
-    "model": "Lenovo Tab P11 Pro",
+    "model": "Lenovo Tab M10",
     "brand": "Lenovo",
     "type": "Tablet",
     "os": "Android 12",
-    "compatible": true,
-    "notes": ["Good battery life", "Mid-range tablet"],
-    "manufacturerUrl": "https://www.lenovo.com/tab-p11-pro-gen2",
-    "rootLinks": [
-      "https://forum.xda-developers.com/f/lenovo-tab-p11-pro.13213/"
-    ]
+    "compatible": false,
+    "notes": [
+      "Wi-Fi GPS can be spotty",
+      "Tablet form factor"
+    ],
+    "manufacturerUrl": "https://www.lenovo.com/",
+    "rootLinks": []
   }
 ]

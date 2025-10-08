@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pokémon GO Compatible Devices</title>
+  <meta name="description" content="A searchable collection of phones and tablets compatible with Pokémon GO." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.card-hover:hover{transform:translateY(-6px);}</style>
+</head>
+<body class="min-h-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
+  <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg text-white font-bold">PG</div>
+          <div>
+            <h1 class="text-lg font-semibold">PG Compatibility</h1>
+            <p class="text-xs text-slate-400">Devices & PGSharp info</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <div class="relative">
+            <input id="searchInput" type="search" placeholder="Search model or brand..." class="w-72 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <svg class="w-4 h-4 text-slate-400 absolute right-3 top-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+          </div>
+
+          <select id="langSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+            <option value="en">EN</option>
+            <option value="de">DE</option>
+            <option value="ru">RU</option>
+          </select>
+
+          <div class="relative">
+            <button id="menuBtn" class="bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-sm">Menu ▾</button>
+            <div id="menu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-lg overflow-hidden">
+              <a href="/admin/login.html" class="block px-4 py-2 text-sm hover:bg-slate-800">Admin</a>
+              <a href="/privacy.html" class="block px-4 py-2 text-sm hover:bg-slate-800">Privacy</a>
+              <a href="/impressum.html" class="block px-4 py-2 text-sm hover:bg-slate-800">Impressum</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <section class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+        <div class="md:col-span-3 flex gap-3">
+          <select id="typeFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+            <option value="all">All Devices</option>
+            <option value="Phone">Phones</option>
+            <option value="Tablet">Tablets</option>
+          </select>
+          <select id="sortSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+            <option value="default">Sort: Default</option>
+            <option value="brand">Brand (A–Z)</option>
+            <option value="model">Model (A–Z)</option>
+            <option value="os">OS Version</option>
+          </select>
+          <button id="clearBtn" class="ml-auto bg-sky-500 hover:bg-sky-600 text-slate-900 px-3 py-2 rounded-lg text-sm font-semibold">Reset</button>
+        </div>
+
+        <div class="md:col-span-1 text-right text-sm text-slate-400">PGSharp — info & warnings</div>
+      </section>
+
+      <section id="gridWrap" class="device-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- cards injected by JS -->
+      </section>
+
+      <section class="mt-12 bg-slate-900 border border-slate-800 rounded-lg p-6">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center font-bold text-white">PG</div>
+          <div>
+            <h2 class="text-xl font-semibold">About PGSharp</h2>
+            <p class="text-slate-400 mt-2">PGSharp is a third-party location-spoofing tool for Pokémon GO. Using such tools likely violates Niantic's Terms of Service and may result in account suspension. This page contains informational content only — we do not provide usage guides, assistance to evade detection, or host downloads.</p>
+            <div class="mt-3 flex gap-3">
+              <a href="https://www.pgsharp.com/" target="_blank" rel="noopener noreferrer nofollow" class="text-sky-400 hover:underline text-sm">Official site</a>
+              <a href="/privacy.html" class="text-slate-400 text-sm hover:underline">Privacy</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform">
+      <button id="closeModal" class="ml-auto text-slate-400">✕</button>
+      <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
+      <p id="modalMeta" class="text-sm text-slate-400"></p>
+      <p id="modalDesc" class="mt-3 text-slate-200"></p>
+      <div id="modalNotesList" class="mt-4 text-slate-300"></div>
+      <div id="modalRootLinks" class="mt-4"></div>
+    </div>
+  </div>
+
+  <footer class="mt-12 border-t border-slate-800 py-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-slate-400 flex justify-between">
+      <div>© <strong>PG Compatibility</strong> — for trainers & developers</div>
+      <div><a href="/impressum.html" class="hover:underline">Impressum</a> • <a href="/privacy.html" class="hover:underline">Privacy</a></div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
