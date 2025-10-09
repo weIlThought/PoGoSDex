@@ -12,7 +12,7 @@ function esc(t) {
 let devices = [];
 async function loadDevices() {
   try {
-    const res = await fetch("/data/devices.json");
+    const res = await fetch("./data/devices.json");
     devices = await res.json();
   } catch (e) {
     devices = [];
