@@ -46,26 +46,38 @@ function applyTranslations() {
   const typeFilter = qs("#typeFilter");
   if (typeFilter) {
     typeFilter.options[0].text = t("type_all", "All Devices");
-    if (typeFilter.options[1]) typeFilter.options[1].text = t("type_phone", "Phones");
-    if (typeFilter.options[2]) typeFilter.options[2].text = t("type_tablet", "Tablets");
+    if (typeFilter.options[1])
+      typeFilter.options[1].text = t("type_phone", "Phones");
+    if (typeFilter.options[2])
+      typeFilter.options[2].text = t("type_tablet", "Tablets");
   }
 
   // sortSelect options
   const sortSelect = qs("#sortSelect");
   if (sortSelect) {
-    if (sortSelect.options[0]) sortSelect.options[0].text = t("sort_default", "Sort: Default");
-    if (sortSelect.options[1]) sortSelect.options[1].text = t("sort_brand", "Brand (A–Z)");
-    if (sortSelect.options[2]) sortSelect.options[2].text = t("sort_model", "Model (A–Z)");
-    if (sortSelect.options[3]) sortSelect.options[3].text = t("sort_os", "OS Version");
+    if (sortSelect.options[0])
+      sortSelect.options[0].text = t("sort_default", "Sort: Default");
+    if (sortSelect.options[1])
+      sortSelect.options[1].text = t("sort_brand", "Brand (A–Z)");
+    if (sortSelect.options[2])
+      sortSelect.options[2].text = t("sort_model", "Model (A–Z)");
+    if (sortSelect.options[3])
+      sortSelect.options[3].text = t("sort_os", "OS Version");
   }
 
   // footer links
-  qsa('a[href="/privacy.html"]').forEach(a => (a.textContent = t("privacy", "Privacy")));
-  qsa('a[href="/impressum.html"]').forEach(a => (a.textContent = t("impressum", "Impressum")));
-  qsa('a[href="/"]').forEach(a => (a.title = t("title", a.title)));
+  qsa('a[href="/privacy.html"]').forEach(
+    (a) => (a.textContent = t("privacy", "Privacy"))
+  );
+  qsa('a[href="/impressum.html"]').forEach(
+    (a) => (a.textContent = t("impressum", "Impressum"))
+  );
+  qsa('a[href="/"]').forEach((a) => (a.title = t("title", a.title)));
 
   // ad placeholder
-  qsa(".ad-placeholder").forEach(d => (d.textContent = t("ad_placeholder", "Advertisement")));
+  qsa(".ad-placeholder").forEach(
+    (d) => (d.textContent = t("ad_placeholder", "Advertisement"))
+  );
 
   // set langSelect value
   const ls = qs("#langSelect");
@@ -132,7 +144,10 @@ function openModal(d) {
   qs("#modalMeta").textContent = `${d.brand} • ${d.type} • ${d.os}`;
   qs("#modalDesc").textContent = d.compatible
     ? t("modal_compatibility_confirmed", "Compatibility: confirmed")
-    : t("modal_compatibility_unknown", "Compatibility: unknown or not verified");
+    : t(
+        "modal_compatibility_unknown",
+        "Compatibility: unknown or not verified"
+      );
   qs("#modalNotesList").innerHTML = (d.notes || [])
     .map((n) => `<div class="text-sm">• ${esc(n)}</div>`)
     .join("");
@@ -144,7 +159,9 @@ function openModal(d) {
         )}</a></div>`
     )
     .join("");
-  qs("#modalRootLinks").innerHTML = links ? `<h4 class="text-sm font-semibold mt-3">Root Links</h4>${links}` : "";
+  qs("#modalRootLinks").innerHTML = links
+    ? `<h4 class="text-sm font-semibold mt-3">Root Links</h4>${links}`
+    : "";
   document.body.style.overflow = "hidden";
 }
 
@@ -207,4 +224,4 @@ qs("#langSelect")?.addEventListener("change", (e) => {
   loadLang(lang);
 });
 
-loadLang(currentLang).then(loadDevices();
+loadLang(currentLang).then(loadDevices);
