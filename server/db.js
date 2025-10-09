@@ -13,18 +13,23 @@ const file = join(__dirname, "../data/devices.json");
 const dir = join(__dirname, "../data");
 if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
-// Default data structure
-const defaultData = { devices: [] };
+// Default data structure (array expected by routes / frontend)
+const defaultData = [];
 
 // Create database adapter
 const adapter = new JSONFile(file);
-const db = new Low(adapter, defaultData);
+const db = new Low(adapter);
 
-// Initialize database file if not exists
-await db.read();
-if (!db.data) {
-  db.data = defaultData;
-  await db.write();
+// Exported init function to initialize/read DB
+export async function initDB() {
+  await db.read();
+  if (!db.data) {
+    db.data = defaultData;
+    await db.write();
+  }
 }
+
+// Initialize immediately (optional) so other modules can use DB early
+await initDB();
 
 export default db;

@@ -51,7 +51,9 @@ app.use(
 
   const staticRoot = path.resolve(__dirname, "..", "public");
   app.use(express.static(staticRoot, { extensions: ["html"] }));
-  app.use("/api/admin", adminRoutes);
+
+  // Mount admin API under /api so frontend (/api/devices etc.) matches
+  app.use("/api", adminRoutes);
 
   // Fallback für SPA (React/Vue/etc.)
   app.get("*", (req, res) => res.sendFile(path.join(staticRoot, "index.html")));

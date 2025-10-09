@@ -10,6 +10,7 @@ function requireAuth(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.status(401).json({ error: "Unauthorized" });
 }
+
 router.post("/login", loginLimiter, async (req, res) => {
   try {
     const pw = req.body?.password;
@@ -26,11 +27,22 @@ router.post("/login", loginLimiter, async (req, res) => {
     res.status(500).json({ error: "server error" });
   }
 });
+
 router.post("/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ ok: true });
   });
 });
+
+// New: GET single device by id (used by admin frontend edit)
+router.get("/devices/:id", requireAuth, async (req, res) => {
+  await db.read();
+  const id = req.params.id;
+  const item = (db.data || []).find((d) => d.id === id);
+  if (!item) return res.status(404).json({ error: "Not found" });
+  res.json(item);
+});
+
 router.get("/devices", requireAuth, async (req, res) => {
   await db.read();
   res.json(db.data || []);
