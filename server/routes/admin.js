@@ -101,4 +101,4 @@ router.delete("/devices/:id", requireAuth, async (req, res) => {
   await db.write();
   res.json({ ok: true, removed: removed[0] });
 });
-module.exports = router;
+export default router;
