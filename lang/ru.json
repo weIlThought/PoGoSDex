@@ -1,3 +1,22 @@
 {
-  "title": "\u0423\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430, \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u0438\u043c\u044b\u0435 \u0441 Pok\u00e9mon GO"
+  "title": "Устройства, совместимые с Pokémon GO",
+  "search_placeholder": "Поиск по модели или бренду...",
+  "type_all": "Все устройства",
+  "type_phone": "Телефоны",
+  "type_tablet": "Планшеты",
+  "sort_default": "Сортировка: по умолчанию",
+  "sort_brand": "Бренд (A–Z)",
+  "sort_model": "Модель (A–Z)",
+  "sort_os": "Версия ОС",
+  "no_devices_found": "Устройства не найдены",
+  "modal_compatibility_confirmed": "Совместимость: подтверждена",
+  "modal_compatibility_unknown": "Совместимость: неизвестна или не подтверждена",
+  "about_pgsharp_title": "О PGSharp",
+  "privacy": "Конфиденциальность",
+  "impressum": "Impressum",
+  "back_to_home": "Вернуться на главную",
+  "cookie_question": "Мы используем куки для аналитики и рекламы. Принимаете?",
+  "cookie_accept": "Принять",
+  "cookie_decline": "Отклонить",
+  "ad_placeholder": "Реклама"
 }

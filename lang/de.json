@@ -1,3 +1,22 @@
 {
-  "title": "Pok\u00e9mon GO Kompatible Ger\u00e4te"
+  "title": "Pokémon GO Kompatible Geräte",
+  "search_placeholder": "Modell oder Hersteller suchen...",
+  "type_all": "Alle Geräte",
+  "type_phone": "Handys",
+  "type_tablet": "Tablets",
+  "sort_default": "Sortierung: Standard",
+  "sort_brand": "Marke (A–Z)",
+  "sort_model": "Modell (A–Z)",
+  "sort_os": "Betriebssystem",
+  "no_devices_found": "Keine Geräte gefunden",
+  "modal_compatibility_confirmed": "Kompatibilität: bestätigt",
+  "modal_compatibility_unknown": "Kompatibilität: unbekannt / nicht verifiziert",
+  "about_pgsharp_title": "Über PGSharp",
+  "privacy": "Datenschutz",
+  "impressum": "Impressum",
+  "back_to_home": "Zurück zur Startseite",
+  "cookie_question": "Wir verwenden Cookies für Analyse und Werbung. Akzeptieren Sie?",
+  "cookie_accept": "Akzeptieren",
+  "cookie_decline": "Ablehnen",
+  "ad_placeholder": "Werbung"
 }

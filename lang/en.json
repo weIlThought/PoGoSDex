@@ -1,3 +1,22 @@
 {
-  "title": "Pok\u00e9mon GO Compatible Devices"
+  "title": "Pokémon GO Compatible Devices",
+  "search_placeholder": "Search model or brand...",
+  "type_all": "All Devices",
+  "type_phone": "Phones",
+  "type_tablet": "Tablets",
+  "sort_default": "Sort: Default",
+  "sort_brand": "Brand (A–Z)",
+  "sort_model": "Model (A–Z)",
+  "sort_os": "OS Version",
+  "no_devices_found": "No devices found",
+  "modal_compatibility_confirmed": "Compatibility: confirmed",
+  "modal_compatibility_unknown": "Compatibility: unknown or not verified",
+  "about_pgsharp_title": "About PGSharp",
+  "privacy": "Privacy",
+  "impressum": "Impressum",
+  "back_to_home": "Back to home",
+  "cookie_question": "We use cookies for analytics and ads. Do you accept?",
+  "cookie_accept": "Accept",
+  "cookie_decline": "Decline",
+  "ad_placeholder": "Advertisement"
 }
