@@ -1,0 +1,28 @@
+{
+  "name": "pogosdex",
+  "version": "1.0.0",
+  "description": "PoGoSDex - PogoSDex-like design (Railway-ready). Deploy using Docker on Railway.",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "dev:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --watch",
+    "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
+    "start": "node server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weIlThought/PoGoSDex.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/weIlThought/PoGoSDex/issues"
+  },
+  "homepage": "https://github.com/weIlThought/PoGoSDex#readme"
+}
