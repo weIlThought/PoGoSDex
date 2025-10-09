@@ -6,6 +6,19 @@
     <title>Admin Dashboard | PoGoSDex</title>
     <!-- Lokale, gebaute Tailwind/CSS -->
     <link rel="stylesheet" href="/output.css" />
+    <!-- language selector (falls noch nicht vorhanden) -->
+    <!-- platziere das Select dort, wo es visuell passen soll -->
+    <select
+      id="langSelect"
+      class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+    >
+      <option value="en">EN</option>
+      <option value="de">DE</option>
+      <option value="ru">RU</option>
+    </select>
+
+    <!-- Admin script (deferred) -->
+    <script src="/admin/dashboard.js" defer></script>
   </head>
   <body class="bg-slate-900 text-slate-100">
     <header
@@ -105,7 +118,5 @@
         </form>
       </div>
     </div>
-
-    <script src="/admin/dashboard.js"></script>
   </body>
 </html>

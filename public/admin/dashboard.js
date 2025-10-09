@@ -106,3 +106,86 @@ logoutBtn.onclick = async () => {
 };
 
 fetchDevices();
+
+// --- i18n helper (appended) ---
+(function () {
+  const LANG_KEY = "lang";
+  let i18n = {};
+  let currentLang =
+    localStorage.getItem(LANG_KEY) || (navigator.language || "en").slice(0, 2);
+
+  function qs(s) {
+    return document.querySelector(s);
+  }
+  function qsa(s) {
+    return Array.from(document.querySelectorAll(s));
+  }
+
+  // t(key, fallback)
+  function t(k, f) {
+    return (i18n && i18n[k]) || f || k;
+  }
+
+  async function loadAdminLang(lang) {
+    try {
+      const res = await fetch(`/lang/${lang}.json`);
+      if (!res.ok) throw new Error("lang not found");
+      i18n = await res.json();
+      currentLang = lang;
+      localStorage.setItem(LANG_KEY, lang);
+      applyAdminTranslations();
+    } catch (err) {
+      console.warn("Failed to load admin lang", lang, err);
+    }
+  }
+
+  function applyAdminTranslations() {
+    // document title
+    document.title = t("admin_dashboard_title", document.title);
+
+    // Generic: elements with data-i18n="key" -> textContent
+    qsa("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (!key) return;
+      const target = el.getAttribute("data-i18n-target") || "text";
+      const txt = t(key, el.textContent || "");
+      if (target === "text") {
+        el.textContent = txt;
+      } else if (target === "html") {
+        el.innerHTML = txt;
+      } else if (target === "placeholder") {
+        el.setAttribute("placeholder", txt);
+      } else if (target === "title") {
+        el.setAttribute("title", txt);
+      } else if (target === "value") {
+        el.value = txt;
+      }
+    });
+
+    // set langSelect value if present
+    const ls = qs("#langSelect");
+    if (ls) ls.value = currentLang;
+  }
+
+  // Wire lang select change
+  document.addEventListener("DOMContentLoaded", () => {
+    const ls = qs("#langSelect");
+    if (ls) {
+      ls.value = currentLang;
+      ls.addEventListener("change", (e) => {
+        const lang = e.target.value;
+        const params = new URLSearchParams(window.location.search);
+        params.set("lang", lang);
+        history.replaceState(
+          null,
+          "",
+          `${location.pathname}?${params.toString()}`
+        );
+        loadAdminLang(lang);
+      });
+    }
+
+    // initial load
+    loadAdminLang(currentLang);
+  });
+})();
