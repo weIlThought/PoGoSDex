@@ -42,7 +42,6 @@ function applyTranslations() {
     t("search_placeholder", "Search model or brand...")
   );
 
-  // typeFilter options
   const typeFilter = qs("#typeFilter");
   if (typeFilter) {
     typeFilter.options[0].text = t("type_all", "All Devices");
@@ -52,7 +51,6 @@ function applyTranslations() {
       typeFilter.options[2].text = t("type_tablet", "Tablets");
   }
 
-  // sortSelect options
   const sortSelect = qs("#sortSelect");
   if (sortSelect) {
     if (sortSelect.options[0])
@@ -65,25 +63,15 @@ function applyTranslations() {
       sortSelect.options[3].text = t("sort_os", "OS Version");
   }
 
-  // footer links
   qsa('a[href="/privacy.html"]').forEach(
     (a) => (a.textContent = t("privacy", "Privacy"))
   );
   qsa('a[href="/impressum.html"]').forEach(
     (a) => (a.textContent = t("impressum", "Impressum"))
   );
-  qsa('a[href="/"]').forEach((a) => (a.title = t("title", a.title)));
 
-  // ad placeholder
-  qsa(".ad-placeholder").forEach(
-    (d) => (d.textContent = t("ad_placeholder", "Advertisement"))
-  );
-
-  // set langSelect value
   const ls = qs("#langSelect");
-  if (ls) {
-    ls.value = currentLang;
-  }
+  if (ls) ls.value = currentLang;
 }
 
 async function loadDevices() {
@@ -98,24 +86,36 @@ async function loadDevices() {
 }
 
 function cardHtml(d) {
-  const compat = d.compatible
-    ? `<span class="inline-block bg-emerald-600/20 text-emerald-300 px-2 py-1 rounded text-xs">${t(
-        "modal_compatibility_confirmed",
-        "Compatible"
-      )}</span>`
-    : `<span class="inline-block bg-amber-600/20 text-amber-300 px-2 py-1 rounded text-xs">${t(
-        "modal_compatibility_unknown",
-        "Unverified"
-      )}</span>`;
-  return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
-    d.id
-  )}"><div class="flex items-start justify-between"><div><h3 class="text-lg font-semibold">${esc(
-    d.model
-  )}</h3><p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(
-    d.type
-  )}</p></div><div>${compat}</div></div><p class="mt-3 text-slate-300 text-sm">${esc(
-    d.os
-  )}</p></article>`;
+  const compatClass = d.compatible ? "text-emerald-400" : "text-amber-400";
+  const pogoColor =
+    d.PoGoComp === "Yes"
+      ? "compat-yes"
+      : d.PoGoComp === "Partial"
+      ? "compat-partial"
+      : "compat-no";
+
+  return `
+    <article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
+      d.id
+    )}">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
+          <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
+        </div>
+        <div class="${compatClass} text-xs font-medium">
+          ${d.compatible ? "Confirmed" : "Unverified"}
+        </div>
+      </div>
+      <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
+      <div class="mt-3 text-sm">
+        <p><strong>Price Range:</strong> ${esc(d.priceRange || "—")}</p>
+        <p><strong>PoGO Comp:</strong> <span class="${pogoColor}">${
+    d.PoGoComp || "Unknown"
+  }</span></p>
+      </div>
+    </article>
+  `;
 }
 
 function renderDevices(list) {
@@ -144,13 +144,15 @@ function openModal(d) {
   qs("#modalMeta").textContent = `${d.brand} • ${d.type} • ${d.os}`;
   qs("#modalDesc").textContent = d.compatible
     ? t("modal_compatibility_confirmed", "Compatibility: confirmed")
-    : t(
-        "modal_compatibility_unknown",
-        "Compatibility: unknown or not verified"
-      );
+    : t("modal_compatibility_unknown", "Compatibility: unknown or not verified");
+
+  qs("#modalPriceRange").textContent = d.priceRange || "—";
+  qs("#modalPoGoComp").textContent = d.PoGoComp || "Unknown";
+
   qs("#modalNotesList").innerHTML = (d.notes || [])
     .map((n) => `<div class="text-sm">• ${esc(n)}</div>`)
     .join("");
+
   const links = (d.rootLinks || [])
     .map(
       (u) =>
@@ -159,9 +161,11 @@ function openModal(d) {
         )}</a></div>`
     )
     .join("");
+
   qs("#modalRootLinks").innerHTML = links
     ? `<h4 class="text-sm font-semibold mt-3">Root Links</h4>${links}`
     : "";
+
   document.body.style.overflow = "hidden";
 }
 
@@ -187,10 +191,11 @@ function applyFilters() {
     const hay = [d.model, d.brand, d.os, (d.notes || []).join(" ")]
       .join(" ")
       .toLowerCase();
-    const ms = q ? hay.includes(q) : true;
-    const mt = type === "all" ? true : d.type === type;
-    return ms && mt;
+    const matchesSearch = q ? hay.includes(q) : true;
+    const matchesType = type === "all" ? true : d.type === type;
+    return matchesSearch && matchesType;
   });
+
   if (sort !== "default") {
     filtered.sort((a, b) => {
       if (sort === "brand") return a.brand.localeCompare(b.brand);
@@ -199,23 +204,14 @@ function applyFilters() {
       return 0;
     });
   }
+
   renderDevices(filtered);
 }
 
 qs("#searchInput")?.addEventListener("input", applyFilters);
 qs("#typeFilter")?.addEventListener("change", applyFilters);
 qs("#sortSelect")?.addEventListener("change", applyFilters);
-qs("#clearBtn")?.addEventListener("click", () => {
-  qs("#searchInput").value = "";
-  qs("#typeFilter").value = "all";
-  qs("#sortSelect").value = "default";
-  applyFilters();
-});
-qs("#menuBtn")?.addEventListener("click", () =>
-  qs("#menu").classList.toggle("hidden")
-);
 
-// Sprache wechseln: select in header
 qs("#langSelect")?.addEventListener("change", (e) => {
   const lang = e.target.value;
   const params = new URLSearchParams(window.location.search);
