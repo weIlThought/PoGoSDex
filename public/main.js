@@ -39,6 +39,7 @@ async function loadLang(lang) {
     applyTranslations();
     renderNews(news);
     applyFilters();
+    if (news.length) ensureNewsTranslations(lang);
   } catch (e) {
     console.warn("Failed to load lang:", lang, e);
   }
@@ -101,6 +102,39 @@ async function loadNews() {
     console.error("Failed to load news.json", e);
   }
   if (activeSection === "news") renderNews(news);
+  if (news.length) ensureNewsTranslations(currentLang);
+}
+
+let newsTranslations = {};
+const dash = () => t("placeholder_dash", "—");
+
+async function ensureNewsTranslations(lang) {
+  if (!lang || lang === "en" || newsTranslations[lang]) return;
+  try {
+    const res = await fetch("/api/translate/news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        target: lang,
+        items: news.map(({ id, title, excerpt, tags = [], content }) => ({
+          id,
+          title,
+          excerpt,
+          tags,
+          content,
+        })),
+      }),
+    });
+    if (!res.ok) throw new Error(`translate ${res.status}`);
+    const data = await res.json();
+    newsTranslations[lang] = data.reduce((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {});
+    if (activeSection === "news") renderNews(news);
+  } catch (err) {
+    console.warn("news translation failed", err);
+  }
 }
 
 function cardHtml(d) {
@@ -158,52 +192,63 @@ function renderNews(items) {
     )}</div>`;
     return;
   }
+  const translations = newsTranslations[currentLang] || {};
   const publishedLabel = t("news_published", "Published");
   const updatedLabel = t("news_updated", "Updated");
-  const readMoreLabel = t("news_read_more", "Read more");
 
   items.forEach((item) => {
+    const translated = translations[item.id];
+    const title = translated?.title || item.title;
+    const excerpt = translated?.excerpt || item.excerpt;
+    const tags = translated?.tags?.length ? translated.tags : item.tags || [];
+    const content = translated?.content || item.content || item.excerpt || "";
+
     const pub = item.publishedAt
       ? dateFormatter.format(new Date(item.publishedAt))
-      : "—";
+      : dash();
     const upd =
       item.updatedAt && item.updatedAt !== item.publishedAt
         ? dateFormatter.format(new Date(item.updatedAt))
         : null;
-    const tags =
-      item.tags && item.tags.length
-        ? `<div class="flex flex-wrap gap-2 mt-3">${item.tags
-            .map(
-              (tag) =>
-                `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
-                  tag
-                )}</span>`
-            )
-            .join("")}</div>`
-        : "";
-    const excerpt = item.excerpt
-      ? `<p class="text-sm text-slate-300 mt-3">${esc(item.excerpt)}</p>`
-      : "";
-    const link = item.contentUrl
-      ? `<a href="${
-          item.contentUrl
-        }" target="_blank" rel="noopener noreferrer nofollow" class="text-sky-400 hover:underline text-sm mt-4 inline-flex items-center gap-1">${esc(
-          readMoreLabel
-        )} →</a>`
-      : "";
-    wrap.insertAdjacentHTML(
-      "beforeend",
-      `<article class="bg-slate-900 border border-slate-800 rounded-lg p-6">
-        <h3 class="text-xl font-semibold">${esc(item.title)}</h3>
-        <div class="text-xs text-slate-400 mt-2 space-x-3">
-          <span>${publishedLabel}: ${esc(pub)}</span>
-          ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
-        </div>
-        ${excerpt}
-        ${tags}
-        ${link}
-      </article>`
-    );
+
+    const article = document.createElement("article");
+    article.className =
+      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
+    article.tabIndex = 0;
+    article.setAttribute("role", "button");
+    article.innerHTML = `
+      <h3 class="text-xl font-semibold">${esc(title)}</h3>
+      <div class="text-xs text-slate-400 mt-2 space-x-3">
+        <span>${publishedLabel}: ${esc(pub)}</span>
+        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+      </div>
+      ${
+        excerpt
+          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
+          : ""
+      }
+      ${
+        tags.length
+          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
+              .map(
+                (tag) =>
+                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+                    tag
+                  )}</span>`
+              )
+              .join("")}</div>`
+          : ""
+      }
+    `;
+    const open = () => openNewsModal(item, { ...translated, content });
+    article.addEventListener("click", open);
+    article.addEventListener("keydown", (evt) => {
+      if (evt.key === "Enter" || evt.key === " ") {
+        evt.preventDefault();
+        open();
+      }
+    });
+    wrap.appendChild(article);
   });
 }
 
@@ -236,8 +281,8 @@ function openModal(d) {
       )}</h4>${links}`
     : "";
   const dash = t("placeholder_dash", "—");
-  qs("#modalPriceRange").textContent = d.priceRange || dash;
-  qs("#modalPoGoComp").textContent = d.poGoNotes || dash;
+  qs("#modalPriceRange").textContent = d.priceRange || dash();
+  qs("#modalPoGoComp").textContent = d.poGoNotes || dash();
   document.body.style.overflow = "hidden";
 }
 
@@ -404,4 +449,88 @@ showSection(activeSection);
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
+});
+
+const newsModalBackdrop = qs("#newsModalBackdrop");
+const closeNewsModalBtn = qs("#closeNewsModal");
+const newsModalTitle = qs("#newsModalTitle");
+const newsModalMeta = qs("#newsModalMeta");
+const newsModalBody = qs("#newsModalBody");
+const newsModalTagsWrap = qs("#newsModalTagsWrap");
+const newsModalTags = qs("#newsModalTags");
+
+function openNewsModal(original, translated = {}) {
+  const merged = {
+    ...original,
+    ...translated,
+    tags: translated?.tags?.length ? translated.tags : original.tags || [],
+  };
+  newsModalTitle.textContent = merged.title;
+  const pub = merged.publishedAt
+    ? dateFormatter.format(new Date(merged.publishedAt))
+    : dash();
+  const upd =
+    merged.updatedAt && merged.updatedAt !== merged.publishedAt
+      ? dateFormatter.format(new Date(merged.updatedAt))
+      : null;
+
+  const publishedLabel = t("news_published", "Published");
+  const updatedLabel = t("news_updated", "Updated");
+  newsModalMeta.innerHTML = `
+    <span>${publishedLabel}: ${esc(pub)}</span>
+    ${upd ? `<span class="ml-3">${updatedLabel}: ${esc(upd)}</span>` : ""}
+  `;
+
+  const body = merged.content || merged.excerpt || "";
+  if (body) {
+    newsModalBody.innerHTML = body
+      .split(/\n{2,}/)
+      .map(
+        (block) =>
+          `<p>${esc(block)
+            .replace(/\n/g, "<br>")
+            .replace(/ {2}/g, "&nbsp;&nbsp;")}</p>`
+      )
+      .join("");
+  } else {
+    newsModalBody.innerHTML = `<p>${esc(
+      t("news_modal_no_content", "No additional details provided.")
+    )}</p>`;
+  }
+
+  if (merged.tags && merged.tags.length) {
+    newsModalTags.innerHTML = merged.tags
+      .map(
+        (tag) =>
+          `<span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs">${esc(
+            tag
+          )}</span>`
+      )
+      .join("");
+    newsModalTagsWrap.classList.remove("hidden");
+  } else {
+    newsModalTagsWrap.classList.add("hidden");
+    newsModalTags.innerHTML = "";
+  }
+
+  newsModalBackdrop.classList.remove("hidden");
+  newsModalBackdrop.classList.add("flex");
+  document.body.style.overflow = "hidden";
+}
+
+function closeNewsModal() {
+  newsModalBackdrop.classList.add("hidden");
+  newsModalBackdrop.classList.remove("flex");
+  document.body.style.overflow = "";
+}
+
+closeNewsModalBtn?.addEventListener("click", closeNewsModal);
+newsModalBackdrop?.addEventListener("click", (evt) => {
+  if (evt.target === newsModalBackdrop) closeNewsModal();
+});
+window.addEventListener("keydown", (evt) => {
+  if (evt.key === "Escape") {
+    closeModal();
+    closeNewsModal();
+  }
 });

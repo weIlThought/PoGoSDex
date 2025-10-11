@@ -415,6 +415,32 @@
       </div>
     </div>
 
+    <div
+      id="newsModalBackdrop"
+      class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50"
+    >
+      <div
+        class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform"
+      >
+        <button id="closeNewsModal" class="ml-auto text-slate-400">✕</button>
+        <h3 id="newsModalTitle" class="text-2xl font-semibold mt-2"></h3>
+        <div id="newsModalMeta" class="text-xs text-slate-400 mt-1"></div>
+        <div
+          id="newsModalBody"
+          class="mt-4 space-y-3 text-sm text-slate-200"
+        ></div>
+        <div id="newsModalTagsWrap" class="mt-4 hidden">
+          <h4
+            class="text-sm font-semibold mb-2 text-slate-300"
+            data-i18n="news_modal_tags"
+          >
+            Tags
+          </h4>
+          <div id="newsModalTags" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </div>
+
     <script src="/main.js" defer></script>
   </body>
 </html>

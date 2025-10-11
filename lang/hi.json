@@ -53,6 +53,8 @@
   "news_read_more": "और पढ़ें",
   "news_published": "प्रकाशित",
   "news_updated": "अद्यतन",
+  "news_modal_tags": "टैग",
+  "news_modal_no_content": "कोई अतिरिक्त विवरण उपलब्ध नहीं है।",
   "site_footer_note": "ट्रेनर्स और डेवलपर्स के लिए",
   "placeholder_brand": "ब्रांड",
   "placeholder_model": "मॉडल",

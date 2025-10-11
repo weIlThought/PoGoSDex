@@ -53,6 +53,8 @@
   "news_read_more": "Read more",
   "news_published": "Published",
   "news_updated": "Updated",
+  "news_modal_tags": "Tags",
+  "news_modal_no_content": "No additional details provided.",
   "site_footer_note": "for trainers & developers",
   "placeholder_brand": "Brand",
   "placeholder_model": "Model",

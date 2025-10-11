@@ -53,6 +53,8 @@
   "news_read_more": "Подробнее",
   "news_published": "Опубликовано",
   "news_updated": "Обновлено",
+  "news_modal_tags": "Теги",
+  "news_modal_no_content": "Дополнительная информация отсутствует.",
   "site_footer_note": "для тренеров и разработчиков",
   "placeholder_brand": "Бренд",
   "placeholder_model": "Модель",
