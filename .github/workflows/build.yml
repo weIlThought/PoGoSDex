@@ -40,5 +40,12 @@ jobs:
       - name: Install server deps
         run: npm ci --prefix server --omit=dev
 
+      - name: Sync submodule files
+        run: |
+          rm -rf lang
+          mkdir -p lang
+          cp -r external/content/lang/. lang/
+          cp external/content/data/devices.json data/devices.json
+
       - name: Docker build
         run: docker build .

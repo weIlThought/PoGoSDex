@@ -23,6 +23,13 @@ jobs:
           git submodule update --remote external/content
           git status
 
+      - name: Sync files into repo
+        run: |
+          rm -rf lang
+          mkdir -p lang
+          cp -r external/content/lang/. lang/
+          cp external/content/data/devices.json data/devices.json
+
       - name: Commit & push
         uses: EndBug/add-and-commit@v9
         with:
