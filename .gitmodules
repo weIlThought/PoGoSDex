@@ -1,0 +1,4 @@
+[submodule "external/content"]
+	path = external/content
+	url = https://github.com/weIlThought/pogosdex-data
+	branch = main
