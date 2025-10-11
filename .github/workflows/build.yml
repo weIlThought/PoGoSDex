@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Ensure submodules up to date
+        run: git submodule update --init --recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Build Tailwind CSS
+        run: npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+
+      - name: Install server deps
+        run: npm ci --prefix server --omit=dev
+
+      - name: Docker build
+        run: docker build .
