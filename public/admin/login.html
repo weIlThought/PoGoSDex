@@ -65,13 +65,6 @@
       </footer>
     </main>
 
-    <script>
-      const btn = document.getElementById("discordLoginBtn");
-      btn.addEventListener("click", () => {
-        const params = new URLSearchParams(window.location.search);
-        const lang = params.get("lang") || localStorage.getItem("lang") || (navigator.language || "en").slice(0, 2);
-        window.location.href = \`/api/auth/discord?lang=\${encodeURIComponent(lang)}\`;
-      });
-    </script>
+    <script src="/admin/login.js" defer></script>
   </body>
 </html>
