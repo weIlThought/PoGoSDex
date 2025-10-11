@@ -86,5 +86,13 @@
   "tos_changes_text": "We may update these Terms from time to time. Continued use of PoGoSDex after changes become effective constitutes acceptance of the updated Terms.",
   "tos_contact_title": "Contact",
   "tos_contact_text": "Questions about these Terms? Reach out at:",
-  "tos_contact_email": "legal@pogosdex.com"
+  "tos_contact_email": "pogosdex@gmail.com",
+  "privacy_overview": "PoGoSDex does not collect, profile, or monetise personal data. Technical requests are processed transiently and discarded immediately after delivery.",
+  "privacy_data_server": "No persistent server logs containing IP addresses or user agents are stored.",
+  "privacy_data_consent": "Language and consent choices remain in your browser and are never transmitted to us.",
+  "privacy_data_feedback": "We do not provide contact or feedback forms that capture personal details.",
+  "privacy_data_usage_analytics": "We do not run analytics platforms or build usage profiles.",
+  "privacy_data_usage_experience": "No behavioural data is processed for optimisation or advertising.",
+  "privacy_data_usage_contact": "If you email us voluntarily, the message is handled only to answer your request and deleted once resolved.",
+  "privacy_cookies": "Only essential language preferences are stored locally. No advertising, tracking, or third-party cookies are loaded."
 }
