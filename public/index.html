@@ -25,11 +25,11 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-3">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg text-white font-bold"
-            >
-              PG
-            </div>
+            <img
+              src="/assets/logo.png"
+              alt="PoGoSDex logo"
+              class="w-12 h-12 rounded-xl shadow-lg"
+            />
             <div>
               <h1
                 id="siteTitle"
@@ -222,125 +222,32 @@
           <section
             class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4"
           >
-            <div>
-              <h3
-                class="text-xl font-semibold"
-                data-i18n="device_builder_title"
-              >
-                Prepare a new device entry
-              </h3>
-              <p
-                class="text-sm text-slate-300"
-                data-i18n="device_builder_intro"
-              >
-                Fill out the form to generate a JSON snippet you can paste into
-                data/devices.json.
-              </p>
-            </div>
-
-            <form
-              id="deviceBuilderForm"
-              class="grid md:grid-cols-2 gap-3"
-              autocomplete="off"
+            <div
+              class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
             >
-              <input
-                class="input"
-                type="text"
-                id="builderBrand"
-                placeholder="Brand"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_brand"
-                required
-              />
-              <input
-                class="input"
-                type="text"
-                id="builderModel"
-                placeholder="Model"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_model"
-                required
-              />
-              <input
-                class="input"
-                type="text"
-                id="builderOs"
-                placeholder="Operating System"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_os"
-              />
-              <input
-                class="input"
-                type="text"
-                id="builderType"
-                placeholder="Type (Phone/Tablet)"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_type"
-              />
-              <input
-                class="input"
-                type="text"
-                id="builderPrice"
-                placeholder="Price range (optional)"
-                data-i18n-target="placeholder"
-                data-i18n="device_builder_price_placeholder"
-              />
-              <div class="flex items-center gap-2">
-                <input type="checkbox" id="builderCompatible" />
-                <label
-                  for="builderCompatible"
-                  class="text-sm"
-                  data-i18n="table_compatible"
-                  >Compatible</label
+              <div>
+                <h3
+                  class="text-xl font-semibold"
+                  data-i18n="device_builder_title"
                 >
+                  Prepare a new device entry
+                </h3>
+                <p
+                  class="text-sm text-slate-300"
+                  data-i18n="device_builder_intro"
+                >
+                  Fill out the form to generate a JSON snippet you can paste
+                  into data/devices.json.
+                </p>
               </div>
-              <textarea
-                class="input md:col-span-2"
-                id="builderNotes"
-                placeholder="Notes (comma separated)"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_notes"
-              ></textarea>
-              <textarea
-                class="input md:col-span-2"
-                id="builderRootLinks"
-                placeholder="Root Links (comma separated URLs)"
-                data-i18n-target="placeholder"
-                data-i18n="placeholder_rootlinks"
-              ></textarea>
-
-              <div class="md:col-span-2 flex gap-3">
-                <button
-                  type="submit"
-                  class="btn-primary"
-                  data-i18n="device_builder_submit"
-                >
-                  Generate JSON
-                </button>
-                <button
-                  type="button"
-                  id="copyDeviceJson"
-                  class="btn-secondary"
-                  data-i18n="device_builder_copy"
-                >
-                  Copy JSON
-                </button>
-              </div>
-            </form>
-
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-              <pre
-                id="deviceJsonOutput"
-                class="whitespace-pre-wrap text-xs text-slate-200"
-              ></pre>
+              <button
+                id="deviceModalOpen"
+                class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+                data-i18n="device_builder_open_modal"
+              >
+                Open builder
+              </button>
             </div>
-            <p
-              id="deviceBuilderStatus"
-              class="text-sm text-slate-400"
-              data-i18n="device_builder_empty"
-            >
-              Fill in the form to generate JSON.
-            </p>
           </section>
         </section>
 
@@ -484,6 +391,158 @@
           </h4>
           <div id="newsModalTags" class="flex flex-wrap gap-2"></div>
         </div>
+      </div>
+    </div>
+
+    <div
+      id="deviceModal"
+      class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur"
+    >
+      <div
+        class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <h3
+              class="text-lg font-semibold text-slate-100"
+              data-i18n="device_builder_title"
+            >
+              Prepare a new device entry
+            </h3>
+            <p class="text-xs text-slate-400" data-i18n="device_builder_intro">
+              Fill out the form to generate a JSON snippet you can paste into
+              data/devices.json.
+            </p>
+          </div>
+          <button
+            id="deviceModalClose"
+            class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition"
+            data-i18n="modal_close"
+          >
+            Close
+          </button>
+        </div>
+
+        <form
+          id="deviceBuilderForm"
+          class="grid md:grid-cols-2 gap-3"
+          autocomplete="off"
+        >
+          <input
+            class="input"
+            type="text"
+            id="builderBrand"
+            placeholder="Brand"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_brand"
+            required
+          />
+          <input
+            class="input"
+            type="text"
+            id="builderModel"
+            placeholder="Model"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_model"
+            required
+          />
+          <input
+            class="input"
+            type="text"
+            id="builderOs"
+            placeholder="Operating System"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_os"
+          />
+          <input
+            class="input"
+            type="text"
+            id="builderType"
+            placeholder="Type (Phone/Tablet)"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_type"
+          />
+          <input
+            class="input"
+            type="text"
+            id="builderPrice"
+            placeholder="Price range (optional)"
+            data-i18n-target="placeholder"
+            data-i18n="device_builder_price_placeholder"
+          />
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="builderCompatible" />
+            <label
+              for="builderCompatible"
+              class="text-sm"
+              data-i18n="table_compatible"
+              >Compatible</label
+            >
+          </div>
+          <textarea
+            class="input md:col-span-2"
+            id="builderNotes"
+            placeholder="Notes (comma separated)"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_notes"
+          ></textarea>
+          <textarea
+            class="input md:col-span-2"
+            id="builderRootLinks"
+            placeholder="Root Links (comma separated URLs)"
+            data-i18n-target="placeholder"
+            data-i18n="placeholder_rootlinks"
+          ></textarea>
+
+          <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              id="deviceFormClear"
+              class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition"
+              data-i18n="device_builder_clear"
+            >
+              Clear
+            </button>
+            <a
+              href="https://github.com/weIlThought/pogosdex-data"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition"
+              data-i18n="device_builder_upload"
+            >
+              ↥ Upload (Pull Request)
+            </a>
+            <button
+              type="submit"
+              class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+              data-i18n="device_builder_submit"
+            >
+              Generate JSON
+            </button>
+            <button
+              type="button"
+              id="copyDeviceJson"
+              class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition"
+              data-i18n="device_builder_copy"
+            >
+              Copy JSON
+            </button>
+          </div>
+        </form>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
+          <pre
+            id="deviceJsonOutput"
+            class="whitespace-pre-wrap text-xs text-slate-200"
+          ></pre>
+        </div>
+        <p
+          id="deviceBuilderStatus"
+          class="text-sm text-slate-400"
+          data-i18n="device_builder_empty"
+        >
+          Fill in the form to generate JSON.
+        </p>
       </div>
     </div>
 

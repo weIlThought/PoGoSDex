@@ -398,6 +398,10 @@ const deviceBuilderForm = qs("#deviceBuilderForm");
 const deviceJsonOutput = qs("#deviceJsonOutput");
 const copyDeviceJsonBtn = qs("#copyDeviceJson");
 const deviceBuilderStatus = qs("#deviceBuilderStatus");
+const deviceModal = qs("#deviceModal");
+const deviceModalOpenBtn = qs("#deviceModalOpen");
+const deviceModalCloseBtn = qs("#deviceModalClose");
+const deviceFormClearBtn = qs("#deviceFormClear");
 
 function setBuilderStatus(key) {
   if (!deviceBuilderStatus) return;
@@ -453,6 +457,33 @@ function setupDeviceBuilder() {
     } catch (err) {
       console.error("Clipboard copy failed", err);
     }
+  });
+
+  deviceModalOpenBtn?.addEventListener("click", () => {
+    deviceModal?.classList.remove("hidden");
+    deviceModal?.classList.add("flex");
+  });
+
+  deviceModalCloseBtn?.addEventListener("click", () => {
+    deviceModal?.classList.add("hidden");
+    deviceModal?.classList.remove("flex");
+  });
+
+  deviceModal?.addEventListener("click", (evt) => {
+    if (evt.target === deviceModal) {
+      deviceModal.classList.add("hidden");
+      deviceModal.classList.remove("flex");
+    }
+  });
+
+  deviceFormClearBtn?.addEventListener("click", () => {
+    deviceBuilderForm?.reset();
+    if (deviceJsonOutput) deviceJsonOutput.textContent = "";
+    if (deviceBuilderStatus)
+      deviceBuilderStatus.textContent = t(
+        "device_builder_empty",
+        "Fill in the form to generate JSON."
+      );
   });
 }
 
