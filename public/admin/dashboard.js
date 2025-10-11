@@ -38,7 +38,13 @@ function renderTable(devices) {
 function openModal(editing = false, device = {}) {
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
-  modalTitle.textContent = editing ? "Edit Device" : "Add Device";
+  // localized modal title when i18n loaded
+  const addKey = "modal_add_device";
+  const editKey = "modal_edit_device";
+  const t = window.__admin_t || ((k, f) => f || k);
+  modalTitle.textContent = editing
+    ? t(editKey, "Edit Device")
+    : t(addKey, "Add Device");
 
   form.deviceId.value = device.id || "";
   form.brand.value = device.brand || "";
@@ -94,18 +100,19 @@ async function editDevice(id) {
   openModal(true, device);
 }
 
-async function deleteDevice(id) {
-  if (!confirm("Delete this device?")) return;
-  await fetch(`${apiBase}/${id}`, { method: "DELETE" });
-  fetchDevices();
+function deleteDevice(id) {
+  const confirmText =
+    (window.__admin_t &&
+      window.__admin_t("confirm_delete", "Delete this device?")) ||
+    "Delete this device?";
+  if (!confirm(confirmText)) return;
+  return fetch(`${apiBase}/${id}`, { method: "DELETE" }).then(fetchDevices);
 }
 
 logoutBtn.onclick = async () => {
   await fetch("/api/logout", { method: "POST" });
   location.href = "/admin/login.html";
 };
-
-fetchDevices();
 
 // --- i18n helper (appended) ---
 (function () {
@@ -121,7 +128,6 @@ fetchDevices();
     return Array.from(document.querySelectorAll(s));
   }
 
-  // t(key, fallback)
   function t(k, f) {
     return (i18n && i18n[k]) || f || k;
   }
@@ -133,6 +139,9 @@ fetchDevices();
       i18n = await res.json();
       currentLang = lang;
       localStorage.setItem(LANG_KEY, lang);
+      // expose helper for other functions
+      window.__admin_i18n = i18n;
+      window.__admin_t = t;
       applyAdminTranslations();
     } catch (err) {
       console.warn("Failed to load admin lang", lang, err);
@@ -140,34 +149,22 @@ fetchDevices();
   }
 
   function applyAdminTranslations() {
-    // document title
     document.title = t("admin_dashboard_title", document.title);
-
-    // Generic: elements with data-i18n="key" -> textContent
     qsa("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       if (!key) return;
       const target = el.getAttribute("data-i18n-target") || "text";
       const txt = t(key, el.textContent || "");
-      if (target === "text") {
-        el.textContent = txt;
-      } else if (target === "html") {
-        el.innerHTML = txt;
-      } else if (target === "placeholder") {
-        el.setAttribute("placeholder", txt);
-      } else if (target === "title") {
-        el.setAttribute("title", txt);
-      } else if (target === "value") {
-        el.value = txt;
-      }
+      if (target === "text") el.textContent = txt;
+      else if (target === "html") el.innerHTML = txt;
+      else if (target === "placeholder") el.setAttribute("placeholder", txt);
+      else if (target === "title") el.setAttribute("title", txt);
+      else if (target === "value") el.value = txt;
     });
-
-    // set langSelect value if present
     const ls = qs("#langSelect");
     if (ls) ls.value = currentLang;
   }
 
-  // Wire lang select change
   document.addEventListener("DOMContentLoaded", () => {
     const ls = qs("#langSelect");
     if (ls) {
@@ -181,11 +178,9 @@ fetchDevices();
           "",
           `${location.pathname}?${params.toString()}`
         );
-        loadAdminLang(lang);
+        loadAdminLang(lang).then(fetchDevices);
       });
     }
-
-    // initial load
-    loadAdminLang(currentLang);
+    loadAdminLang(currentLang).then(fetchDevices);
   });
 })();

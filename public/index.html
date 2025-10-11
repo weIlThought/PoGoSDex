@@ -30,8 +30,20 @@
               PG
             </div>
             <div>
-              <h1 class="text-lg font-semibold">PoGoSDex</h1>
-              <p class="text-xs text-slate-400">Devices & PGSharp info</p>
+              <h1
+                id="siteTitle"
+                data-i18n="site_name"
+                class="text-lg font-semibold"
+              >
+                PoGoSDex
+              </h1>
+              <p
+                id="siteSubtitle"
+                data-i18n="site_subtitle"
+                class="text-xs text-slate-400"
+              >
+                Devices & PGSharp info
+              </p>
             </div>
           </div>
 
@@ -41,6 +53,7 @@
                 id="searchInput"
                 type="search"
                 placeholder="Search model or brand..."
+                data-i18n-target="placeholder"
                 class="w-72 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
               <svg
@@ -67,35 +80,6 @@
               <option value="de">DE</option>
               <option value="ru">RU</option>
             </select>
-
-            <!-- <div class="relative">
-              <button
-                id="menuBtn"
-                class="bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-sm"
-              >
-                Menu ▾
-              </button>
-              <div
-                id="menu"
-                class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-lg overflow-hidden"
-              >
-                <a
-                  href="/admin/login.html"
-                  class="block px-4 py-2 text-sm hover:bg-slate-800"
-                  >Admin</a
-                >
-                <a
-                  href="/privacy.html"
-                  class="block px-4 py-2 text-sm hover:bg-slate-800"
-                  >Privacy</a
-                >
-                <a
-                  href="/impressum.html"
-                  class="block px-4 py-2 text-sm hover:bg-slate-800"
-                  >Impressum</a
-                >
-              </div>
-            </div> -->
           </div>
         </div>
       </div>
@@ -111,38 +95,34 @@
               id="typeFilter"
               class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
             >
-              <option value="all">All Devices</option>
-              <option value="Phone">Phones</option>
-              <option value="Tablet">Tablets</option>
+              <option value="all" data-i18n="type_all">All Devices</option>
+              <option value="Phone" data-i18n="type_phone">Phones</option>
+              <option value="Tablet" data-i18n="type_tablet">Tablets</option>
             </select>
             <select
               id="sortSelect"
               class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
             >
-              <option value="default">Sort: Default</option>
-              <option value="brand">Brand (A–Z)</option>
-              <option value="model">Model (A–Z)</option>
-              <option value="os">OS Version</option>
+              <option value="default" data-i18n="sort_default">
+                Sort: Default
+              </option>
+              <option value="brand" data-i18n="sort_brand">Brand (A–Z)</option>
+              <option value="model" data-i18n="sort_model">Model (A–Z)</option>
+              <option value="os" data-i18n="sort_os">OS Version</option>
             </select>
-            <!-- <button
-              id="clearBtn"
-              class="ml-auto bg-sky-500 hover:bg-sky-600 text-slate-900 px-3 py-2 rounded-lg text-sm font-semibold"
-            >
-              Reset
-            </button> -->
           </div>
 
           <div class="md:col-span-1 text-right text-sm text-slate-400">
-            PGSharp — info & warnings
+            <span data-i18n="about_pgsharp_title"
+              >PGSharp — info & warnings</span
+            >
           </div>
         </section>
 
         <section
           id="gridWrap"
           class="device-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <!-- cards injected by JS -->
-        </section>
+        ></section>
 
         <section
           class="mt-12 bg-slate-900 border border-slate-800 rounded-lg p-6"
@@ -154,8 +134,18 @@
               PG
             </div>
             <div>
-              <h2 class="text-xl font-semibold">About PGSharp</h2>
-              <p class="text-slate-400 mt-2">
+              <h2
+                id="aboutTitle"
+                data-i18n="about_pgsharp_title"
+                class="text-xl font-semibold"
+              >
+                About PGSharp
+              </h2>
+              <p
+                id="aboutParagraph"
+                data-i18n="about_pgsharp_paragraph"
+                class="text-slate-400 mt-2"
+              >
                 PGSharp is a third-party location-spoofing tool for Pokémon GO.
                 Using such tools likely violates Niantic's Terms of Service and
                 may result in account suspension. This page contains
@@ -168,11 +158,13 @@
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   class="text-sky-400 hover:underline text-sm"
+                  data-i18n="about_pgsharp_official"
                   >Official site</a
                 >
                 <a
                   href="/privacy.html"
                   class="text-slate-400 text-sm hover:underline"
+                  data-i18n="privacy"
                   >Privacy</a
                 >
               </div>
@@ -184,6 +176,7 @@
           <div
             class="ad-placeholder border border-slate-800 rounded-lg p-4 text-center text-slate-400"
             data-slot="1234567890"
+            data-i18n="ad_placeholder"
           >
             Advertisement
           </div>
@@ -191,7 +184,29 @@
       </div>
     </main>
 
-    <!-- Modal -->
+    <footer class="mt-12 border-t border-slate-800 py-6">
+      <div
+        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-slate-400 flex justify-between"
+      >
+        <div>
+          © <strong data-i18n="site_name">PoGoSDex</strong> — for trainers &
+          developers
+        </div>
+        <div>
+          <a
+            href="/impressum.html"
+            class="hover:underline"
+            data-i18n="impressum"
+            >Impressum</a
+          >
+          •
+          <a href="/privacy.html" class="hover:underline" data-i18n="privacy"
+            >Privacy</a
+          >
+        </div>
+      </div>
+    </footer>
+
     <div
       id="modalBackdrop"
       class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50"
@@ -207,18 +222,6 @@
         <div id="modalRootLinks" class="mt-4"></div>
       </div>
     </div>
-
-    <footer class="mt-12 border-t border-slate-800 py-6">
-      <div
-        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-slate-400 flex justify-between"
-      >
-        <div>© <strong>PoGoSDex</strong> — for trainers & developers</div>
-        <div>
-          <a href="/impressum.html" class="hover:underline">Impressum</a> •
-          <a href="/privacy.html" class="hover:underline">Privacy</a>
-        </div>
-      </div>
-    </footer>
 
     <script src="main.js"></script>
   </body>

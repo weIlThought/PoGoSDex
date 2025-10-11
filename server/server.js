@@ -51,11 +51,7 @@ app.use(
 
   const staticRoot = path.resolve(__dirname, "..", "public");
   app.use(express.static(staticRoot, { extensions: ["html"] }));
-
-  // Serve data directory so /data/devices.json returns real JSON (wird vor SPA‑fallback registriert)
   app.use("/data", express.static(path.resolve(__dirname, "..", "data")));
-
-  // Serve lang directory so /lang/*.json is reachable
   app.use("/lang", express.static(path.resolve(__dirname, "..", "lang")));
 
   // Mount admin API under /api so frontend (/api/devices etc.) matches

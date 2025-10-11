@@ -37,35 +37,83 @@ async function loadLang(lang) {
 function applyTranslations() {
   document.title = t("title", document.title);
 
+  // header/site
+  qs("#siteTitle") &&
+    (qs("#siteTitle").textContent = t(
+      "site_name",
+      qs("#siteTitle").textContent
+    ));
+  qs("#siteSubtitle") &&
+    (qs("#siteSubtitle").textContent = t(
+      "site_subtitle",
+      qs("#siteSubtitle").textContent
+    ));
+
+  // search placeholder
   qs("#searchInput")?.setAttribute(
     "placeholder",
     t("search_placeholder", "Search model or brand...")
   );
 
-  // typeFilter options
+  // typeFilter options (fallback if dataset not present)
   const typeFilter = qs("#typeFilter");
   if (typeFilter) {
-    typeFilter.options[0].text = t("type_all", "All Devices");
-    if (typeFilter.options[1])
-      typeFilter.options[1].text = t("type_phone", "Phones");
-    if (typeFilter.options[2])
-      typeFilter.options[2].text = t("type_tablet", "Tablets");
+    typeFilter
+      .querySelector('option[value="all"]')
+      ?.setAttribute("data-i18n", "type_all");
+    typeFilter.querySelector('option[value="all"]').textContent = t(
+      "type_all",
+      "All Devices"
+    );
+    typeFilter.querySelector('option[value="Phone"]') &&
+      (typeFilter.querySelector('option[value="Phone"]').textContent = t(
+        "type_phone",
+        "Phones"
+      ));
+    typeFilter.querySelector('option[value="Tablet"]') &&
+      (typeFilter.querySelector('option[value="Tablet"]').textContent = t(
+        "type_tablet",
+        "Tablets"
+      ));
   }
 
   // sortSelect options
   const sortSelect = qs("#sortSelect");
   if (sortSelect) {
-    if (sortSelect.options[0])
-      sortSelect.options[0].text = t("sort_default", "Sort: Default");
-    if (sortSelect.options[1])
-      sortSelect.options[1].text = t("sort_brand", "Brand (A–Z)");
-    if (sortSelect.options[2])
-      sortSelect.options[2].text = t("sort_model", "Model (A–Z)");
-    if (sortSelect.options[3])
-      sortSelect.options[3].text = t("sort_os", "OS Version");
+    sortSelect.querySelector('option[value="default"]').textContent = t(
+      "sort_default",
+      "Sort: Default"
+    );
+    sortSelect.querySelector('option[value="brand"]').textContent = t(
+      "sort_brand",
+      "Brand (A–Z)"
+    );
+    sortSelect.querySelector('option[value="model"]').textContent = t(
+      "sort_model",
+      "Model (A–Z)"
+    );
+    sortSelect.querySelector('option[value="os"]').textContent = t(
+      "sort_os",
+      "OS Version"
+    );
   }
 
-  // footer links
+  // about / pgsharp
+  qs("#aboutTitle") &&
+    (qs("#aboutTitle").textContent = t(
+      "about_pgsharp_title",
+      qs("#aboutTitle").textContent
+    ));
+  qs("#aboutParagraph") &&
+    (qs("#aboutParagraph").textContent = t(
+      "about_pgsharp_paragraph",
+      qs("#aboutParagraph").textContent
+    ));
+  qsa('a[href="https://www.pgsharp.com/"]').forEach(
+    (a) => (a.textContent = t("about_pgsharp_official", "Official site"))
+  );
+
+  // footer & links
   qsa('a[href="/privacy.html"]').forEach(
     (a) => (a.textContent = t("privacy", "Privacy"))
   );
@@ -79,11 +127,10 @@ function applyTranslations() {
     (d) => (d.textContent = t("ad_placeholder", "Advertisement"))
   );
 
+  // modal root links heading will be set in openModal()
   // set langSelect value
   const ls = qs("#langSelect");
-  if (ls) {
-    ls.value = currentLang;
-  }
+  if (ls) ls.value = currentLang;
 }
 
 async function loadDevices() {
@@ -160,7 +207,10 @@ function openModal(d) {
     )
     .join("");
   qs("#modalRootLinks").innerHTML = links
-    ? `<h4 class="text-sm font-semibold mt-3">Root Links</h4>${links}`
+    ? `<h4 class="text-sm font-semibold mt-3">${t(
+        "modal_root_links",
+        "Root Links"
+      )}</h4>${links}`
     : "";
   document.body.style.overflow = "hidden";
 }
