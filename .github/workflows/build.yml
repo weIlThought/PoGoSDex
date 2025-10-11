@@ -20,7 +20,7 @@ jobs:
       - name: Configure submodule sparse checkout
         run: |
           git -C external/content sparse-checkout init --cone
-          git -C external/content sparse-checkout set lang data/devices.json
+          git -C external/content sparse-checkout set --skip-checks lang data/devices.json
 
       - name: Ensure submodules up to date
         run: git submodule update --init --recursive
