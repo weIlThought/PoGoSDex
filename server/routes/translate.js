@@ -1,6 +1,6 @@
-const express = require("express");
+import { Router } from "express";
 
-const router = express.Router();
+const router = Router();
 
 const TRANSLATE_ENDPOINT =
   process.env.TRANSLATE_ENDPOINT || "https://translate.astian.org/translate";
@@ -59,4 +59,4 @@ router.post("/news", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
