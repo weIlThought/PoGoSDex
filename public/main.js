@@ -235,8 +235,9 @@ function openModal(d) {
         "Root Links"
       )}</h4>${links}`
     : "";
-  qs("#modalPriceRange").textContent = d.priceRange || "—";
-  qs("#modalPoGoComp").textContent = d.poGoNotes || "—";
+  const dash = t("placeholder_dash", "—");
+  qs("#modalPriceRange").textContent = d.priceRange || dash;
+  qs("#modalPoGoComp").textContent = d.poGoNotes || dash;
   document.body.style.overflow = "hidden";
 }
 
