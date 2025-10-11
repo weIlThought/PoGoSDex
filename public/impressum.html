@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="scroll-smooth">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -8,26 +8,38 @@
     />
     <title data-i18n="impressum_title">Impressum · PoGoSDex</title>
     <link rel="stylesheet" href="/output.css" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="bg-slate-950 text-slate-100 min-h-screen">
     <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur">
       <div
         class="max-w-4xl mx-auto px-6 py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <div>
-          <p class="text-xs uppercase tracking-[0.4em] text-emerald-400">
-            PoGoSDex
-          </p>
-          <h1
-            class="mt-2 text-3xl font-semibold text-slate-50"
-            data-i18n="impressum_heading"
-          >
-            Impressum
-          </h1>
-          <p class="text-sm text-slate-400">
-            Stand:
-            <span class="font-medium text-slate-200">11. Oktober 2025</span>
-          </p>
+        <div class="flex items-center gap-4">
+          <img
+            src="/assets/logo.png"
+            alt="PoGoSDex"
+            class="h-12 w-12 rounded-lg shadow-lg"
+          />
+          <div>
+            <p class="text-xs uppercase tracking-[0.4em] text-emerald-400">
+              PoGoSDex
+            </p>
+            <h1
+              class="mt-2 text-3xl font-semibold text-slate-50"
+              data-i18n="impressum_heading"
+            >
+              Impressum
+            </h1>
+            <p class="text-sm text-slate-400">
+              <span data-i18n="impressum_meta_prefix">Last update:</span>
+              <span
+                class="font-medium text-slate-200"
+                data-i18n="impressum_meta_date"
+                >11 October 2025</span
+              >
+            </p>
+          </div>
         </div>
         <a
           href="/"
@@ -45,14 +57,18 @@
           class="text-xl font-semibold text-slate-100"
           data-i18n="impressum_operator_title"
         >
-          Verantwortlicher Betreiber
+          Responsible operator
         </h2>
         <p class="mt-3 text-sm leading-relaxed text-slate-300">
-          <span data-i18n="impressum_operator_name">Beispiel Name</span><br />
+          <span data-i18n="impressum_operator_name">J. C.</span><br />
           <span data-i18n="impressum_operator_address"
-            >Musterstraße 1<br />12345 Musterstadt</span
+            >Example Street 1<br />12345 Example City<br />Germany</span
           ><br /><br />
-          <span class="text-slate-400">E-Mail:</span>
+          <span
+            class="text-slate-400"
+            data-i18n="impressum_operator_email_label"
+            >Email:</span
+          >
           <a
             href="mailto:pogosdex@gmail.com"
             class="text-emerald-400 hover:underline"
@@ -72,11 +88,10 @@
           </h3>
           <p class="mt-3 text-sm leading-relaxed text-slate-300">
             <span data-i18n="impressum_responsibility_text">
-              Die Inhalte dieser Seite wurden mit größter Sorgfalt erstellt. Für
-              die Richtigkeit, Vollständigkeit und Aktualität der Inhalte
-              übernehmen wir dennoch keine Gewähr. Verpflichtungen zur
-              Entfernung oder Sperrung von Informationen nach den allgemeinen
-              Gesetzen bleiben hiervon unberührt.
+              The contents of this site are created with great care.
+              Nevertheless, no guarantee is given for accuracy, completeness, or
+              timeliness. Legal duties to remove or block information remain
+              unaffected.
             </span>
           </p>
         </article>
@@ -90,11 +105,10 @@
           </h3>
           <p class="mt-3 text-sm leading-relaxed text-slate-300">
             <span data-i18n="impressum_links_text">
-              Unsere Website enthält Verweise zu externen Webseiten Dritter, auf
-              deren Inhalte wir keinen Einfluss haben. Für die Inhalte der
-              verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber
-              verantwortlich. Bei Bekanntwerden von Rechtsverletzungen werden
-              solche Links umgehend entfernt.
+              Our website links to external third-party sites whose content we
+              cannot control. The respective providers are responsible for
+              linked pages. Links are removed immediately if violations become
+              known.
             </span>
           </p>
         </article>
@@ -109,11 +123,10 @@
         </h2>
         <p class="mt-3 text-sm leading-relaxed text-slate-300">
           <span data-i18n="impressum_note_text">
-            PoGoSDex bietet ausschließlich Informationen zu Geräten,
-            Community-News und nützlichen Ressourcen für Pokémon GO. Wir stellen
-            keine eigenen Spoofing-Tools bereit und verlinken nur auf
-            vertrauenswürdige Quellen. Jegliche Nutzung von Drittanbieter-Tools
-            erfolgt auf eigene Verantwortung.
+            PoGoSDex provides information on devices, community news, and useful
+            resources for Pokémon GO. We do not provide spoofing tools;
+            references to third parties are for information only and used at
+            your own risk.
           </span>
         </p>
       </section>
@@ -127,17 +140,16 @@
         </h2>
         <p class="mt-3 text-sm leading-relaxed text-slate-300">
           <span data-i18n="impressum_dispute_text">
-            Die Europäische Kommission stellt eine Plattform zur
-            Online-Streitbeilegung (OS) bereit:
+            The European Commission offers an Online Dispute Resolution
+            platform:
             <a
               href="https://ec.europa.eu/consumers/odr"
               class="text-emerald-400 hover:underline"
               rel="noopener"
               target="_blank"
               >https://ec.europa.eu/consumers/odr</a
-            >. Wir sind weder verpflichtet noch bereit, an
-            Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
-            teilzunehmen.
+            >. We are neither obliged nor willing to participate in consumer
+            arbitration proceedings.
           </span>
         </p>
       </section>
@@ -147,11 +159,26 @@
       <div
         class="max-w-4xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
       >
-        <span>© 2025 PoGoSDex. Alle Rechte vorbehalten.</span>
+        <span data-i18n="footer_copyright">2025 PoGoSDex. </span>
         <div class="flex gap-4">
-          <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a>
-          <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
-          <a href="/tos.html" class="hover:text-emerald-400">Terms</a>
+          <a
+            href="/impressum.html"
+            class="hover:text-emerald-400"
+            data-i18n="footer_link_impressum"
+            >Imprint</a
+          >
+          <a
+            href="/privacy.html"
+            class="hover:text-emerald-400"
+            data-i18n="footer_link_privacy"
+            >Privacy</a
+          >
+          <a
+            href="/tos.html"
+            class="hover:text-emerald-400"
+            data-i18n="footer_link_terms"
+            >Terms</a
+          >
         </div>
       </div>
     </footer>

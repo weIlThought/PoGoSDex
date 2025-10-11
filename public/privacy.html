@@ -8,26 +8,34 @@
     />
     <title data-i18n="privacy_title">Privacy Policy · PoGoSDex</title>
     <link rel="stylesheet" href="/output.css" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="bg-slate-950 text-slate-100 min-h-screen">
     <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur">
       <div
         class="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <div>
-          <p class="text-xs uppercase tracking-[0.4em] text-emerald-400">
-            PoGoSDex
-          </p>
-          <h1
-            class="mt-2 text-3xl font-semibold text-slate-50"
-            data-i18n="privacy_heading"
-          >
-            Privacy Policy
-          </h1>
-          <p class="text-sm text-slate-400">
-            Effective date:
-            <span class="font-medium text-slate-200">October 11, 2025</span>
-          </p>
+        <div class="flex items-center gap-4">
+          <img
+            src="/assets/logo.png"
+            alt="PoGoSDex"
+            class="h-12 w-12 rounded-lg shadow-lg"
+          />
+          <div>
+            <p class="text-xs uppercase tracking-[0.4em] text-emerald-400">
+              PoGoSDex
+            </p>
+            <h1
+              class="mt-2 text-3xl font-semibold text-slate-50"
+              data-i18n="privacy_heading"
+            >
+              Privacy Policy
+            </h1>
+            <p class="text-sm text-slate-400">
+              Effective date:
+              <span class="font-medium text-slate-200">October 11, 2025</span>
+            </p>
+          </div>
         </div>
         <a
           href="/"
@@ -48,9 +56,8 @@
           Overview
         </h2>
         <p class="leading-relaxed text-slate-300" data-i18n="privacy_overview">
-          PoGoSDex provides informational content for Pokémon GO players. We
-          operate with a privacy-first mindset and collect only the data that is
-          essential for site functionality, analytics, and product improvement.
+          PoGoSDex does not collect, store, or profile personal data. Requests
+          are processed transiently and discarded immediately after delivery.
         </p>
       </section>
 
@@ -64,14 +71,16 @@
           </h3>
           <ul class="mt-3 space-y-2 text-sm text-slate-300">
             <li data-i18n="privacy_data_server">
-              Server logs (IP address, user agent) retained for 7 days for
-              security.
+              We do not retain server logs containing IP addresses or user
+              agents.
             </li>
             <li data-i18n="privacy_data_consent">
-              Consent preferences stored in cookies when you opt in.
+              Language preferences stay in your browser and are never
+              transmitted to us.
             </li>
             <li data-i18n="privacy_data_feedback">
-              Voluntary information you share via contact or feedback forms.
+              We do not operate contact or feedback forms that capture personal
+              data.
             </li>
           </ul>
         </article>
@@ -85,13 +94,14 @@
           </h3>
           <ul class="mt-3 space-y-2 text-sm text-slate-300">
             <li data-i18n="privacy_data_usage_analytics">
-              To monitor service stability and prevent abuse.
+              No analytics platforms run on PoGoSDex.
             </li>
             <li data-i18n="privacy_data_usage_experience">
-              To improve site experience based on aggregated analytics.
+              Behavioural data is not collected or processed.
             </li>
             <li data-i18n="privacy_data_usage_contact">
-              To respond to support inquiries you initiate.
+              Emails sent voluntarily are used only to respond and are deleted
+              afterwards.
             </li>
           </ul>
         </article>
@@ -105,11 +115,8 @@
           Cookies & Tracking
         </h2>
         <p class="leading-relaxed text-slate-300" data-i18n="privacy_cookies">
-          Cookies are only set after you provide explicit consent through the
-          cookie banner. Essential cookies store your language and consent
-          choices. Optional analytics cookies help us measure usage patterns via
-          privacy-friendly tooling. No third-party advertising scripts are
-          loaded.
+          No advertising, tracking, or third-party cookies are loaded. Essential
+          language settings remain on your device only.
         </p>
       </section>
 
@@ -124,10 +131,8 @@
           class="leading-relaxed text-slate-300"
           data-i18n="privacy_third_parties"
         >
-          We host PoGoSDex on infrastructure providers that process data on our
-          behalf under data processing agreements. Any integration with external
-          services (e.g., embedded media or analytics) is disclosed and remains
-          optional for users.
+          PoGoSDex does not embed third-party trackers or advertising networks.
+          Hosting providers act solely as infrastructure processors.
         </p>
       </section>
 
@@ -168,6 +173,7 @@
               <a
                 href="mailto:pogosdex@gmail.com"
                 class="text-emerald-400 hover:underline"
+                data-i18n="privacy_contact_email"
                 >pogosdex@gmail.com</a
               >
             </li>
@@ -197,7 +203,7 @@
       <div
         class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
       >
-        <span>© 2025 PoGoSDex. All rights reserved.</span>
+        <span>2025 PoGoSDex. </span>
         <div class="flex gap-4">
           <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a>
           <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
