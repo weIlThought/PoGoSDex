@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Pokémon GO Compatible Devices</title>
+    <title>PoGoSDex – Devices & PGSharp Info</title>
     <meta
       name="description"
       content="A searchable collection of phones and tablets compatible with Pokémon GO."
@@ -12,6 +12,15 @@
     <style>
       .card-hover:hover {
         transform: translateY(-6px);
+      }
+      .compat-yes {
+        color: #34d399;
+      }
+      .compat-no {
+        color: #f87171;
+      }
+      .compat-partial {
+        color: #facc15;
       }
     </style>
   </head>
@@ -87,6 +96,7 @@
 
     <main class="py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Filter + Sort -->
         <section
           class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-center"
         >
@@ -119,11 +129,13 @@
           </div>
         </section>
 
+        <!-- Gerätegrid -->
         <section
           id="gridWrap"
           class="device-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         ></section>
 
+        <!-- Info -->
         <section
           class="mt-12 bg-slate-900 border border-slate-800 rounded-lg p-6"
         >
@@ -148,9 +160,7 @@
               >
                 PGSharp is a third-party location-spoofing tool for Pokémon GO.
                 Using such tools likely violates Niantic's Terms of Service and
-                may result in account suspension. This page contains
-                informational content only — we do not provide usage guides,
-                assistance to evade detection, or host downloads.
+                may result in account suspension.
               </p>
               <div class="mt-3 flex gap-3">
                 <a
@@ -218,6 +228,19 @@
         <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
         <p id="modalMeta" class="text-sm text-slate-400"></p>
         <p id="modalDesc" class="mt-3 text-slate-200"></p>
+
+        <!-- Neue Infos -->
+        <div id="modalExtra" class="mt-4 text-slate-300 space-y-1">
+          <p>
+            <strong>Price Range:</strong>
+            <span id="modalPriceRange" class="text-slate-400">—</span>
+          </p>
+          <p>
+            <strong>PoGO Compatibility:</strong>
+            <span id="modalPoGoComp" class="text-slate-400">—</span>
+          </p>
+        </div>
+
         <div id="modalNotesList" class="mt-4 text-slate-300"></div>
         <div id="modalRootLinks" class="mt-4"></div>
       </div>
