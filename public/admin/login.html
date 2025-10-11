@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-i18n-target="lang">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title data-i18n="login_title">Admin Login</title>
+    <link rel="stylesheet" href="/output.css" />
+  </head>
+  <body
+    class="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center"
+  >
+    <main
+      class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-xl space-y-6"
+    >
+      <header class="text-center space-y-2">
+        <div
+          class="mx-auto w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-2xl font-bold"
+        >
+          PG
+        </div>
+        <h1 class="text-xl font-semibold" data-i18n="login_title">
+          Admin Login
+        </h1>
+        <p class="text-sm text-slate-400" data-i18n="login_discord_hint">
+          Sign in with Discord to access the admin dashboard.
+        </p>
+      </header>
+
+      <section>
+        <button
+          id="discordLoginBtn"
+          class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] transition text-white font-medium"
+        >
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            width="24"
+            height="24"
+            viewBox="0 0 245 240"
+          >
+            <path
+              fill="currentColor"
+              d="M104.4 104.9c-5.7 0-10.2 5-10.2 11.1 0 6.1 4.6 11.1 10.2 11.1 5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.2 0c-5.7 0-10.2 5-10.2 11.1 0 6.1 4.6 11.1 10.2 11.1 5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"
+            />
+            <path
+              fill="currentColor"
+              d="M189.5 20h-134C33.2 20 20 33.2 20 48.8v134.3c0 15.6 13.2 28.8 28.8 28.8h113.5l-5.3-18.5 12.8 11.9 12.1 11.3 21.5 19.5V48.8c-.1-15.6-13.3-28.8-28.9-28.8zm-45.4 135.6s-4.3-5.1-7.8-9.6c15.6-4.4 21.5-14.1 21.5-14.1-4.9 3.2-9.5 5.4-13.6 6.9-5.9 2.5-11.6 4.1-17.1 5.1-11.3 2.1-21.7 1.5-30.6-.1-6.7-1.3-12.4-3.1-17.2-5.1-2.7-1-5.6-2.3-8.5-3.9-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s5.7 9.5 20.8 14c-3.5 4.5-7.9 9.8-7.9 9.8-26.1-.8-35.9-18-35.9-18 0-38.1 17-69 17-69 17-12.7 33.2-12.3 33.2-12.3l1.2 1.4c-21.3 6.1-31.1 15.4-31.1 15.4s2.6-1.4 7-3.3c12.7-5.6 22.8-7.1 27-7.5.7-.1 1.3-.2 2-.2 7.1-.9 15.1-1.1 23.4-.2 11 1.3 22.8 4.6 34.8 11.3 0 0-9.3-8.8-29.4-14.9l1.7-1.9s16.2-.4 33.2 12.3c0 0 17 30.9 17 69 0 0-9.8 17.2-35.9 18z"
+            />
+          </svg>
+          <span data-i18n="login_button_discord">Continue with Discord</span>
+        </button>
+      </section>
+
+      <footer class="text-center text-xs text-slate-500 space-y-1">
+        <p data-i18n="login_privacy_note">
+          You will be redirected to Discord to grant access. We store minimal
+          profile data to verify admin access.
+        </p>
+        <a
+          href="/"
+          class="text-sky-400 hover:underline"
+          data-i18n="back_to_home"
+          >Back to home</a
+        >
+      </footer>
+    </main>
+
+    <script>
+      const btn = document.getElementById("discordLoginBtn");
+      btn.addEventListener("click", () => {
+        const params = new URLSearchParams(window.location.search);
+        const lang = params.get("lang") || localStorage.getItem("lang") || (navigator.language || "en").slice(0, 2);
+        window.location.href = \`/api/auth/discord?lang=\${encodeURIComponent(lang)}\`;
+      });
+    </script>
+  </body>
+</html>
