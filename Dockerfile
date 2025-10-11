@@ -29,7 +29,8 @@ COPY --from=builder /app/public ./public
 
 # Copy data/lang as before
 COPY data ./data
-COPY lang ./lang
+COPY external/content/data/devices.json ./data/devices.json
+COPY external/content/lang ./lang
 
 ENV NODE_ENV=production
 EXPOSE 3000
