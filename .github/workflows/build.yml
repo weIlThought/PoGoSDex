@@ -17,6 +17,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Configure submodule sparse checkout
+        run: |
+          git -C external/content sparse-checkout init --cone
+          git -C external/content sparse-checkout set lang data/devices.json
+
       - name: Ensure submodules up to date
         run: git submodule update --init --recursive
 
@@ -34,11 +39,6 @@ jobs:
 
       - name: Install server deps
         run: npm ci --prefix server --omit=dev
-
-      - name: Configure sparese checkout
-        run: |
-          git -C external/content sparse-checkout init --cone
-          git -C external/content sparse-checkout set lang data/devices.json
 
       - name: Docker build
         run: docker build .
