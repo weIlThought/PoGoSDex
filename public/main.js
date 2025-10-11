@@ -12,6 +12,12 @@ function esc(t) {
 
 let devices = [];
 let news = [];
+let newsSearch = "";
+let newsSelectedTags = new Set();
+
+const newsSearchInput = qs("#newsSearchInput");
+const newsTagFilterWrap = qs("#newsTagFilter");
+
 let i18n = {};
 let currentLang =
   new URLSearchParams(window.location.search).get("lang") ||
@@ -39,7 +45,6 @@ async function loadLang(lang) {
     applyTranslations();
     renderNews(news);
     applyFilters();
-    if (news.length) ensureNewsTranslations(lang);
   } catch (e) {
     console.warn("Failed to load lang:", lang, e);
   }
@@ -101,40 +106,35 @@ async function loadNews() {
     news = [];
     console.error("Failed to load news.json", e);
   }
+  populateNewsTagFilter(news);
   if (activeSection === "news") renderNews(news);
-  if (news.length) ensureNewsTranslations(currentLang);
 }
 
-let newsTranslations = {};
-const dash = () => t("placeholder_dash", "—");
-
-async function ensureNewsTranslations(lang) {
-  if (!lang || lang === "en" || newsTranslations[lang]) return;
-  try {
-    const res = await fetch("/api/translate/news", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        target: lang,
-        items: news.map(({ id, title, excerpt, tags = [], content }) => ({
-          id,
-          title,
-          excerpt,
-          tags,
-          content,
-        })),
-      }),
-    });
-    if (!res.ok) throw new Error(`translate ${res.status}`);
-    const data = await res.json();
-    newsTranslations[lang] = data.reduce((acc, item) => {
-      acc[item.id] = item;
-      return acc;
-    }, {});
-    if (activeSection === "news") renderNews(news);
-  } catch (err) {
-    console.warn("news translation failed", err);
+function populateNewsTagFilter(items) {
+  if (!newsTagFilterWrap) return;
+  const tags = [
+    ...new Set(
+      items.flatMap((item) => (item.tags || []).map((tag) => tag.trim()))
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  newsTagFilterWrap.innerHTML = "";
+  if (!tags.length) {
+    newsTagFilterWrap.innerHTML = `<span class="text-xs text-slate-500" data-i18n="news_filter_no_tags">No tags available.</span>`;
+    return;
   }
+  tags.forEach((tag) => {
+    const tagKey = tag.toLowerCase();
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = tag;
+    btn.dataset.tag = tagKey;
+    btn.className =
+      "px-3 py-1 text-xs rounded-full border transition-colors " +
+      (newsSelectedTags.has(tagKey)
+        ? "bg-emerald-600 border-emerald-400"
+        : "bg-slate-800 border-slate-700");
+    newsTagFilterWrap.appendChild(btn);
+  });
 }
 
 function cardHtml(d) {
@@ -185,23 +185,35 @@ function renderNews(items) {
   const wrap = qs("#newsWrap");
   if (!wrap) return;
   wrap.innerHTML = "";
-  if (!items.length) {
+  const filtered = items.filter((item) => {
+    const title = item.title?.toLowerCase() || "";
+    const excerpt = item.excerpt?.toLowerCase() || "";
+    const content = item.content?.toLowerCase() || "";
+    const matchesSearch =
+      !newsSearch ||
+      title.includes(newsSearch) ||
+      excerpt.includes(newsSearch) ||
+      content.includes(newsSearch);
+    const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+    const matchesTags =
+      !newsSelectedTags.size ||
+      itemTags.some((tag) => newsSelectedTags.has(tag));
+    return matchesSearch && matchesTags;
+  });
+  if (!filtered.length) {
     wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
       "news_empty",
       "No news available yet."
     )}</div>`;
     return;
   }
-  const translations = newsTranslations[currentLang] || {};
   const publishedLabel = t("news_published", "Published");
   const updatedLabel = t("news_updated", "Updated");
-
-  items.forEach((item) => {
-    const translated = translations[item.id];
-    const title = translated?.title || item.title;
-    const excerpt = translated?.excerpt || item.excerpt;
-    const tags = translated?.tags?.length ? translated.tags : item.tags || [];
-    const content = translated?.content || item.content || item.excerpt || "";
+  filtered.forEach((item) => {
+    const title = item.title;
+    const excerpt = item.excerpt;
+    const tags = item.tags || [];
+    const content = item.content || item.excerpt || "";
 
     const pub = item.publishedAt
       ? dateFormatter.format(new Date(item.publishedAt))
@@ -240,7 +252,7 @@ function renderNews(items) {
           : ""
       }
     `;
-    const open = () => openNewsModal(item, { ...translated, content });
+    const open = () => openNewsModal(item, { content });
     article.addEventListener("click", open);
     article.addEventListener("keydown", (evt) => {
       if (evt.key === "Enter" || evt.key === " ") {
@@ -444,11 +456,34 @@ function setupDeviceBuilder() {
   });
 }
 
+function init() {
+  newsSearchInput?.addEventListener("input", (evt) => {
+    newsSearch = evt.target.value.trim().toLowerCase();
+    renderNews(news);
+  });
+  newsTagFilterWrap?.addEventListener("click", (evt) => {
+    const btn = evt.target.closest("[data-tag]");
+    if (!btn) return;
+    const tag = btn.getAttribute("data-tag");
+    if (newsSelectedTags.has(tag)) {
+      newsSelectedTags.delete(tag);
+      btn.classList.remove("bg-emerald-600", "border-emerald-400");
+      btn.classList.add("bg-slate-800", "border-slate-700");
+    } else {
+      newsSelectedTags.add(tag);
+      btn.classList.remove("bg-slate-800", "border-slate-700");
+      btn.classList.add("bg-emerald-600", "border-emerald-400");
+    }
+    renderNews(news);
+  });
+}
+
 setupDeviceBuilder();
 showSection(activeSection);
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
+  init();
 });
 
 const newsModalBackdrop = qs("#newsModalBackdrop");
@@ -463,7 +498,7 @@ function openNewsModal(original, translated = {}) {
   const merged = {
     ...original,
     ...translated,
-    tags: translated?.tags?.length ? translated.tags : original.tags || [],
+    tags: original.tags || [],
   };
   newsModalTitle.textContent = merged.title;
   const pub = merged.publishedAt

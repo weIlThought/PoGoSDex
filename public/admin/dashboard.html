@@ -75,61 +75,100 @@
           <tbody id="deviceTable" class="divide-y divide-slate-800"></tbody>
         </table>
       </div>
-    </main>
 
-    <!-- Add/Edit Modal -->
-    <div id="deviceModal" class="modal-backdrop hidden">
-      <div class="modal bg-slate-800 p-6 rounded-xl max-w-md w-full">
-        <h3 id="modalTitle" class="text-lg font-semibold mb-4">Add Device</h3>
-        <form id="deviceForm" class="flex flex-col gap-2">
-          <input type="hidden" id="deviceId" />
-          <input
-            class="input"
-            type="text"
-            id="brand"
-            placeholder="Brand"
-            required
-          />
-          <input
-            class="input"
-            type="text"
-            id="model"
-            placeholder="Model"
-            required
-          />
-          <input
-            class="input"
-            type="text"
-            id="os"
-            placeholder="Operating System"
-          />
-          <input
-            class="input"
-            type="text"
-            id="type"
-            placeholder="Type (Phone/Tablet)"
-          />
-          <label class="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="compatible" /> Compatible
-          </label>
-          <textarea
-            class="input"
-            id="notes"
-            placeholder="Notes (comma separated)"
-          ></textarea>
-          <textarea
-            class="input"
-            id="rootLinks"
-            placeholder="Root Links (comma separated URLs)"
-          ></textarea>
-          <div class="flex justify-end gap-2 mt-4">
-            <button type="button" id="cancelBtn" class="btn-secondary">
-              Cancel
+      <section
+        class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4"
+      >
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-xl font-semibold text-slate-100">
+            Prepare a new device entry
+          </h2>
+          <button
+            id="deviceModalOpen"
+            class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 px-3 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/10 transition"
+          >
+            Open form
+          </button>
+        </div>
+      </section>
+
+      <div
+        id="deviceModal"
+        class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur"
+      >
+        <div
+          class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6"
+        >
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-100">
+              Prepare a new device entry
+            </h3>
+            <button
+              id="deviceModalClose"
+              class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition"
+            >
+              Close
             </button>
-            <button type="submit" class="btn-primary">Save</button>
           </div>
-        </form>
+          <form id="deviceForm" class="space-y-4">
+            <input type="hidden" id="deviceId" />
+            <input
+              class="input"
+              type="text"
+              id="brand"
+              placeholder="Brand"
+              required
+            />
+            <input
+              class="input"
+              type="text"
+              id="model"
+              placeholder="Model"
+              required
+            />
+            <input
+              class="input"
+              type="text"
+              id="os"
+              placeholder="Operating System"
+            />
+            <input
+              class="input"
+              type="text"
+              id="type"
+              placeholder="Type (Phone/Tablet)"
+            />
+            <label class="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="compatible" /> Compatible
+            </label>
+            <textarea
+              class="input"
+              id="notes"
+              placeholder="Notes (comma separated)"
+            ></textarea>
+            <textarea
+              class="input"
+              id="rootLinks"
+              placeholder="Root Links (comma separated URLs)"
+            ></textarea>
+            <div class="flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                id="deviceFormClear"
+                class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition"
+              >
+                Clear
+              </button>
+              <button
+                type="submit"
+                class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+              >
+                Generate JSON
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </main>
   </body>
 </html>

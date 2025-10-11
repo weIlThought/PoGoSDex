@@ -1,24 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title data-i18n="privacy">Privacy</title>
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title data-i18n="privacy_title">Privacy Policy · PoGoSDex</title>
     <link rel="stylesheet" href="/output.css" />
   </head>
-  <body class="bg-slate-900 text-slate-100 p-8">
-    <main class="max-w-3xl mx-auto bg-slate-800 p-6 rounded-lg">
-      <h1 class="text-2xl font-semibold" data-i18n="privacy">Privacy Policy</h1>
-      <p class="mt-4 text-slate-300" data-i18n="privacy_paragraph">
-        This site uses cookies for analytics and advertising if you consent. We
-        do not host third-party downloads and provide informational content
-        only.
-      </p>
-      <p class="mt-4">
-        <a href="/" class="text-sky-400" data-i18n="back_to_home"
-          >Back to home</a
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur">
+      <div
+        class="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div>
+          <p class="text-xs uppercase tracking-[0.4em] text-emerald-400">
+            PoGoSDex
+          </p>
+          <h1
+            class="mt-2 text-3xl font-semibold text-slate-50"
+            data-i18n="privacy_heading"
+          >
+            Privacy Policy
+          </h1>
+          <p class="text-sm text-slate-400">
+            Effective date:
+            <span class="font-medium text-slate-200">October 11, 2025</span>
+          </p>
+        </div>
+        <a
+          href="/"
+          class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-emerald-500 hover:text-emerald-400"
+          data-i18n="privacy_back_home"
         >
-      </p>
+          ← Back to Home
+        </a>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-10">
+      <section class="space-y-4">
+        <h2
+          class="text-2xl font-semibold text-slate-50"
+          data-i18n="privacy_overview_title"
+        >
+          Overview
+        </h2>
+        <p class="leading-relaxed text-slate-300" data-i18n="privacy_overview">
+          PoGoSDex provides informational content for Pokémon GO players. We
+          operate with a privacy-first mindset and collect only the data that is
+          essential for site functionality, analytics, and product improvement.
+        </p>
+      </section>
+
+      <section class="grid gap-6 md:grid-cols-2">
+        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="privacy_data_collection_title"
+          >
+            Data We Collect
+          </h3>
+          <ul class="mt-3 space-y-2 text-sm text-slate-300">
+            <li data-i18n="privacy_data_server">
+              Server logs (IP address, user agent) retained for 7 days for
+              security.
+            </li>
+            <li data-i18n="privacy_data_consent">
+              Consent preferences stored in cookies when you opt in.
+            </li>
+            <li data-i18n="privacy_data_feedback">
+              Voluntary information you share via contact or feedback forms.
+            </li>
+          </ul>
+        </article>
+
+        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="privacy_data_usage_title"
+          >
+            How We Use It
+          </h3>
+          <ul class="mt-3 space-y-2 text-sm text-slate-300">
+            <li data-i18n="privacy_data_usage_analytics">
+              To monitor service stability and prevent abuse.
+            </li>
+            <li data-i18n="privacy_data_usage_experience">
+              To improve site experience based on aggregated analytics.
+            </li>
+            <li data-i18n="privacy_data_usage_contact">
+              To respond to support inquiries you initiate.
+            </li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="space-y-4">
+        <h2
+          class="text-2xl font-semibold text-slate-50"
+          data-i18n="privacy_cookies_title"
+        >
+          Cookies & Tracking
+        </h2>
+        <p class="leading-relaxed text-slate-300" data-i18n="privacy_cookies">
+          Cookies are only set after you provide explicit consent through the
+          cookie banner. Essential cookies store your language and consent
+          choices. Optional analytics cookies help us measure usage patterns via
+          privacy-friendly tooling. No third-party advertising scripts are
+          loaded.
+        </p>
+      </section>
+
+      <section class="space-y-4">
+        <h2
+          class="text-2xl font-semibold text-slate-50"
+          data-i18n="privacy_third_parties_title"
+        >
+          Third-Party Services
+        </h2>
+        <p
+          class="leading-relaxed text-slate-300"
+          data-i18n="privacy_third_parties"
+        >
+          We host PoGoSDex on infrastructure providers that process data on our
+          behalf under data processing agreements. Any integration with external
+          services (e.g., embedded media or analytics) is disclosed and remains
+          optional for users.
+        </p>
+      </section>
+
+      <section class="space-y-4">
+        <h2
+          class="text-2xl font-semibold text-slate-50"
+          data-i18n="privacy_rights_title"
+        >
+          Your Rights
+        </h2>
+        <p
+          class="leading-relaxed text-slate-300"
+          data-i18n="privacy_rights_intro"
+        >
+          Depending on your jurisdiction, you may have the right to access,
+          rectify, delete, or export your personal data. You may also object to
+          certain processing activities or withdraw consent at any time.
+        </p>
+      </section>
+
+      <section class="grid gap-6 md:grid-cols-2">
+        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="privacy_contact_title"
+          >
+            Contact
+          </h3>
+          <p
+            class="mt-3 text-sm text-slate-300"
+            data-i18n="privacy_contact_text"
+          >
+            For privacy inquiries or data requests, reach out via:
+          </p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-200">
+            <li>
+              <span class="text-slate-400">Email:</span>
+              <a
+                href="mailto:privacy@pogosdex.com"
+                class="text-emerald-400 hover:underline"
+                >privacy@pogosdex.com</a
+              >
+            </li>
+          </ul>
+        </article>
+
+        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="privacy_updates_title"
+          >
+            Policy Updates
+          </h3>
+          <p
+            class="mt-3 text-sm text-slate-300"
+            data-i18n="privacy_updates_text"
+          >
+            We may update this Privacy Policy to reflect changes in our
+            practices or legal requirements. Significant updates will be posted
+            on this page with a revised effective date.
+          </p>
+        </article>
+      </section>
     </main>
+
+    <footer class="border-t border-slate-800 bg-slate-900/70">
+      <div
+        class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+      >
+        <span>© 2025 PoGoSDex. All rights reserved.</span>
+        <div class="flex gap-4">
+          <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a>
+          <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

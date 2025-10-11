@@ -1,10 +1,11 @@
 const apiBase = "/api/devices";
 const table = document.getElementById("deviceTable");
-const modal = document.getElementById("deviceModal");
-const form = document.getElementById("deviceForm");
-const addBtn = document.getElementById("addDeviceBtn");
-const cancelBtn = document.getElementById("cancelBtn");
-const modalTitle = document.getElementById("modalTitle");
+const deviceForm = document.getElementById("deviceForm");
+const deviceOutput = document.getElementById("deviceJsonPreview");
+const deviceModal = document.getElementById("deviceModal");
+const deviceModalOpenBtn = document.getElementById("deviceModalOpen");
+const deviceModalCloseBtn = document.getElementById("deviceModalClose");
+const deviceFormClearBtn = document.getElementById("deviceFormClear");
 const logoutBtn = document.getElementById("logoutBtn");
 
 async function fetchDevices() {
@@ -36,7 +37,7 @@ function renderTable(devices) {
 }
 
 function openModal(editing = false, device = {}) {
-  modal.classList.remove("hidden");
+  deviceModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   // localized modal title when i18n loaded
   const addKey = "modal_add_device";
@@ -46,43 +47,61 @@ function openModal(editing = false, device = {}) {
     ? t(editKey, "Edit Device")
     : t(addKey, "Add Device");
 
-  form.deviceId.value = device.id || "";
-  form.brand.value = device.brand || "";
-  form.model.value = device.model || "";
-  form.os.value = device.os || "";
-  form.type.value = device.type || "";
-  form.compatible.checked = device.compatible || false;
-  form.notes.value = (device.notes || []).join(", ");
-  form.rootLinks.value = (device.rootLinks || []).join(", ");
+  deviceForm.deviceId.value = device.id || "";
+  deviceForm.brand.value = device.brand || "";
+  deviceForm.model.value = device.model || "";
+  deviceForm.os.value = device.os || "";
+  deviceForm.type.value = device.type || "";
+  deviceForm.compatible.checked = device.compatible || false;
+  deviceForm.notes.value = (device.notes || []).join(", ");
+  deviceForm.rootLinks.value = (device.rootLinks || []).join(", ");
 }
 
 function closeModal() {
-  modal.classList.add("hidden");
+  deviceModal.classList.add("hidden");
   document.body.style.overflow = "";
-  form.reset();
+  deviceForm.reset();
 }
 
-addBtn.onclick = () => openModal();
-cancelBtn.onclick = closeModal;
+deviceModalOpenBtn?.addEventListener("click", () => {
+  deviceModal?.classList.remove("hidden");
+});
+
+deviceModalCloseBtn?.addEventListener("click", () => {
+  deviceModal?.classList.add("hidden");
+});
+
+deviceModal?.addEventListener("click", (event) => {
+  if (event.target === deviceModal) {
+    deviceModal.classList.add("hidden");
+  }
+});
+
+deviceFormClearBtn?.addEventListener("click", () => {
+  deviceForm?.reset();
+  if (deviceOutput) {
+    deviceOutput.value = "";
+  }
+});
 
 form.onsubmit = async (e) => {
   e.preventDefault();
   const data = {
-    brand: form.brand.value,
-    model: form.model.value,
-    os: form.os.value,
-    type: form.type.value,
-    compatible: form.compatible.checked,
-    notes: form.notes.value
+    brand: deviceForm.brand.value,
+    model: deviceForm.model.value,
+    os: deviceForm.os.value,
+    type: deviceForm.type.value,
+    compatible: deviceForm.compatible.checked,
+    notes: deviceForm.notes.value
       .split(",")
       .map((n) => n.trim())
       .filter(Boolean),
-    rootLinks: form.rootLinks.value
+    rootLinks: deviceForm.rootLinks.value
       .split(",")
       .map((n) => n.trim())
       .filter(Boolean),
   };
-  const id = form.deviceId.value;
+  const id = deviceForm.deviceId.value;
   const method = id ? "PUT" : "POST";
   const url = id ? `${apiBase}/${id}` : apiBase;
   await fetch(url, {

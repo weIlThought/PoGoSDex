@@ -61,3 +61,41 @@
     transform: scale(1);
   }
 }
+
+@layer base {
+  body {
+    background-color: #140d13;
+    background-image:
+      radial-gradient(at 20% 15%, rgba(255, 170, 125, 0.18), transparent 55%),
+      radial-gradient(at 85% 20%, rgba(255, 201, 150, 0.12), transparent 60%),
+      radial-gradient(at 50% 80%, rgba(255, 132, 179, 0.08), transparent 55%),
+      linear-gradient(180deg, rgba(34, 18, 27, 0.88), #0d1722 70%);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+}
+
+@layer utilities {
+  .bg-slate-950 {
+    background-color: rgba(19, 12, 21, 0.96) !important;
+  }
+
+  .bg-slate-900 {
+    background-color: rgba(39, 24, 30, 0.88) !important;
+    backdrop-filter: saturate(125%) blur(10px);
+  }
+
+  .bg-slate-900\/70 {
+    background-color: rgba(39, 24, 30, 0.7) !important;
+    backdrop-filter: saturate(125%) blur(12px);
+  }
+
+  .bg-slate-900\/60 {
+    background-color: rgba(39, 24, 30, 0.6) !important;
+    backdrop-filter: saturate(125%) blur(12px);
+  }
+
+  .border-slate-800 {
+    border-color: rgba(255, 160, 130, 0.28) !important;
+  }
+}

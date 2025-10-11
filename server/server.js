@@ -10,7 +10,6 @@ import xssClean from "xss-clean";
 import { fileURLToPath } from "url";
 import { apiLimiter } from "./security/rate-limit.js";
 import adminRoutes from "./routes/admin.js";
-import translateRouter from "./routes/translate.js";
 import { initDB } from "./db.js";
 
 // ESM hat kein __dirname automatisch – selbst definieren:
@@ -57,7 +56,6 @@ app.use(
 
   // Mount admin API under /api so frontend (/api/devices etc.) matches
   app.use("/api", adminRoutes);
-  app.use("/api/translate", translateRouter);
 
   // Fallback für SPA (React/Vue/etc.)
   app.get("*", (req, res) => res.sendFile(path.join(staticRoot, "index.html")));
