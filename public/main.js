@@ -11,11 +11,16 @@ function esc(t) {
 }
 
 let devices = [];
+let news = [];
 let i18n = {};
 let currentLang =
   new URLSearchParams(window.location.search).get("lang") ||
   localStorage.getItem("lang") ||
   (navigator.language || "en").slice(0, 2);
+
+let dateFormatter = new Intl.DateTimeFormat(currentLang, {
+  dateStyle: "medium",
+});
 
 function t(key, fallback) {
   return (i18n && i18n[key]) || fallback || key;
@@ -28,110 +33,52 @@ async function loadLang(lang) {
     i18n = await res.json();
     currentLang = lang;
     localStorage.setItem("lang", lang);
+    dateFormatter = new Intl.DateTimeFormat(currentLang, {
+      dateStyle: "medium",
+    });
     applyTranslations();
+    renderNews(news);
+    applyFilters();
   } catch (e) {
     console.warn("Failed to load lang:", lang, e);
   }
 }
 
-function applyTranslations() {
-  document.title = t("title", document.title);
+const sections = {
+  overview: qs("#overviewSection"),
+  devices: qs("#devicesSection"),
+  news: qs("#newsSection"),
+};
+let activeSection = "overview";
 
-  // header/site
-  qs("#siteTitle") &&
-    (qs("#siteTitle").textContent = t(
-      "site_name",
-      qs("#siteTitle").textContent
-    ));
-  qs("#siteSubtitle") &&
-    (qs("#siteSubtitle").textContent = t(
-      "site_subtitle",
-      qs("#siteSubtitle").textContent
-    ));
+const navButtons = qsa("[data-section]");
+navButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    showSection(btn.dataset.section);
+  });
+});
 
-  // search placeholder
-  qs("#searchInput")?.setAttribute(
-    "placeholder",
-    t("search_placeholder", "Search model or brand...")
-  );
-
-  // typeFilter options (fallback if dataset not present)
-  const typeFilter = qs("#typeFilter");
-  if (typeFilter) {
-    typeFilter
-      .querySelector('option[value="all"]')
-      ?.setAttribute("data-i18n", "type_all");
-    typeFilter.querySelector('option[value="all"]').textContent = t(
-      "type_all",
-      "All Devices"
-    );
-    typeFilter.querySelector('option[value="Phone"]') &&
-      (typeFilter.querySelector('option[value="Phone"]').textContent = t(
-        "type_phone",
-        "Phones"
-      ));
-    typeFilter.querySelector('option[value="Tablet"]') &&
-      (typeFilter.querySelector('option[value="Tablet"]').textContent = t(
-        "type_tablet",
-        "Tablets"
-      ));
-  }
-
-  // sortSelect options
-  const sortSelect = qs("#sortSelect");
-  if (sortSelect) {
-    sortSelect.querySelector('option[value="default"]').textContent = t(
-      "sort_default",
-      "Sort: Default"
-    );
-    sortSelect.querySelector('option[value="brand"]').textContent = t(
-      "sort_brand",
-      "Brand (A–Z)"
-    );
-    sortSelect.querySelector('option[value="model"]').textContent = t(
-      "sort_model",
-      "Model (A–Z)"
-    );
-    sortSelect.querySelector('option[value="os"]').textContent = t(
-      "sort_os",
-      "OS Version"
-    );
-  }
-
-  // about / pgsharp
-  qs("#aboutTitle") &&
-    (qs("#aboutTitle").textContent = t(
-      "about_pgsharp_title",
-      qs("#aboutTitle").textContent
-    ));
-  qs("#aboutParagraph") &&
-    (qs("#aboutParagraph").textContent = t(
-      "about_pgsharp_paragraph",
-      qs("#aboutParagraph").textContent
-    ));
-  qsa('a[href="https://www.pgsharp.com/"]').forEach(
-    (a) => (a.textContent = t("about_pgsharp_official", "Official site"))
-  );
-
-  // footer & links
-  qsa('a[href="/privacy.html"]').forEach(
-    (a) => (a.textContent = t("privacy", "Privacy"))
-  );
-  qsa('a[href="/impressum.html"]').forEach(
-    (a) => (a.textContent = t("impressum", "Impressum"))
-  );
-  qsa('a[href="/"]').forEach((a) => (a.title = t("title", a.title)));
-
-  // ad placeholder
-  qsa(".ad-placeholder").forEach(
-    (d) => (d.textContent = t("ad_placeholder", "Advertisement"))
-  );
-
-  // modal root links heading will be set in openModal()
-  // set langSelect value
-  const ls = qs("#langSelect");
-  if (ls) ls.value = currentLang;
-  if (ls) ls.value = currentLang;
+function showSection(name = "overview") {
+  if (!sections[name]) return;
+  Object.entries(sections).forEach(([key, node]) => {
+    if (!node) return;
+    if (key === name) {
+      node.classList.remove("hidden");
+    } else {
+      node.classList.add("hidden");
+    }
+  });
+  navButtons.forEach((btn) => {
+    const isActive = btn.dataset.section === name;
+    btn.setAttribute("aria-selected", String(isActive));
+    btn.classList.toggle("border-slate-700", isActive);
+    btn.classList.toggle("bg-slate-800", isActive);
+    btn.classList.toggle("bg-slate-800/60", !isActive);
+    btn.classList.toggle("border-transparent", !isActive);
+  });
+  activeSection = name;
+  if (name === "devices") applyFilters();
+  if (name === "news") renderNews(news);
 }
 
 async function loadDevices() {
@@ -145,43 +92,46 @@ async function loadDevices() {
   applyFilters();
 }
 
-function cardHtml(d) {
-  const compatClass = d.compatible ? "text-emerald-400" : "text-amber-400";
-  const pogoColor =
-    d.PoGoComp === "Yes"
-      ? "compat-yes"
-      : d.PoGoComp === "Partial"
-      ? "compat-partial"
-      : "compat-no";
+async function loadNews() {
+  try {
+    const res = await fetch("/data/news.json");
+    news = await res.json();
+  } catch (e) {
+    news = [];
+    console.error("Failed to load news.json", e);
+  }
+  if (activeSection === "news") renderNews(news);
+}
 
-  return `
-    <article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
-      d.id
-    )}">
-      <div class="flex items-start justify-between">
-        <div>
-          <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
-          <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
-        </div>
-        <div class="${compatClass} text-xs font-medium">
-          ${d.compatible ? "Confirmed" : "Unverified"}
-        </div>
+function cardHtml(d) {
+  const compat = d.compatible
+    ? `<span class="inline-block bg-emerald-600/20 text-emerald-300 px-2 py-1 rounded text-xs">${t(
+        "modal_compatibility_confirmed",
+        "Compatibility: confirmed"
+      )}</span>`
+    : `<span class="inline-block bg-amber-600/20 text-amber-300 px-2 py-1 rounded text-xs">${t(
+        "modal_compatibility_unknown",
+        "Compatibility: unknown or not verified"
+      )}</span>`;
+  return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
+    d.id
+  )}">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
+        <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
       </div>
-      <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
-      <div class="mt-3 text-sm">
-        <p><strong>Price Range:</strong> ${esc(d.priceRange || "—")}</p>
-        <p><strong>PoGO Comp:</strong> <span class="${pogoColor}">${
-    d.PoGoComp || "Unknown"
-  }</span></p>
-      </div>
-    </article>
-  `;
+      <div>${compat}</div>
+    </div>
+    <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
+  </article>`;
 }
 
 function renderDevices(list) {
   const wrap = qs("#gridWrap");
+  if (!wrap) return;
   wrap.innerHTML = "";
-  if (list.length === 0) {
+  if (!list.length) {
     wrap.innerHTML = `<div class="col-span-full text-center text-slate-400">${t(
       "no_devices_found",
       "No devices found"
@@ -197,6 +147,66 @@ function renderDevices(list) {
   });
 }
 
+function renderNews(items) {
+  const wrap = qs("#newsWrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (!items.length) {
+    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+      "news_empty",
+      "No news available yet."
+    )}</div>`;
+    return;
+  }
+  const publishedLabel = t("news_published", "Published");
+  const updatedLabel = t("news_updated", "Updated");
+  const readMoreLabel = t("news_read_more", "Read more");
+
+  items.forEach((item) => {
+    const pub = item.publishedAt
+      ? dateFormatter.format(new Date(item.publishedAt))
+      : "—";
+    const upd =
+      item.updatedAt && item.updatedAt !== item.publishedAt
+        ? dateFormatter.format(new Date(item.updatedAt))
+        : null;
+    const tags =
+      item.tags && item.tags.length
+        ? `<div class="flex flex-wrap gap-2 mt-3">${item.tags
+            .map(
+              (tag) =>
+                `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+                  tag
+                )}</span>`
+            )
+            .join("")}</div>`
+        : "";
+    const excerpt = item.excerpt
+      ? `<p class="text-sm text-slate-300 mt-3">${esc(item.excerpt)}</p>`
+      : "";
+    const link = item.contentUrl
+      ? `<a href="${
+          item.contentUrl
+        }" target="_blank" rel="noopener noreferrer nofollow" class="text-sky-400 hover:underline text-sm mt-4 inline-flex items-center gap-1">${esc(
+          readMoreLabel
+        )} →</a>`
+      : "";
+    wrap.insertAdjacentHTML(
+      "beforeend",
+      `<article class="bg-slate-900 border border-slate-800 rounded-lg p-6">
+        <h3 class="text-xl font-semibold">${esc(item.title)}</h3>
+        <div class="text-xs text-slate-400 mt-2 space-x-3">
+          <span>${publishedLabel}: ${esc(pub)}</span>
+          ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+        </div>
+        ${excerpt}
+        ${tags}
+        ${link}
+      </article>`
+    );
+  });
+}
+
 function openModal(d) {
   qs("#modalBackdrop").classList.remove("hidden");
   qs("#modalBackdrop").classList.add("flex");
@@ -208,14 +218,9 @@ function openModal(d) {
         "modal_compatibility_unknown",
         "Compatibility: unknown or not verified"
       );
-
-  qs("#modalPriceRange").textContent = d.priceRange || "—";
-  qs("#modalPoGoComp").textContent = d.PoGoComp || "Unknown";
-
   qs("#modalNotesList").innerHTML = (d.notes || [])
     .map((n) => `<div class="text-sm">• ${esc(n)}</div>`)
     .join("");
-
   const links = (d.rootLinks || [])
     .map(
       (u) =>
@@ -224,14 +229,14 @@ function openModal(d) {
         )}</a></div>`
     )
     .join("");
-
   qs("#modalRootLinks").innerHTML = links
     ? `<h4 class="text-sm font-semibold mt-3">${t(
         "modal_root_links",
         "Root Links"
       )}</h4>${links}`
     : "";
-
+  qs("#modalPriceRange").textContent = d.priceRange || "—";
+  qs("#modalPoGoComp").textContent = d.poGoNotes || "—";
   document.body.style.overflow = "hidden";
 }
 
@@ -249,10 +254,20 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeModal();
 });
 
+const searchInput = qs("#searchInput");
+const typeFilter = qs("#typeFilter");
+const sortSelect = qs("#sortSelect");
+
+searchInput?.addEventListener("input", applyFilters);
+typeFilter?.addEventListener("change", applyFilters);
+sortSelect?.addEventListener("change", applyFilters);
+
 function applyFilters() {
-  const q = (qs("#searchInput")?.value || "").trim().toLowerCase();
-  const type = qs("#typeFilter")?.value || "all";
-  const sort = qs("#sortSelect")?.value || "default";
+  const wrap = qs("#gridWrap");
+  if (!wrap) return;
+  const q = (searchInput?.value || "").trim().toLowerCase();
+  const type = typeFilter?.value || "all";
+  const sort = sortSelect?.value || "default";
   let filtered = devices.filter((d) => {
     const hay = [d.model, d.brand, d.os, (d.notes || []).join(" ")]
       .join(" ")
@@ -261,7 +276,6 @@ function applyFilters() {
     const matchesType = type === "all" ? true : d.type === type;
     return matchesSearch && matchesType;
   });
-
   if (sort !== "default") {
     filtered.sort((a, b) => {
       if (sort === "brand") return a.brand.localeCompare(b.brand);
@@ -270,15 +284,11 @@ function applyFilters() {
       return 0;
     });
   }
-
   renderDevices(filtered);
 }
 
-qs("#searchInput")?.addEventListener("input", applyFilters);
-qs("#typeFilter")?.addEventListener("change", applyFilters);
-qs("#sortSelect")?.addEventListener("change", applyFilters);
-
-qs("#langSelect")?.addEventListener("change", (e) => {
+const langSelect = qs("#langSelect");
+langSelect?.addEventListener("change", (e) => {
   const lang = e.target.value;
   const params = new URLSearchParams(window.location.search);
   params.set("lang", lang);
@@ -286,4 +296,111 @@ qs("#langSelect")?.addEventListener("change", (e) => {
   loadLang(lang);
 });
 
-loadLang(currentLang).then(loadDevices);
+function applyTranslations() {
+  document.title = t(
+    "title",
+    "Pokémon GO Compatible Devices & PGSharp Updates"
+  );
+
+  qs("#siteTitle") &&
+    (qs("#siteTitle").textContent = t(
+      "site_name",
+      qs("#siteTitle").textContent
+    ));
+  qs("#siteSubtitle") &&
+    (qs("#siteSubtitle").textContent = t(
+      "site_subtitle",
+      qs("#siteSubtitle").textContent
+    ));
+
+  qsa("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    const target = el.getAttribute("data-i18n-target") || "text";
+    const fallback =
+      target === "placeholder"
+        ? el.getAttribute("placeholder") || ""
+        : el.textContent || "";
+    const value = t(key, fallback);
+    if (target === "text") el.textContent = value;
+    if (target === "html") el.innerHTML = value;
+    if (target === "placeholder") el.setAttribute("placeholder", value);
+    if (target === "title") el.setAttribute("title", value);
+    if (target === "value") el.setAttribute("value", value);
+  });
+
+  const statusEl = qs("#deviceBuilderStatus");
+  if (statusEl?.dataset.i18nKey) {
+    statusEl.textContent = t(statusEl.dataset.i18nKey, statusEl.textContent);
+  }
+
+  if (langSelect) langSelect.value = currentLang;
+}
+
+const deviceBuilderForm = qs("#deviceBuilderForm");
+const deviceJsonOutput = qs("#deviceJsonOutput");
+const copyDeviceJsonBtn = qs("#copyDeviceJson");
+const deviceBuilderStatus = qs("#deviceBuilderStatus");
+
+function setBuilderStatus(key) {
+  if (!deviceBuilderStatus) return;
+  deviceBuilderStatus.dataset.i18nKey = key;
+  deviceBuilderStatus.textContent = t(key, deviceBuilderStatus.textContent);
+}
+
+function setupDeviceBuilder() {
+  if (!deviceBuilderForm) return;
+  copyDeviceJsonBtn.disabled = true;
+  setBuilderStatus("device_builder_empty");
+  deviceJsonOutput.textContent = "";
+
+  deviceBuilderForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const entry = {
+      id: `${qs("#builderBrand").value}-${qs("#builderModel").value}`
+        .toLowerCase()
+        .replace(/\s+/g, "-"),
+      brand: qs("#builderBrand").value.trim(),
+      model: qs("#builderModel").value.trim(),
+      os: qs("#builderOs").value.trim(),
+      type: qs("#builderType").value.trim() || "Phone",
+      compatible: qs("#builderCompatible").checked,
+      priceRange: qs("#builderPrice")?.value.trim() || undefined,
+      notes: qs("#builderNotes")
+        .value.split(",")
+        .map((n) => n.trim())
+        .filter(Boolean),
+      rootLinks: qs("#builderRootLinks")
+        .value.split(",")
+        .map((n) => n.trim())
+        .filter(Boolean),
+    };
+    if (!entry.brand || !entry.model) {
+      setBuilderStatus("device_builder_empty");
+      copyDeviceJsonBtn.disabled = true;
+      deviceJsonOutput.textContent = "";
+      return;
+    }
+    if (!entry.priceRange) delete entry.priceRange;
+    const jsonString = JSON.stringify(entry, null, 2);
+    deviceJsonOutput.textContent = jsonString;
+    copyDeviceJsonBtn.disabled = false;
+    setBuilderStatus("device_builder_result_hint");
+  });
+
+  copyDeviceJsonBtn?.addEventListener("click", async () => {
+    if (!deviceJsonOutput.textContent) return;
+    try {
+      await navigator.clipboard.writeText(deviceJsonOutput.textContent);
+      setBuilderStatus("device_builder_copied");
+    } catch (err) {
+      console.error("Clipboard copy failed", err);
+    }
+  });
+}
+
+setupDeviceBuilder();
+showSection(activeSection);
+loadLang(currentLang).then(() => {
+  loadDevices();
+  loadNews();
+});

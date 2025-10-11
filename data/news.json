@@ -1,0 +1,19 @@
+[
+  {
+    "id": "pgsharp-1-47",
+    "title": "PGSharp 1.47 Release",
+    "excerpt": "The 1.47 update adds Android 15 compatibility fixes, refreshed joystick options, and resolves softban detection glitches.",
+    "contentUrl": "https://www.pgsharp.com/news/pgsharp-1-47",
+    "publishedAt": "2025-09-30T10:00:00Z",
+    "updatedAt": "2025-10-05T08:30:00Z",
+    "tags": ["Update", "Android 15", "Bugfix"]
+  },
+  {
+    "id": "pgsharp-event-oct",
+    "title": "October Community Event Support",
+    "excerpt": "PGSharp team announces temporary route presets for the Pokémon GO Halloween event to reduce cooldown issues.",
+    "contentUrl": "https://www.pgsharp.com/news/october-community-event",
+    "publishedAt": "2025-10-08T14:00:00Z",
+    "tags": ["Event", "Tips"]
+  }
+]

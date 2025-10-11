@@ -13,15 +13,6 @@
       .card-hover:hover {
         transform: translateY(-6px);
       }
-      .compat-yes {
-        color: #34d399;
-      }
-      .compat-no {
-        color: #f87171;
-      }
-      .compat-partial {
-        color: #facc15;
-      }
     </style>
   </head>
   <body
@@ -57,37 +48,6 @@
           </div>
 
           <div class="flex items-center space-x-3">
-            <a
-              href="/admin/login.html"
-              class="hidden sm:inline-flex items-center px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm hover:border-sky-500 transition"
-              data-i18n="menu_admin"
-            >
-              Admin
-            </a>
-            <div class="relative">
-              <input
-                id="searchInput"
-                type="search"
-                placeholder="Search model or brand..."
-                data-i18n-target="placeholder"
-                class="w-72 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-              <svg
-                class="w-4 h-4 text-slate-400 absolute right-3 top-2.5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-                />
-              </svg>
-            </div>
-
             <select
               id="langSelect"
               class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
@@ -98,105 +58,299 @@
             </select>
           </div>
         </div>
+
+        <nav class="mt-4 flex gap-2">
+          <button
+            type="button"
+            data-section="overview"
+            class="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-sm transition"
+            data-i18n="nav_overview"
+            aria-selected="true"
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            data-section="devices"
+            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
+            data-i18n="nav_devices"
+            aria-selected="false"
+          >
+            Devices
+          </button>
+          <button
+            type="button"
+            data-section="news"
+            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
+            data-i18n="nav_news"
+            aria-selected="false"
+          >
+            News
+          </button>
+        </nav>
       </div>
     </header>
 
     <main class="py-8">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Filter + Sort -->
-        <section
-          class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-center"
-        >
-          <div class="md:col-span-3 flex gap-3">
-            <select
-              id="typeFilter"
-              class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="all" data-i18n="type_all">All Devices</option>
-              <option value="Phone" data-i18n="type_phone">Phones</option>
-              <option value="Tablet" data-i18n="type_tablet">Tablets</option>
-            </select>
-            <select
-              id="sortSelect"
-              class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="default" data-i18n="sort_default">
-                Sort: Default
-              </option>
-              <option value="brand" data-i18n="sort_brand">Brand (A–Z)</option>
-              <option value="model" data-i18n="sort_model">Model (A–Z)</option>
-              <option value="os" data-i18n="sort_os">OS Version</option>
-            </select>
-          </div>
-
-          <div class="md:col-span-1 text-right text-sm text-slate-400">
-            <span data-i18n="about_pgsharp_title"
-              >PGSharp — info & warnings</span
-            >
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <section id="overviewSection" aria-labelledby="overviewTitle">
+          <h2
+            id="overviewTitle"
+            class="text-2xl font-semibold"
+            data-i18n="overview_intro_heading"
+          >
+            Welcome to PoGoSDex
+          </h2>
+          <p class="mt-3 text-slate-300" data-i18n="overview_intro_text">
+            Discover compatible devices, keep track of PGSharp updates, and stay
+            informed with curated news.
+          </p>
+          <div class="mt-6 grid sm:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-5">
+              <h3
+                class="text-lg font-semibold"
+                data-i18n="overview_devices_cta"
+              >
+                Browse compatible devices
+              </h3>
+              <p class="text-sm text-slate-400 mt-2">
+                Explore phones and tablets, filter by type, and open the modal
+                to see details and notes.
+              </p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-5">
+              <h3 class="text-lg font-semibold" data-i18n="overview_news_cta">
+                Stay up to date with PGSharp news
+              </h3>
+              <p class="text-sm text-slate-400 mt-2">
+                Read curated PGSharp announcements, feature updates, and
+                community alerts in the News tab.
+              </p>
+            </div>
           </div>
         </section>
 
-        <!-- Gerätegrid -->
         <section
-          id="gridWrap"
-          class="device-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        ></section>
-
-        <!-- Info -->
-        <section
-          class="mt-12 bg-slate-900 border border-slate-800 rounded-lg p-6"
+          id="devicesSection"
+          class="hidden space-y-6"
+          aria-labelledby="devicesTitle"
         >
-          <div class="flex items-start gap-4">
-            <div
-              class="w-16 h-16 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center font-bold text-white"
+          <div class="space-y-2">
+            <h2
+              id="devicesTitle"
+              class="text-2xl font-semibold"
+              data-i18n="devices_section_heading"
             >
-              PG
-            </div>
-            <div>
-              <h2
-                id="aboutTitle"
-                data-i18n="about_pgsharp_title"
-                class="text-xl font-semibold"
-              >
-                About PGSharp
-              </h2>
-              <p
-                id="aboutParagraph"
-                data-i18n="about_pgsharp_paragraph"
-                class="text-slate-400 mt-2"
-              >
-                PGSharp is a third-party location-spoofing tool for Pokémon GO.
-                Using such tools likely violates Niantic's Terms of Service and
-                may result in account suspension.
-              </p>
-              <div class="mt-3 flex gap-3">
-                <a
-                  href="https://www.pgsharp.com/"
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  class="text-sky-400 hover:underline text-sm"
-                  data-i18n="about_pgsharp_official"
-                  >Official site</a
+              Compatible devices
+            </h2>
+            <p class="text-slate-300" data-i18n="devices_section_intro">
+              Filter the device catalog and open any entry for more detailed
+              notes, compatibility hints, and helpful links.
+            </p>
+          </div>
+
+          <section
+            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-slate-900 border border-slate-800 rounded-lg p-4"
+          >
+            <div class="md:col-span-3 flex flex-wrap gap-3">
+              <div class="relative">
+                <input
+                  id="searchInput"
+                  type="search"
+                  placeholder="Search model or brand..."
+                  data-i18n-target="placeholder"
+                  class="w-64 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+                <svg
+                  class="w-4 h-4 text-slate-400 absolute right-3 top-2.5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                <a
-                  href="/privacy.html"
-                  class="text-slate-400 text-sm hover:underline"
-                  data-i18n="privacy"
-                  >Privacy</a
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                  />
+                </svg>
+              </div>
+              <select
+                id="typeFilter"
+                class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all" data-i18n="type_all">All Devices</option>
+                <option value="Phone" data-i18n="type_phone">Phones</option>
+                <option value="Tablet" data-i18n="type_tablet">Tablets</option>
+              </select>
+              <select
+                id="sortSelect"
+                class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="default" data-i18n="sort_default">
+                  Sort: Default
+                </option>
+                <option value="brand" data-i18n="sort_brand">
+                  Brand (A–Z)
+                </option>
+                <option value="model" data-i18n="sort_model">
+                  Model (A–Z)
+                </option>
+                <option value="os" data-i18n="sort_os">OS Version</option>
+              </select>
+            </div>
+          </section>
+
+          <section
+            id="gridWrap"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          ></section>
+
+          <section
+            class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4"
+          >
+            <div>
+              <h3
+                class="text-xl font-semibold"
+                data-i18n="device_builder_title"
+              >
+                Prepare a new device entry
+              </h3>
+              <p
+                class="text-sm text-slate-300"
+                data-i18n="device_builder_intro"
+              >
+                Fill out the form to generate a JSON snippet you can paste into
+                data/devices.json.
+              </p>
+            </div>
+
+            <form
+              id="deviceBuilderForm"
+              class="grid md:grid-cols-2 gap-3"
+              autocomplete="off"
+            >
+              <input
+                class="input"
+                type="text"
+                id="builderBrand"
+                placeholder="Brand"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_brand"
+                required
+              />
+              <input
+                class="input"
+                type="text"
+                id="builderModel"
+                placeholder="Model"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_model"
+                required
+              />
+              <input
+                class="input"
+                type="text"
+                id="builderOs"
+                placeholder="Operating System"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_os"
+              />
+              <input
+                class="input"
+                type="text"
+                id="builderType"
+                placeholder="Type (Phone/Tablet)"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_type"
+              />
+              <input
+                class="input"
+                type="text"
+                id="builderPrice"
+                placeholder="Price range (optional)"
+                data-i18n-target="placeholder"
+                data-i18n="device_builder_price_placeholder"
+              />
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="builderCompatible" />
+                <label
+                  for="builderCompatible"
+                  class="text-sm"
+                  data-i18n="table_compatible"
+                  >Compatible</label
                 >
               </div>
+              <textarea
+                class="input md:col-span-2"
+                id="builderNotes"
+                placeholder="Notes (comma separated)"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_notes"
+              ></textarea>
+              <textarea
+                class="input md:col-span-2"
+                id="builderRootLinks"
+                placeholder="Root Links (comma separated URLs)"
+                data-i18n-target="placeholder"
+                data-i18n="placeholder_rootlinks"
+              ></textarea>
+
+              <div class="md:col-span-2 flex gap-3">
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  data-i18n="device_builder_submit"
+                >
+                  Generate JSON
+                </button>
+                <button
+                  type="button"
+                  id="copyDeviceJson"
+                  class="btn-secondary"
+                  data-i18n="device_builder_copy"
+                >
+                  Copy JSON
+                </button>
+              </div>
+            </form>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
+              <pre
+                id="deviceJsonOutput"
+                class="whitespace-pre-wrap text-xs text-slate-200"
+              ></pre>
             </div>
-          </div>
+            <p
+              id="deviceBuilderStatus"
+              class="text-sm text-slate-400"
+              data-i18n="device_builder_empty"
+            >
+              Fill in the form to generate JSON.
+            </p>
+          </section>
         </section>
 
-        <section class="mt-8">
-          <div
-            class="ad-placeholder border border-slate-800 rounded-lg p-4 text-center text-slate-400"
-            data-slot="1234567890"
-            data-i18n="ad_placeholder"
-          >
-            Advertisement
+        <section
+          id="newsSection"
+          class="hidden space-y-6"
+          aria-labelledby="newsTitle"
+        >
+          <div class="space-y-2">
+            <h2
+              id="newsTitle"
+              class="text-2xl font-semibold"
+              data-i18n="news_section_title"
+            >
+              PGSharp News
+            </h2>
+            <p class="text-slate-300" data-i18n="news_section_intro">
+              Latest PGSharp updates, patch notes, and community announcements.
+            </p>
           </div>
+
+          <div id="newsWrap" class="space-y-4"></div>
         </section>
       </div>
     </main>
@@ -235,8 +389,6 @@
         <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
         <p id="modalMeta" class="text-sm text-slate-400"></p>
         <p id="modalDesc" class="mt-3 text-slate-200"></p>
-
-        <!-- Neue Infos -->
         <div id="modalExtra" class="mt-4 text-slate-300 space-y-1">
           <p>
             <strong>Price Range:</strong>
@@ -247,7 +399,6 @@
             <span id="modalPoGoComp" class="text-slate-400">—</span>
           </p>
         </div>
-
         <div id="modalNotesList" class="mt-4 text-slate-300"></div>
         <div id="modalRootLinks" class="mt-4"></div>
       </div>
