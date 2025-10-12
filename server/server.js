@@ -65,8 +65,13 @@ export async function createServer() {
 
   const connectOrigins =
     allowedOrigin === "*"
-      ? ["*"]
-      : ["'self'", ...allowedOrigin.split(",").map((value) => value.trim())];
+      ? ["'self'", "*", "data:", "https://pagead2.googlesyndication.com"]
+      : [
+          "'self'",
+          "data:",
+          "https://pagead2.googlesyndication.com",
+          ...allowedOrigin.split(",").map((value) => value.trim()),
+        ];
 
   app.use(
     helmet({
@@ -76,6 +81,8 @@ export async function createServer() {
           "img-src": ["'self'", "data:", "https:"],
           "script-src": [
             "'self'",
+            "https://pagead2.googlesyndication.com",
+            "https://securepubads.g.doubleclick.net",
             (_req, res) => `'nonce-${res.locals.cspNonce}'`,
           ],
           "style-src": ["'self'", "'unsafe-inline'"],
