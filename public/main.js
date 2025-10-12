@@ -678,20 +678,17 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-async function hydrateNews() {
+window.hydrateNews = async function hydrateNews() {
   const list = qs("[data-news-list]");
   if (!list) return;
-
   try {
     const res = await fetch("/data/news.json", { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const newsItems = await res.json();
-
     if (!Array.isArray(newsItems) || !newsItems.length) {
       list.innerHTML = `<li class="text-slate-500">No news available.</li>`;
       return;
     }
-
     list.innerHTML = newsItems
       .slice(0, 6)
       .map(
@@ -716,4 +713,4 @@ async function hydrateNews() {
     console.error("Failed to hydrate news:", error);
     list.innerHTML = `<li class="text-red-400">News feed unavailable.</li>`;
   }
-}
+};
