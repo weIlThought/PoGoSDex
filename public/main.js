@@ -617,7 +617,10 @@ function hydrateNewsInternal() {
     });
 }
 
-window.hydrateNews = hydrateNewsInternal;
+function hydrateNews() {
+  hydrateNewsInternal();
+}
+window.hydrateNews = hydrateNews;
 
 document.addEventListener("DOMContentLoaded", () => {
   hydrateTranslations();
