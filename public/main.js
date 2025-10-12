@@ -581,7 +581,6 @@ async function hydrateUptimeStatus() {
 function hydrateNewsInternal() {
   const list = qs("[data-news-list]");
   if (!list) return;
-
   fetch("/data/news.json", { cache: "no-store" })
     .then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -592,7 +591,6 @@ function hydrateNewsInternal() {
         list.innerHTML = `<li class="text-slate-500">No news available.</li>`;
         return;
       }
-
       list.innerHTML = newsItems
         .slice(0, 6)
         .map(
@@ -618,6 +616,8 @@ function hydrateNewsInternal() {
       list.innerHTML = `<li class="text-red-400">News feed unavailable.</li>`;
     });
 }
+
+window.hydrateNews = hydrateNewsInternal;
 
 document.addEventListener("DOMContentLoaded", () => {
   hydrateTranslations();
