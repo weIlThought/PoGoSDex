@@ -61,5 +61,16 @@
   "placeholder_os": "Operating System",
   "placeholder_type": "Type (Phone/Tablet)",
   "placeholder_notes": "Notes (comma separated)",
-  "placeholder_rootlinks": "Root Links (comma separated URLs)"
+  "placeholder_rootlinks": "Root Links (comma separated URLs)",
+  "status_heading": "Service status",
+  "status_description": "Live uptime information supplied by UptimeRobot. Data is cached for a few minutes.",
+  "status_link_label": "Open status page →",
+  "status_loading": "Checking status…",
+  "status_ok": "All systems operational",
+  "status_warn": "Degraded performance",
+  "status_down": "Service unavailable",
+  "status_error": "Status check failed",
+  "status_uptime_label": "Uptime",
+  "status_uptime_unknown": "Uptime: — %",
+  "status_checked_at": "Last check"
 }

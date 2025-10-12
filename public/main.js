@@ -509,6 +509,67 @@ function init() {
   });
 }
 
+async function hydrateUptimeStatus() {
+  const statusIndicator = qs("#statusIndicator");
+  const statusMessage = qs("#statusMessage");
+  const statusUptime = qs("#statusUptime");
+  if (!statusIndicator || !statusMessage || !statusUptime) return;
+
+  try {
+    statusIndicator.classList.add("animate-pulse");
+    const res = await fetch("/status/uptime", {
+      headers: { "Cache-Control": "no-cache" },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const { state, uptimeRatio, checkedAt } = data;
+    statusIndicator.classList.remove("animate-pulse");
+    statusIndicator.classList.remove(
+      "bg-yellow-400",
+      "bg-emerald-400",
+      "bg-red-500"
+    );
+    if (state === "up") {
+      statusIndicator.classList.add("bg-emerald-400");
+      statusMessage.textContent = t("status_ok", "All systems operational");
+    } else if (state === "degraded") {
+      statusIndicator.classList.add("bg-yellow-400");
+      statusMessage.textContent = t("status_warn", "Degraded performance");
+    } else {
+      statusIndicator.classList.add("bg-red-500");
+      statusMessage.textContent = t("status_down", "Service unavailable");
+    }
+
+    const uptimeText =
+      typeof uptimeRatio === "number" ? `${uptimeRatio.toFixed(2)}%` : "— %";
+    statusUptime.textContent = `${t(
+      "status_uptime_label",
+      "Uptime"
+    )}: ${uptimeText}`;
+
+    if (checkedAt) {
+      statusUptime.title = `${t("status_checked_at", "Last check")}: ${new Date(
+        checkedAt
+      ).toLocaleString()}`;
+    }
+  } catch (error) {
+    statusIndicator.classList.remove("animate-pulse");
+    statusIndicator.classList.add("bg-red-500");
+    statusMessage.textContent = t("status_error", "Status check failed");
+    statusUptime.textContent = `${t("status_uptime_label", "Uptime")}: — %`;
+    console.error("Status fetch failed:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  hydrateTranslations();
+  hydrateGrid();
+  hydrateNews();
+  hydrateUptimeStatus();
+  bindNavigation();
+});
+
 setupDeviceBuilder();
 showSection(activeSection);
 loadLang(currentLang).then(() => {

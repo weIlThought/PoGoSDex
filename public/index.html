@@ -326,6 +326,64 @@
             Read the Terms of Service →
           </a>
         </section>
+
+        <section
+          id="statusSection"
+          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
+        >
+          <div
+            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+          >
+            <div>
+              <h2
+                class="text-lg font-semibold text-slate-100"
+                data-i18n="status_heading"
+              >
+                Service status
+              </h2>
+              <p data-i18n="status_description">
+                Live uptime information supplied by UptimeRobot. Data is cached
+                for a few minutes.
+              </p>
+            </div>
+            <a
+              href="https://stats.uptimerobot.com/vf4OJASwdA"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+              data-i18n="status_link_label"
+            >
+              Open status page →
+            </a>
+          </div>
+
+          <div
+            id="statusCard"
+            class="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div class="flex items-center gap-2">
+              <span
+                id="statusIndicator"
+                class="h-3 w-3 rounded-full bg-yellow-400 animate-pulse"
+                aria-hidden="true"
+              ></span>
+              <span
+                id="statusMessage"
+                class="font-medium text-slate-200"
+                data-i18n="status_loading"
+              >
+                Checking status…
+              </span>
+            </div>
+            <span
+              id="statusUptime"
+              class="text-xs text-slate-400 uppercase tracking-wide"
+              data-i18n="status_uptime_unknown"
+            >
+              Uptime: — %
+            </span>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -546,6 +604,7 @@
       </div>
     </div>
 
-    <script src="/main.js" defer></script>
+    <script src="/cookie-consent.js" defer nonce="{{CSP_NONCE}}"></script>
+    <script src="/main.js" defer nonce="{{CSP_NONCE}}"></script>
   </body>
 </html>

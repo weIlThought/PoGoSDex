@@ -6,11 +6,13 @@
   "main": "index.js",
   "scripts": {
     "dev:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --watch",
-    "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
+    "build:css": "npx tailwindcss -c tailwind.config.js -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
     "tailwindcss": "^4.1.14"
   },
   "repository": {

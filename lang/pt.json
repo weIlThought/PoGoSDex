@@ -61,5 +61,16 @@
   "placeholder_os": "Sistema operacional",
   "placeholder_type": "Tipo (Celular/Tablet)",
   "placeholder_notes": "Notas (separadas por vírgulas)",
-  "placeholder_rootlinks": "Links root (URLs separadas por vírgulas)"
+  "placeholder_rootlinks": "Links root (URLs separadas por vírgulas)",
+  "status_heading": "Status do serviço",
+  "status_description": "Informações de disponibilidade em tempo real fornecidas pelo UptimeRobot. Os dados ficam em cache por alguns minutos.",
+  "status_link_label": "Abrir página de status →",
+  "status_loading": "Verificando status…",
+  "status_ok": "Todos os sistemas operacionais",
+  "status_warn": "Desempenho degradado",
+  "status_down": "Serviço indisponível",
+  "status_error": "Falha ao verificar o status",
+  "status_uptime_label": "Disponibilidade",
+  "status_uptime_unknown": "Disponibilidade: — %",
+  "status_checked_at": "Última verificação"
 }
