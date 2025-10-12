@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 const htmlRoutes = [
   { route: "/", file: "index.html" },
   { route: "/privacy.html", file: "privacy.html" },
-  { route: "/impressum.html", file: "impressum.html" },
+  // { route: "/impressum.html", file: "impressum.html" },
   { route: "/tos.html", file: "tos.html" },
 ];
 
