@@ -37,6 +37,11 @@ jobs:
       - name: Install server dependencies
         run: npm ci --prefix server --omit=dev
 
+      - name: Install root dependencies
+        run: npm ci --include=dev
+        env:
+          NODE_ENV: development
+
       - name: Build Tailwind CSS
         run: npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
 
