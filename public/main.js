@@ -10,6 +10,10 @@ function esc(t) {
   return d.innerHTML;
 }
 
+function dash() {
+  return t("placeholder_dash", "—");
+}
+
 let devices = [];
 let news = [];
 let newsSearch = "";
@@ -57,12 +61,16 @@ const sections = {
 };
 let activeSection = "overview";
 
-const navButtons = qsa("[data-section]");
-navButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    showSection(btn.dataset.section);
+let navButtons = [];
+
+function bindNavigation() {
+  navButtons = qsa("[data-section]");
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      showSection(btn.dataset.section);
+    });
   });
-});
+}
 
 function showSection(name = "overview") {
   if (!sections[name]) return;
@@ -181,6 +189,10 @@ function renderDevices(list) {
   });
 }
 
+function hydrateGrid() {
+  renderDevices(devices);
+}
+
 function renderNews(items) {
   const wrap = qs("#newsWrap");
   if (!wrap) return;
@@ -292,9 +304,9 @@ function openModal(d) {
         "Root Links"
       )}</h4>${links}`
     : "";
-  const dash = t("placeholder_dash", "—");
   qs("#modalPriceRange").textContent = d.priceRange || dash();
-  qs("#modalPoGoComp").textContent = d.poGoNotes || dash();
+  const pogoDetails = [d.pogo, d.pgsharp].filter(Boolean).join(" • ");
+  qs("#modalPoGoComp").textContent = pogoDetails || dash();
   document.body.style.overflow = "hidden";
 }
 
@@ -392,6 +404,10 @@ function applyTranslations() {
   }
 
   if (langSelect) langSelect.value = currentLang;
+}
+
+function hydrateTranslations() {
+  applyTranslations();
 }
 
 const deviceBuilderForm = qs("#deviceBuilderForm");

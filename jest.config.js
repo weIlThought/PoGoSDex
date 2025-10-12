@@ -1,5 +1,3 @@
-export default {
+module.exports = {
   testEnvironment: "node",
-  roots: ["<rootDir>/tests"],
-  transform: {},
 };
