@@ -698,12 +698,12 @@ function hydrateNews() {
         .map(
           (item) => `
             <li class="space-y-1">
-              <p class="text-xs uppercase tracking-wide text-emerald-400">
-                ${esc(item.date ?? "")}
-              </p>
-              <p class="font-semibold text-slate-100">
-                ${esc(item.title ?? "Untitled")}
-              </p>
+              <p class="text-xs uppercase tracking-wide text-emerald-400">${esc(
+                item.date ?? ""
+              )}</p>
+              <p class="font-semibold text-slate-100">${esc(
+                item.title ?? "Untitled"
+              )}</p>
               ${
                 item.excerpt
                   ? `<p class="text-sm text-slate-400">${esc(item.excerpt)}</p>`
