@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "PoGoSDex - PogoSDex-like design (Railway-ready). Deploy using Docker on Railway.",
   "private": true,
+  "workspaces": [
+    "server"
+  ],
   "main": "index.js",
   "scripts": {
     "dev:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --watch",
     "build:css": "npx tailwindcss -c tailwind.config.js -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --passWithNoTests"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "supertest": "^6.3.4",
     "tailwindcss": "^3.4.13"

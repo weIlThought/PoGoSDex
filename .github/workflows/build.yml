@@ -31,14 +31,14 @@ jobs:
           node-version: 22
           cache: "npm"
 
-      - name: Install root deps
+      - name: Install root dependencies
         run: npm ci
+
+      - name: Install server dependencies
+        run: npm ci --prefix server --omit=dev
 
       - name: Build Tailwind CSS
         run: npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
-
-      - name: Install server deps
-        run: npm ci --prefix server --omit=dev
 
       - name: Sync submodule files
         run: |
