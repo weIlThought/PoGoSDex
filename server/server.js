@@ -7,7 +7,6 @@ import fs from "fs/promises";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import xssClean from "xss-clean";
 import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
@@ -87,7 +86,6 @@ export async function createServer() {
     })
   );
 
-  app.use(xssClean());
   app.use(
     cors({
       origin: allowedOrigin === "*" ? true : allowedOrigin.split(","),
@@ -274,7 +272,11 @@ export async function createServer() {
     });
   });
 
-  app.get("*", (_req, res) => {
+  app.use((req, res) => {
+    if (req.method !== "GET") {
+      return res.status(404).end();
+    }
+
     const nonce = res.locals.cspNonce;
     const template = htmlCache.get("index.html");
     const html = template.replace(/{{CSP_NONCE}}/g, nonce);
