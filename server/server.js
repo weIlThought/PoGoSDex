@@ -33,7 +33,19 @@ const uptimeCache = {
 export async function createServer() {
   const port = Number(process.env.PORT || 3000);
   const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
-  const trustProxy = Number(process.env.TRUST_PROXY || 0);
+  const trustProxyInput = (process.env.TRUST_PROXY || "").trim().toLowerCase();
+  let trustProxy = false;
+
+  if (trustProxyInput === "loopback" || trustProxyInput === "true") {
+    trustProxy = "loopback";
+  } else if (trustProxyInput === "false" || trustProxyInput === "") {
+    trustProxy = false;
+  } else if (/^\d+$/.test(trustProxyInput)) {
+    trustProxy = Number(trustProxyInput);
+  } else if (trustProxyInput) {
+    trustProxy = trustProxyInput;
+  }
+
   const uptimeApiKey = process.env.UPTIMEROBOT_API_KEY || "";
 
   const logger = winston.createLogger({
@@ -52,11 +64,7 @@ export async function createServer() {
 
   const app = express();
 
-  if (trustProxy) {
-    app.set("trust proxy", trustProxy);
-  } else {
-    app.set("trust proxy", true);
-  }
+  app.set("trust proxy", trustProxy);
 
   app.disable("x-powered-by");
 
