@@ -169,23 +169,54 @@ function cardHtml(d) {
   </article>`;
 }
 
+const deviceLimitSelect = qs("[data-device-limit]");
+let deviceRenderLimit = 50;
+
+if (deviceLimitSelect) {
+  deviceLimitSelect.addEventListener("change", () => {
+    const value = deviceLimitSelect.value;
+    deviceRenderLimit =
+      value === "all"
+        ? Infinity
+        : Number.parseInt(value, 10) || deviceRenderLimit;
+    renderDevices(devices);
+  });
+}
+
+let devicesPageSize = 10;
+
+function getVisibleDevices() {
+  if (devicesPageSize === "all") return devices;
+  return devices.slice(0, devicesPageSize);
+}
+
+function renderDevices() {
+  const list = qs("[data-devices-list]");
+  if (!list) return;
+  const rows = getVisibleDevices().map(createDeviceRow).join("");
+  list.innerHTML = rows || `<li class="text-slate-500">No devices found.</li>`;
+}
+
 function renderDevices(list) {
-  const wrap = qs("#gridWrap");
-  if (!wrap) return;
-  wrap.innerHTML = "";
-  if (!list.length) {
-    wrap.innerHTML = `<div class="col-span-full text-center text-slate-400">${t(
+  const container = qs("[data-devices-grid]");
+  if (!container) return;
+
+  const limited =
+    deviceRenderLimit === Infinity ? list : list.slice(0, deviceRenderLimit);
+  container.innerHTML = "";
+  if (!limited.length) {
+    container.innerHTML = `<div class="col-span-full text-center text-slate-400">${t(
       "no_devices_found",
       "No devices found"
     )}</div>`;
     return;
   }
-  list.forEach((d) => {
+  limited.forEach((d) => {
     const tmp = document.createElement("div");
     tmp.innerHTML = cardHtml(d);
     const card = tmp.firstElementChild;
     card.addEventListener("click", () => openModal(d));
-    wrap.appendChild(card);
+    container.appendChild(card);
   });
 }
 
@@ -660,6 +691,15 @@ function hydrateNews() {
 window.hydrateNews = hydrateNews;
 
 document.addEventListener("DOMContentLoaded", () => {
+  const pageSizeSelect = qs("#device-page-size");
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", (event) => {
+      devicesPageSize =
+        event.target.value === "all" ? "all" : Number(event.target.value);
+      renderDevices();
+    });
+  }
+
   hydrateTranslations();
   hydrateGrid();
   hydrateNewsInternal();
