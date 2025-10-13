@@ -61,16 +61,5 @@
   "placeholder_os": "Betriebssystem",
   "placeholder_type": "Typ (Phone/Tablet)",
   "placeholder_notes": "Notizen (Komma-getrennt)",
-  "placeholder_rootlinks": "Root-Links (Komma-getrennte URLs)",
-  "status_heading": "Systemstatus",
-  "status_description": "Live-Uptime-Informationen bereitgestellt von UptimeRobot. Daten werden für wenige Minuten zwischengespeichert.",
-  "status_link_label": "Statusseite öffnen →",
-  "status_loading": "Status wird geprüft…",
-  "status_ok": "Alle Systeme in Betrieb",
-  "status_warn": "Eingeschränkte Verfügbarkeit",
-  "status_down": "Dienst nicht erreichbar",
-  "status_error": "Statusabfrage fehlgeschlagen",
-  "status_uptime_label": "Verfügbarkeit",
-  "status_uptime_unknown": "Verfügbarkeit: — %",
-  "status_checked_at": "Letzte Prüfung"
+  "placeholder_rootlinks": "Root-Links (Komma-getrennte URLs)"
 }

@@ -61,16 +61,5 @@
   "placeholder_os": "ऑपरेटिंग सिस्टम",
   "placeholder_type": "प्रकार (फोन/टैबलेट)",
   "placeholder_notes": "नोट्स (कॉमा से अलग)",
-  "placeholder_rootlinks": "रूट लिंक (कॉमा से अलग URLs)",
-  "status_heading": "सेवा स्थिति",
-  "status_description": "UptimeRobot द्वारा प्रदत्त लाइव उपलब्धता जानकारी। डेटा कुछ मिनटों के लिए कैश रहता है।",
-  "status_link_label": "स्थिति पृष्ठ खोलें →",
-  "status_loading": "स्थिति जांची जा रही है…",
-  "status_ok": "सभी सिस्टम सक्रिय",
-  "status_warn": "प्रदर्शन घटा हुआ",
-  "status_down": "सेवा उपलब्ध नहीं",
-  "status_error": "स्थिति जांच विफल",
-  "status_uptime_label": "अपटाइम",
-  "status_uptime_unknown": "अपटाइम: — %",
-  "status_checked_at": "अंतिम जांच"
+  "placeholder_rootlinks": "रूट लिंक (कॉमा से अलग URLs)"
 }

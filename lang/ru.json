@@ -61,16 +61,5 @@
   "placeholder_os": "Операционная система",
   "placeholder_type": "Тип (Phone/Tablet)",
   "placeholder_notes": "Заметки (через запятую)",
-  "placeholder_rootlinks": "Root-ссылки (через запятую URL)",
-  "status_heading": "Состояние сервиса",
-  "status_description": "Онлайн-данные о доступности от UptimeRobot. Информация кэшируется на несколько минут.",
-  "status_link_label": "Открыть страницу статуса →",
-  "status_loading": "Проверка статуса…",
-  "status_ok": "Все системы работают",
-  "status_warn": "Пониженная производительность",
-  "status_down": "Сервис недоступен",
-  "status_error": "Ошибка проверки статуса",
-  "status_uptime_label": "Доступность",
-  "status_uptime_unknown": "Доступность: — %",
-  "status_checked_at": "Последняя проверка"
+  "placeholder_rootlinks": "Root-ссылки (через запятую URL)"
 }
