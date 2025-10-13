@@ -607,7 +607,8 @@ function hydrateNewsInternal() {
                   ? `<p class="text-sm text-slate-400">${esc(item.excerpt)}</p>`
                   : ""
               }
-            </li>`
+            </li>
+          `
         )
         .join("");
     })
@@ -618,7 +619,43 @@ function hydrateNewsInternal() {
 }
 
 function hydrateNews() {
-  hydrateNewsInternal();
+  const list = qs("[data-news-list]");
+  if (!list) return;
+  fetch("/data/news.json", { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((newsItems) => {
+      if (!Array.isArray(newsItems) || !newsItems.length) {
+        list.innerHTML = `<li class="text-slate-500">No news available.</li>`;
+        return;
+      }
+      list.innerHTML = newsItems
+        .slice(0, 6)
+        .map(
+          (item) => `
+            <li class="space-y-1">
+              <p class="text-xs uppercase tracking-wide text-emerald-400">${esc(
+                item.date ?? ""
+              )}</p>
+              <p class="font-semibold text-slate-100">${esc(
+                item.title ?? "Untitled"
+              )}</p>
+              ${
+                item.excerpt
+                  ? `<p class="text-sm text-slate-400">${esc(item.excerpt)}</p>`
+                  : ""
+              }
+            </li>
+          `
+        )
+        .join("");
+    })
+    .catch((error) => {
+      console.error("Failed to hydrate news:", error);
+      list.innerHTML = `<li class="text-red-400">News feed unavailable.</li>`;
+    });
 }
 window.hydrateNews = hydrateNews;
 

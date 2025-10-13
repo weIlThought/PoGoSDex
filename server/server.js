@@ -54,6 +54,8 @@ export async function createServer() {
 
   if (trustProxy) {
     app.set("trust proxy", trustProxy);
+  } else {
+    app.set("trust proxy", true);
   }
 
   app.disable("x-powered-by");
