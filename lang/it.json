@@ -61,22 +61,5 @@
   "placeholder_os": "Sistema operativo",
   "placeholder_type": "Tipo (Telefono/Tablet)",
   "placeholder_notes": "Note (separate da virgole)",
-  "placeholder_rootlinks": "Link root (URL separati da virgole)",
-  "privacy_title": "Informativa sulla Privacy",
-  "privacy_date": "15 ottobre 2025",
-  "privacy_intro": "Questa pagina informa sulle politiche di pogosdex.com (“il Sito”, “noi”) riguardo la raccolta, l'uso e la divulgazione delle informazioni personali ricevute dagli utenti del Sito.",
-  "privacy_usage": "Utilizziamo le tue informazioni personali solo per fornire e migliorare il Sito. Utilizzando il Sito, accetti la raccolta e l'uso delle informazioni in conformità con questa politica.",
-  "privacy_collection_heading": "Raccolta e Utilizzo delle Informazioni",
-  "privacy_collection_text": "Possiamo utilizzare società pubblicitarie di terze parti per mostrare annunci quando visiti il Sito. Queste società possono utilizzare informazioni aggregate (escludendo nome, indirizzo, email o numero di telefono) sulle tue visite a questo e altri siti web per offrire annunci su prodotti e servizi di tuo interesse. Se desideri maggiori informazioni su questa pratica e conoscere le tue opzioni per non consentire l'uso di queste informazioni, clicca qui.",
-  "privacy_logdata_heading": "Dati di Log",
-  "privacy_logdata_text": "Questo sito utilizza Google Analytics, una tecnologia basata sui cookie per misurare il traffico del sito. Google Analytics non memorizza informazioni personali identificabili e presenta i dati in forma aggregata, non per attività individuale. Se desideri disattivare Google Analytics, vedi qui.",
-  "privacy_cookies_heading": "Cookie",
-  "privacy_cookies_text": "Utilizziamo i cookie per memorizzare informazioni per tua comodità (“Impostazioni”). Possiamo anche utilizzare annunci di terze parti sul Sito. Alcuni di questi inserzionisti possono utilizzare tecnologie come cookie e web beacon quando pubblicizzano sul Sito, che invieranno anche a questi inserzionisti (come Google tramite il programma Google AdSense) informazioni come il tuo indirizzo IP, il tuo ISP, il browser utilizzato per visitare il nostro sito e, in alcuni casi, se hai Flash installato. Questo viene generalmente utilizzato per scopi di geolocalizzazione o per mostrare determinati annunci in base ai siti visitati.",
-  "privacy_cookies_disable": "Puoi scegliere di disabilitare o disattivare selettivamente i nostri cookie o quelli di terze parti nelle impostazioni del browser, o gestendo le preferenze in programmi come Norton Internet Security. Tuttavia, questo può influire notevolmente su come interagisci con il Sito e con la maggior parte degli altri siti web.",
-  "privacy_security_heading": "Sicurezza",
-  "privacy_security_text": "La sicurezza delle tue informazioni personali è importante per noi, ma ricorda che nessun metodo di trasmissione su Internet o di archiviazione elettronica è sicuro al 100%. Pur impegnandoci a utilizzare mezzi commercialmente accettabili per proteggere le tue informazioni personali, non possiamo garantirne la sicurezza assoluta.",
-  "privacy_changes_heading": "Modifiche a questa Informativa sulla Privacy",
-  "privacy_changes_text": "Ci riserviamo il diritto di aggiornare o modificare la nostra Informativa sulla Privacy in qualsiasi momento e dovresti controllare periodicamente questa Informativa. L'uso continuato del Servizio dopo la pubblicazione di modifiche costituirà il tuo riconoscimento e consenso a rispettare l'Informativa sulla Privacy modificata.",
-  "privacy_contact_heading": "Contattaci",
-  "privacy_contact_text": "Se hai domande su questa Informativa sulla Privacy, contattaci a pogosdex@gmail.com."
+  "placeholder_rootlinks": "Link root (URL separati da virgole)"
 }
