@@ -5,24 +5,62 @@
     <title>PGSharp – PoGoSDex</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="/output.css" />
-    <script>
-      function showTab(tab) {
-        document
-          .querySelectorAll(".pgsharp-tab-content")
-          .forEach((el) => el.classList.add("hidden"));
-        document.getElementById(tab).classList.remove("hidden");
-        document
-          .querySelectorAll(".pgsharp-tab-btn")
-          .forEach((el) =>
-            el.classList.remove("bg-emerald-400", "text-slate-900")
-          );
-        document
-          .getElementById(tab + "-btn")
-          .classList.add("bg-emerald-400", "text-slate-900");
+    <style>
+      .fade {
+        opacity: 0;
+        transition: opacity 0.18s;
+        pointer-events: none;
+        position: absolute;
+        width: 100%;
       }
-      window.onload = function () {
-        showTab("faq");
-      };
+      .fade.active {
+        opacity: 1;
+        pointer-events: auto;
+        position: static;
+        transition: opacity 0.18s;
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const tabBtns = Array.from(
+          document.querySelectorAll("[data-pgsharp-tab]")
+        );
+        const tabContents = Array.from(
+          document.querySelectorAll("[data-pgsharp-content]")
+        );
+        let active = "faq";
+        function activate(tab) {
+          tabBtns.forEach((btn) => {
+            btn.classList.toggle(
+              "bg-emerald-400",
+              btn.dataset.pgsharpTab === tab
+            );
+            btn.classList.toggle(
+              "text-slate-900",
+              btn.dataset.pgsharpTab === tab
+            );
+            btn.setAttribute(
+              "aria-selected",
+              btn.dataset.pgsharpTab === tab ? "true" : "false"
+            );
+          });
+          tabContents.forEach((content) => {
+            if (content.dataset.pgsharpContent === tab) {
+              content.classList.add("active");
+              content.classList.remove("fade");
+            } else {
+              content.classList.remove("active");
+              content.classList.add("fade");
+            }
+          });
+          active = tab;
+        }
+        tabBtns.forEach((btn) => {
+          btn.addEventListener("click", () => activate(btn.dataset.pgsharpTab));
+        });
+        // Initial
+        activate(active);
+      });
     </script>
   </head>
   <body class="bg-slate-900 text-slate-100 antialiased">
@@ -31,178 +69,187 @@
         <h1 class="text-3xl font-bold mb-6" data-i18n="pgsharp_title">
           PGSharp
         </h1>
-        <nav class="flex gap-2 mb-8">
+        <nav class="flex gap-2 mb-8" role="tablist" aria-label="PGSharp Tabs">
           <button
-            id="faq-btn"
-            class="pgsharp-tab-btn px-4 py-2 rounded soft-button transition-colors"
-            onclick="showTab('faq')"
+            type="button"
+            data-pgsharp-tab="faq"
+            class="soft-button px-4 py-2 rounded transition-colors font-medium"
+            aria-selected="true"
             data-i18n="pgsharp_tab_faq"
           >
             FAQ
           </button>
           <button
-            id="features-btn"
-            class="pgsharp-tab-btn px-4 py-2 rounded soft-button transition-colors"
-            onclick="showTab('features')"
+            type="button"
+            data-pgsharp-tab="features"
+            class="soft-button px-4 py-2 rounded transition-colors font-medium"
+            aria-selected="false"
             data-i18n="pgsharp_tab_features"
           >
             Features
           </button>
           <button
-            id="issues-btn"
-            class="pgsharp-tab-btn px-4 py-2 rounded soft-button transition-colors"
-            onclick="showTab('issues')"
+            type="button"
+            data-pgsharp-tab="issues"
+            class="soft-button px-4 py-2 rounded transition-colors font-medium"
+            aria-selected="false"
             data-i18n="pgsharp_tab_issues"
           >
             Known Issues
           </button>
           <button
-            id="report-btn"
-            class="pgsharp-tab-btn px-4 py-2 rounded soft-button transition-colors"
-            onclick="showTab('report')"
+            type="button"
+            data-pgsharp-tab="report"
+            class="soft-button px-4 py-2 rounded transition-colors font-medium"
+            aria-selected="false"
             data-i18n="pgsharp_tab_report"
           >
             Bug Report / Questions
           </button>
         </nav>
-        <section id="faq" class="pgsharp-tab-content">
-          <h2 class="text-xl font-semibold mb-2" data-i18n="pgsharp_faq_title">
-            PGSharp FAQ
-          </h2>
-          <ul class="space-y-3">
-            <li>
-              <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
-              <p class="text-slate-400" data-i18n="pgsharp_faq_a1">
-                PGSharp is a tool for spoofing location in Pokémon GO on Android
-                devices.
-              </p>
-            </li>
-            <li>
-              <strong data-i18n="pgsharp_faq_q2"
-                >Is PGSharp safe to use?</strong
-              >
-              <p class="text-slate-400" data-i18n="pgsharp_faq_a2">
-                Use at your own risk. Spoofing may violate Niantic's terms of
-                service.
-              </p>
-            </li>
-            <li>
-              <strong data-i18n="pgsharp_faq_q3"
-                >How do I install PGSharp?</strong
-              >
-              <p class="text-slate-400" data-i18n="pgsharp_faq_a3">
-                Visit the official PGSharp website and follow the installation
-                instructions for your device.
-              </p>
-            </li>
-          </ul>
-        </section>
-        <section id="features" class="pgsharp-tab-content hidden">
-          <h2
-            class="text-xl font-semibold mb-2"
-            data-i18n="pgsharp_features_title"
-          >
-            Features
-          </h2>
-          <ul class="space-y-3">
-            <li>
-              <strong data-i18n="pgsharp_features_f1"
-                >Joystick for movement</strong
-              >
-              <p class="text-slate-400" data-i18n="pgsharp_features_f1_desc">
-                Move your avatar freely on the map using a virtual joystick.
-              </p>
-            </li>
-            <li>
-              <strong data-i18n="pgsharp_features_f2">Teleportation</strong>
-              <p class="text-slate-400" data-i18n="pgsharp_features_f2_desc">
-                Jump instantly to any location worldwide.
-              </p>
-            </li>
-            <li>
-              <strong data-i18n="pgsharp_features_f3">Auto-walk</strong>
-              <p class="text-slate-400" data-i18n="pgsharp_features_f3_desc">
-                Automatically walk a route for hatching eggs or collecting
-                items.
-              </p>
-            </li>
-          </ul>
-        </section>
-        <section id="issues" class="pgsharp-tab-content hidden">
-          <h2
-            class="text-xl font-semibold mb-2"
-            data-i18n="pgsharp_issues_title"
-          >
-            Known Issues
-          </h2>
-          <ul class="space-y-3">
-            <li>
-              <strong data-i18n="pgsharp_issues_i1"
-                >App crashes on some devices</strong
-              >
-              <p class="text-slate-400" data-i18n="pgsharp_issues_i1_desc">
-                Try updating PGSharp or your device firmware.
-              </p>
-            </li>
-            <li>
-              <strong data-i18n="pgsharp_issues_i2"
-                >Location not updating</strong
-              >
-              <p class="text-slate-400" data-i18n="pgsharp_issues_i2_desc">
-                Check location permissions and restart the app.
-              </p>
-            </li>
-          </ul>
-        </section>
-        <section id="report" class="pgsharp-tab-content hidden">
-          <h2
-            class="text-xl font-semibold mb-2"
-            data-i18n="pgsharp_report_title"
-          >
-            Bug Report / Questions
-          </h2>
-          <form class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
-            <label
-              class="block mb-2 font-medium"
-              for="pgsharp-report-email"
-              data-i18n="pgsharp_report_email_label"
-              >Your Email</label
+        <div class="relative min-h-[180px]">
+          <section data-pgsharp-content="faq" class="fade">
+            <h2
+              class="text-xl font-semibold mb-2"
+              data-i18n="pgsharp_faq_title"
             >
-            <input
-              id="pgsharp-report-email"
-              type="email"
-              class="input mb-4"
-              placeholder="you@example.com"
-            />
-            <label
-              class="block mb-2 font-medium"
-              for="pgsharp-report-message"
-              data-i18n="pgsharp_report_message_label"
-              >Message</label
+              PGSharp FAQ
+            </h2>
+            <ul class="space-y-3">
+              <li>
+                <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
+                <p class="text-slate-400" data-i18n="pgsharp_faq_a1">
+                  PGSharp is a tool for spoofing location in Pokémon GO on
+                  Android devices.
+                </p>
+              </li>
+              <li>
+                <strong data-i18n="pgsharp_faq_q2"
+                  >Is PGSharp safe to use?</strong
+                >
+                <p class="text-slate-400" data-i18n="pgsharp_faq_a2">
+                  Use at your own risk. Spoofing may violate Niantic's terms of
+                  service.
+                </p>
+              </li>
+              <li>
+                <strong data-i18n="pgsharp_faq_q3"
+                  >How do I install PGSharp?</strong
+                >
+                <p class="text-slate-400" data-i18n="pgsharp_faq_a3">
+                  Visit the official PGSharp website and follow the installation
+                  instructions for your device.
+                </p>
+              </li>
+            </ul>
+          </section>
+          <section data-pgsharp-content="features" class="fade">
+            <h2
+              class="text-xl font-semibold mb-2"
+              data-i18n="pgsharp_features_title"
             >
-            <textarea
-              id="pgsharp-report-message"
-              class="input mb-4"
-              rows="4"
-              placeholder="Describe your issue or question..."
-            ></textarea>
-            <button
-              type="submit"
-              class="btn-primary"
-              data-i18n="pgsharp_report_submit"
+              Features
+            </h2>
+            <ul class="space-y-3">
+              <li>
+                <strong data-i18n="pgsharp_features_f1"
+                  >Joystick for movement</strong
+                >
+                <p class="text-slate-400" data-i18n="pgsharp_features_f1_desc">
+                  Move your avatar freely on the map using a virtual joystick.
+                </p>
+              </li>
+              <li>
+                <strong data-i18n="pgsharp_features_f2">Teleportation</strong>
+                <p class="text-slate-400" data-i18n="pgsharp_features_f2_desc">
+                  Jump instantly to any location worldwide.
+                </p>
+              </li>
+              <li>
+                <strong data-i18n="pgsharp_features_f3">Auto-walk</strong>
+                <p class="text-slate-400" data-i18n="pgsharp_features_f3_desc">
+                  Automatically walk a route for hatching eggs or collecting
+                  items.
+                </p>
+              </li>
+            </ul>
+          </section>
+          <section data-pgsharp-content="issues" class="fade">
+            <h2
+              class="text-xl font-semibold mb-2"
+              data-i18n="pgsharp_issues_title"
             >
-              Send
-            </button>
-          </form>
-          <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">
-            Alternatively, contact
-            <a
-              href="mailto:pogosdex@gmail.com"
-              class="text-emerald-400 underline"
-              >pogosdex@gmail.com</a
-            >.
-          </p>
-        </section>
+              Known Issues
+            </h2>
+            <ul class="space-y-3">
+              <li>
+                <strong data-i18n="pgsharp_issues_i1"
+                  >App crashes on some devices</strong
+                >
+                <p class="text-slate-400" data-i18n="pgsharp_issues_i1_desc">
+                  Try updating PGSharp or your device firmware.
+                </p>
+              </li>
+              <li>
+                <strong data-i18n="pgsharp_issues_i2"
+                  >Location not updating</strong
+                >
+                <p class="text-slate-400" data-i18n="pgsharp_issues_i2_desc">
+                  Check location permissions and restart the app.
+                </p>
+              </li>
+            </ul>
+          </section>
+          <section data-pgsharp-content="report" class="fade">
+            <h2
+              class="text-xl font-semibold mb-2"
+              data-i18n="pgsharp_report_title"
+            >
+              Bug Report / Questions
+            </h2>
+            <form class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+              <label
+                class="block mb-2 font-medium"
+                for="pgsharp-report-email"
+                data-i18n="pgsharp_report_email_label"
+                >Your Email</label
+              >
+              <input
+                id="pgsharp-report-email"
+                type="email"
+                class="input mb-4"
+                placeholder="you@example.com"
+              />
+              <label
+                class="block mb-2 font-medium"
+                for="pgsharp-report-message"
+                data-i18n="pgsharp_report_message_label"
+                >Message</label
+              >
+              <textarea
+                id="pgsharp-report-message"
+                class="input mb-4"
+                rows="4"
+                placeholder="Describe your issue or question..."
+              ></textarea>
+              <button
+                type="submit"
+                class="btn-primary"
+                data-i18n="pgsharp_report_submit"
+              >
+                Send
+              </button>
+            </form>
+            <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">
+              Alternatively, contact
+              <a
+                href="mailto:pogosdex@gmail.com"
+                class="text-emerald-400 underline"
+                >pogosdex@gmail.com</a
+              >.
+            </p>
+          </section>
+        </div>
       </div>
     </main>
   </body>

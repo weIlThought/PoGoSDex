@@ -116,3 +116,25 @@
     border-color: rgba(147, 198, 255, 0.5);
   }
 }
+
+/* Tab-Animation */
+.fade {
+  opacity: 0;
+  transition: opacity 0.18s;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+}
+
+.fade.active {
+  opacity: 1;
+  pointer-events: auto;
+  position: static;
+  transition: opacity 0.18s;
+}
+
+/* Optional: Einheitliches Padding für Tab-Inhalte */
+.tab-content {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
