@@ -61,5 +61,16 @@
   "placeholder_os": "Betriebssystem",
   "placeholder_type": "Typ (Phone/Tablet)",
   "placeholder_notes": "Notizen (Komma-getrennt)",
-  "placeholder_rootlinks": "Root-Links (Komma-getrennte URLs)"
+  "placeholder_rootlinks": "Root-Links (Komma-getrennte URLs)",
+  "pgsharp_faq_a1": "PGSharp ist ein Tool zum Spoofen des Standorts in Pokémon GO auf Android-Geräten.",
+  "pgsharp_faq_a2": "Nutzung auf eigene Gefahr. Spoofing kann gegen die Niantic-Nutzungsbedingungen verstoßen.",
+  "pgsharp_faq_a3": "Besuche die offizielle PGSharp-Website und folge der Installationsanleitung für dein Gerät.",
+  "pgsharp_features_f1_desc": "Bewege deinen Avatar frei auf der Karte mit einem virtuellen Joystick.",
+  "pgsharp_features_f2_desc": "Springe sofort zu jedem beliebigen Ort weltweit.",
+  "pgsharp_features_f3_desc": "Laufe automatisch eine Route zum Ausbrüten von Eiern oder Sammeln von Items.",
+  "pgsharp_issues_i1_desc": "Versuche PGSharp oder die Geräte-Firmware zu aktualisieren.",
+  "pgsharp_issues_i2_desc": "Prüfe die Standortberechtigungen und starte die App neu.",
+  "pgsharp_report_email_label": "Deine E-Mail",
+  "pgsharp_report_message_label": "Nachricht",
+  "pgsharp_report_submit": "Senden"
 }

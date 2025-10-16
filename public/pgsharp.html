@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="/output.css" />
     <script>
-      // Tab switching logic
       function showTab(tab) {
         document
           .querySelectorAll(".pgsharp-tab-content")
@@ -68,9 +67,29 @@
           PGSharp FAQ
         </h2>
         <ul class="space-y-3">
-          <li data-i18n="pgsharp_faq_q1">What is PGSharp?</li>
-          <li data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</li>
-          <li data-i18n="pgsharp_faq_q3">How do I install PGSharp?</li>
+          <li>
+            <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
+            <p class="text-slate-400" data-i18n="pgsharp_faq_a1">
+              PGSharp is a tool for spoofing location in Pokémon GO on Android
+              devices.
+            </p>
+          </li>
+          <li>
+            <strong data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</strong>
+            <p class="text-slate-400" data-i18n="pgsharp_faq_a2">
+              Use at your own risk. Spoofing may violate Niantic's terms of
+              service.
+            </p>
+          </li>
+          <li>
+            <strong data-i18n="pgsharp_faq_q3"
+              >How do I install PGSharp?</strong
+            >
+            <p class="text-slate-400" data-i18n="pgsharp_faq_a3">
+              Visit the official PGSharp website and follow the installation
+              instructions for your device.
+            </p>
+          </li>
         </ul>
       </section>
       <section id="features" class="pgsharp-tab-content hidden">
@@ -81,9 +100,26 @@
           Features
         </h2>
         <ul class="space-y-3">
-          <li data-i18n="pgsharp_features_f1">Joystick for movement</li>
-          <li data-i18n="pgsharp_features_f2">Teleportation</li>
-          <li data-i18n="pgsharp_features_f3">Auto-walk</li>
+          <li>
+            <strong data-i18n="pgsharp_features_f1"
+              >Joystick for movement</strong
+            >
+            <p class="text-slate-400" data-i18n="pgsharp_features_f1_desc">
+              Move your avatar freely on the map using a virtual joystick.
+            </p>
+          </li>
+          <li>
+            <strong data-i18n="pgsharp_features_f2">Teleportation</strong>
+            <p class="text-slate-400" data-i18n="pgsharp_features_f2_desc">
+              Jump instantly to any location worldwide.
+            </p>
+          </li>
+          <li>
+            <strong data-i18n="pgsharp_features_f3">Auto-walk</strong>
+            <p class="text-slate-400" data-i18n="pgsharp_features_f3_desc">
+              Automatically walk a route for hatching eggs or collecting items.
+            </p>
+          </li>
         </ul>
       </section>
       <section id="issues" class="pgsharp-tab-content hidden">
@@ -91,16 +127,61 @@
           Known Issues
         </h2>
         <ul class="space-y-3">
-          <li data-i18n="pgsharp_issues_i1">App crashes on some devices</li>
-          <li data-i18n="pgsharp_issues_i2">Location not updating</li>
+          <li>
+            <strong data-i18n="pgsharp_issues_i1"
+              >App crashes on some devices</strong
+            >
+            <p class="text-slate-400" data-i18n="pgsharp_issues_i1_desc">
+              Try updating PGSharp or your device firmware.
+            </p>
+          </li>
+          <li>
+            <strong data-i18n="pgsharp_issues_i2">Location not updating</strong>
+            <p class="text-slate-400" data-i18n="pgsharp_issues_i2_desc">
+              Check location permissions and restart the app.
+            </p>
+          </li>
         </ul>
       </section>
       <section id="report" class="pgsharp-tab-content hidden">
         <h2 class="text-xl font-semibold mb-2" data-i18n="pgsharp_report_title">
           Bug Report / Questions
         </h2>
-        <p class="mb-4" data-i18n="pgsharp_report_text">
-          For bug reports or questions, please contact
+        <form class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+          <label
+            class="block mb-2 font-medium"
+            for="pgsharp-report-email"
+            data-i18n="pgsharp_report_email_label"
+            >Your Email</label
+          >
+          <input
+            id="pgsharp-report-email"
+            type="email"
+            class="input mb-4"
+            placeholder="you@example.com"
+          />
+          <label
+            class="block mb-2 font-medium"
+            for="pgsharp-report-message"
+            data-i18n="pgsharp_report_message_label"
+            >Message</label
+          >
+          <textarea
+            id="pgsharp-report-message"
+            class="input mb-4"
+            rows="4"
+            placeholder="Describe your issue or question..."
+          ></textarea>
+          <button
+            type="submit"
+            class="btn-primary"
+            data-i18n="pgsharp_report_submit"
+          >
+            Send
+          </button>
+        </form>
+        <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">
+          Alternatively, contact
           <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline"
             >pogosdex@gmail.com</a
           >.
