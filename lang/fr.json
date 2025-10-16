@@ -61,5 +61,22 @@
   "placeholder_os": "Système d’exploitation",
   "placeholder_type": "Type (Téléphone/Tablette)",
   "placeholder_notes": "Notes (séparées par des virgules)",
-  "placeholder_rootlinks": "Liens root (URLs séparées par des virgules)"
+  "placeholder_rootlinks": "Liens root (URLs séparées par des virgules)",
+  "privacy_title": "Politique de Confidentialité",
+  "privacy_date": "15 octobre 2025",
+  "privacy_intro": "Cette page vous informe des politiques de pogosdex.com (« le Site », « nous ») concernant la collecte, l'utilisation et la divulgation des informations personnelles que nous recevons des utilisateurs du Site.",
+  "privacy_usage": "Nous utilisons vos informations personnelles uniquement pour fournir et améliorer le Site. En utilisant le Site, vous acceptez la collecte et l'utilisation des informations conformément à cette politique.",
+  "privacy_collection_heading": "Collecte et Utilisation des Informations",
+  "privacy_collection_text": "Nous pouvons utiliser des sociétés de publicité tierces pour diffuser des annonces lorsque vous visitez le Site. Ces sociétés peuvent utiliser des informations agrégées (sans inclure votre nom, adresse, adresse e-mail ou numéro de téléphone) concernant vos visites sur ce site et d'autres sites Web afin de proposer des publicités sur des biens et services susceptibles de vous intéresser. Pour plus d'informations sur cette pratique et pour connaître vos choix concernant l'utilisation de ces informations, cliquez ici.",
+  "privacy_logdata_heading": "Données de Journal",
+  "privacy_logdata_text": "Ce site utilise Google Analytics, une technologie basée sur les cookies pour mesurer le trafic du site Web. Google Analytics ne stocke aucune information personnelle identifiable et présente les données de manière agrégée, et non par activité individuelle. Si vous souhaitez vous désinscrire de Google Analytics, voir ici.",
+  "privacy_cookies_heading": "Cookies",
+  "privacy_cookies_text": "Nous utilisons des cookies pour stocker des informations pour votre commodité (« Paramètres »). Nous pouvons également utiliser des publicités tierces sur le Site. Certains de ces annonceurs peuvent utiliser des technologies telles que les cookies et les balises Web lorsqu'ils font de la publicité sur le Site, ce qui enverra également à ces annonceurs (comme Google via le programme Google AdSense) des informations telles que votre adresse IP, votre FAI, le navigateur que vous avez utilisé pour visiter notre site et, dans certains cas, si vous avez installé Flash. Cela est généralement utilisé à des fins de géolocalisation ou pour afficher certaines annonces en fonction des sites visités.",
+  "privacy_cookies_disable": "Vous pouvez choisir de désactiver ou de désactiver sélectivement nos cookies ou les cookies tiers dans les paramètres de votre navigateur, ou en gérant les préférences dans des programmes tels que Norton Internet Security. Cependant, cela peut grandement affecter la façon dont vous interagissez avec le Site ainsi qu'avec la plupart des autres sites Web.",
+  "privacy_security_heading": "Sécurité",
+  "privacy_security_text": "La sécurité de vos informations personnelles est importante pour nous, mais rappelez-vous qu'aucune méthode de transmission sur Internet ou de stockage électronique n'est 100% sûre. Bien que nous nous efforcions d'utiliser des moyens commercialement acceptables pour protéger vos informations personnelles, nous ne pouvons pas garantir leur sécurité absolue.",
+  "privacy_changes_heading": "Modifications de cette Politique de Confidentialité",
+  "privacy_changes_text": "Nous nous réservons le droit de mettre à jour ou de modifier notre Politique de Confidentialité à tout moment et vous devez consulter cette Politique de Confidentialité périodiquement. Votre utilisation continue du Service après la publication de modifications constituera votre reconnaissance et votre consentement à respecter la Politique de Confidentialité modifiée.",
+  "privacy_contact_heading": "Contactez-nous",
+  "privacy_contact_text": "Si vous avez des questions concernant cette Politique de Confidentialité, veuillez nous contacter à pogosdex@gmail.com."
 }

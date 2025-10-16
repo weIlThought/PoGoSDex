@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PGSharp – PoGoSDex</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="/output.css" />
+    <script>
+      // Tab switching logic
+      function showTab(tab) {
+        document
+          .querySelectorAll(".pgsharp-tab-content")
+          .forEach((el) => el.classList.add("hidden"));
+        document.getElementById(tab).classList.remove("hidden");
+        document
+          .querySelectorAll(".pgsharp-tab-btn")
+          .forEach((el) =>
+            el.classList.remove("bg-emerald-400", "text-slate-900")
+          );
+        document
+          .getElementById(tab + "-btn")
+          .classList.add("bg-emerald-400", "text-slate-900");
+      }
+      window.onload = function () {
+        showTab("faq");
+      };
+    </script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 antialiased">
+    <main class="max-w-3xl mx-auto px-4 py-10">
+      <h1 class="text-3xl font-bold mb-6" data-i18n="pgsharp_title">PGSharp</h1>
+      <nav class="flex gap-2 mb-8">
+        <button
+          id="faq-btn"
+          class="pgsharp-tab-btn px-4 py-2 rounded soft-button"
+          onclick="showTab('faq')"
+          data-i18n="pgsharp_tab_faq"
+        >
+          FAQ
+        </button>
+        <button
+          id="features-btn"
+          class="pgsharp-tab-btn px-4 py-2 rounded soft-button"
+          onclick="showTab('features')"
+          data-i18n="pgsharp_tab_features"
+        >
+          Features
+        </button>
+        <button
+          id="issues-btn"
+          class="pgsharp-tab-btn px-4 py-2 rounded soft-button"
+          onclick="showTab('issues')"
+          data-i18n="pgsharp_tab_issues"
+        >
+          Known Issues
+        </button>
+        <button
+          id="report-btn"
+          class="pgsharp-tab-btn px-4 py-2 rounded soft-button"
+          onclick="showTab('report')"
+          data-i18n="pgsharp_tab_report"
+        >
+          Bug Report / Questions
+        </button>
+      </nav>
+      <section id="faq" class="pgsharp-tab-content">
+        <h2 class="text-xl font-semibold mb-2" data-i18n="pgsharp_faq_title">
+          PGSharp FAQ
+        </h2>
+        <ul class="space-y-3">
+          <li data-i18n="pgsharp_faq_q1">What is PGSharp?</li>
+          <li data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</li>
+          <li data-i18n="pgsharp_faq_q3">How do I install PGSharp?</li>
+        </ul>
+      </section>
+      <section id="features" class="pgsharp-tab-content hidden">
+        <h2
+          class="text-xl font-semibold mb-2"
+          data-i18n="pgsharp_features_title"
+        >
+          Features
+        </h2>
+        <ul class="space-y-3">
+          <li data-i18n="pgsharp_features_f1">Joystick for movement</li>
+          <li data-i18n="pgsharp_features_f2">Teleportation</li>
+          <li data-i18n="pgsharp_features_f3">Auto-walk</li>
+        </ul>
+      </section>
+      <section id="issues" class="pgsharp-tab-content hidden">
+        <h2 class="text-xl font-semibold mb-2" data-i18n="pgsharp_issues_title">
+          Known Issues
+        </h2>
+        <ul class="space-y-3">
+          <li data-i18n="pgsharp_issues_i1">App crashes on some devices</li>
+          <li data-i18n="pgsharp_issues_i2">Location not updating</li>
+        </ul>
+      </section>
+      <section id="report" class="pgsharp-tab-content hidden">
+        <h2 class="text-xl font-semibold mb-2" data-i18n="pgsharp_report_title">
+          Bug Report / Questions
+        </h2>
+        <p class="mb-4" data-i18n="pgsharp_report_text">
+          For bug reports or questions, please contact
+          <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline"
+            >pogosdex@gmail.com</a
+          >.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

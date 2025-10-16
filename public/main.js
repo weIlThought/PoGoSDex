@@ -705,6 +705,23 @@ document.addEventListener("DOMContentLoaded", () => {
   hydrateNewsInternal();
   hydrateUptimeStatus();
   bindNavigation();
+
+  // PGSharp Tabs
+  const pgsharpTabs = document.querySelectorAll("#pgsharp-tabs .tab-btn");
+  const pgsharpContents = document.querySelectorAll(
+    ".tab-content[id^='pgsharp-']"
+  );
+
+  pgsharpTabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pgsharpTabs.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      pgsharpContents.forEach((c) => {
+        c.style.display =
+          c.id === "pgsharp-" + btn.dataset.tab ? "block" : "none";
+      });
+    });
+  });
 });
 
 setupDeviceBuilder();

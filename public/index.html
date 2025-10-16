@@ -93,6 +93,8 @@
           >
             News
           </button>
+          <a href="/faq.html" class="hover:text-emerald-400">FAQ</a>
+          <a href="/pgsharp.html" class="hover:text-emerald-400">PGSharp</a>
         </nav>
       </div>
     </header>
@@ -400,6 +402,55 @@
             </span>
           </div>
         </section>
+
+        <!-- PGSharp Tab Navigation -->
+        <div class="tabs" id="pgsharp-tabs">
+          <button data-tab="faq" class="tab-btn active">FAQ</button>
+          <button data-tab="features" class="tab-btn">Features</button>
+          <button data-tab="issues" class="tab-btn">Known Issues</button>
+          <button data-tab="bugreport" class="tab-btn">
+            Bug Report / Questions
+          </button>
+        </div>
+
+        <!-- PGSharp Tab Content -->
+        <div class="tab-content" id="pgsharp-faq" style="display: block">
+          <h2>PGSharp FAQ</h2>
+          <ul>
+            <li>What is PGSharp?</li>
+            <li>Is PGSharp safe to use?</li>
+            <li>How do I install PGSharp?</li>
+            <!-- ... -->
+          </ul>
+        </div>
+        <div class="tab-content" id="pgsharp-features" style="display: none">
+          <h2>PGSharp Features</h2>
+          <ul>
+            <li>Joystick for movement</li>
+            <li>Teleportation</li>
+            <li>Auto-walk</li>
+            <li>Enhanced throw</li>
+            <!-- ... -->
+          </ul>
+        </div>
+        <div class="tab-content" id="pgsharp-issues" style="display: none">
+          <h2>Known Issues</h2>
+          <ul>
+            <li>App crashes on some devices</li>
+            <li>Ban risk if used improperly</li>
+            <li>Compatibility issues with latest Android versions</li>
+            <!-- ... -->
+          </ul>
+        </div>
+        <div class="tab-content" id="pgsharp-bugreport" style="display: none">
+          <h2>Bug Report / Questions</h2>
+          <form>
+            <label for="pgsharp-bug">Describe your issue or question:</label
+            ><br />
+            <textarea id="pgsharp-bug" rows="5" cols="40"></textarea><br />
+            <button type="submit">Submit</button>
+          </form>
+        </div>
       </div>
     </main>
 
@@ -407,7 +458,10 @@
       <div
         class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
       >
-        <span>2025 PoGoSDex. </span>
+        <span
+          >2025 - PoGoSDex. All rights reserved by their respective
+          owners.</span
+        >
         <div class="flex gap-4">
           <!-- <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a> -->
           <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
