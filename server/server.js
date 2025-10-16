@@ -64,7 +64,8 @@ export async function createServer() {
 
   const app = express();
 
-  app.set("trust proxy", trustProxy);
+  // Set trust proxy for correct client IP detection (important for rate limiting behind proxies)
+  app.set("trust proxy", 1);
 
   app.disable("x-powered-by");
 
