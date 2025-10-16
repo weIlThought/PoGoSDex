@@ -722,6 +722,18 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+  fetch("/api/uptime")
+    .then((res) => res.json())
+    .then((data) => {
+      const el = document.getElementById("uptime");
+      if (el && data && typeof data.uptime === "number") {
+        el.textContent = `Uptime: ${data.uptime.toFixed(2)} %`;
+      }
+    })
+    .catch(() => {
+      // Fehler ignorieren, Anzeige bleibt auf — %
+    });
 });
 
 setupDeviceBuilder();

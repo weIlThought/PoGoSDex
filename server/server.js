@@ -242,6 +242,31 @@ export async function createServer() {
     }
   });
 
+  app.get("/api/uptime", async (req, res) => {
+    try {
+      const apiKey = process.env.UPTIMEROBOT_API_KEY;
+      // Monitor-ID ggf. aus .env oder fest eintragen
+      const monitorID = "801563784";
+      const response = await fetch(
+        `https://api.uptimerobot.com/v2/getMonitors`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `api_key=${apiKey}&monitors=${monitorID}&format=json`,
+        }
+      );
+      const data = await response.json();
+      const uptime = data.monitors?.[0]?.all_time_uptime_ratio;
+      if (uptime) {
+        res.json({ uptime: parseFloat(uptime) });
+      } else {
+        res.json({ uptime: null });
+      }
+    } catch (e) {
+      res.json({ uptime: null });
+    }
+  });
+
   const staticRoot = path.resolve(__dirname, "..", "public");
   const htmlCache = new Map();
   await Promise.all(
