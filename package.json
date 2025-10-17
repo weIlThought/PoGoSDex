@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/weIlThought/PoGoSDex#readme",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2"
   }
 }
