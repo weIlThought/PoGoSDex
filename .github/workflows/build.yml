@@ -31,13 +31,16 @@ jobs:
           node-version: 22
           cache: "npm"
 
+      - name: Clean stray server installs (prevent duplicates)
+        run: |
+          # remove any accidental server/node_modules or server/package-lock.json that could cause duplicate installs
+          rm -rf server/node_modules || true
+          rm -f server/package-lock.json || true
+
       - name: Install root dependencies
         run: npm ci --include=dev
         env:
           NODE_ENV: development
-
-      - name: Install server dependencies
-        run: npm ci --prefix server --omit=dev
 
       - name: Build Tailwind CSS
         run: npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
