@@ -435,7 +435,9 @@
               required
             ></textarea>
           </div>
-          <div id="turnstile-container" class="mt-4"></div>
+          <div id="turnstile-container">
+            <div class="cf-turnstile" data-sitekey="{{TURNSTILE_SITEKEY}}"></div>
+          </div>
           <button type="submit" class="btn-primary mt-4">Absenden</button>
         </form>
 
