@@ -1,7 +1,13 @@
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("contact-form");
   const containerSelector = "#turnstile-container";
-  const siteKey = "YOUR_SITE_KEY"; // Ersetze mit deinem echten Sitekey
+
+  const container = document.querySelector(containerSelector);
+  const siteKey = container?.dataset?.sitekey || null;
+  if (!siteKey) {
+    console.error("Turnstile: Kein siteKey in data-sitekey gefunden.");
+    return;
+  }
 
   function attachToken(token) {
     let input = form.querySelector('input[name="cf_turnstile_response"]');

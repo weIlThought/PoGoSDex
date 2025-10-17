@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "dev:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --watch",
-    "build:css": "npx tailwindcss -c tailwind.config.js -i ./public/styles.css -o ./public/output.css --minify",
+    "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
     "prepare": "husky"

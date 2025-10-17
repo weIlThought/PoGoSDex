@@ -80,10 +80,9 @@ export async function createServer() {
         "script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net 'nonce-" +
           nonce +
           "'",
+        "connect-src 'self' https://challenges.cloudflare.com https://api.uptimerobot.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
         "frame-src 'self' https://challenges.cloudflare.com",
-        "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        "img-src 'self' data: https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'nonce-" + nonce + "'",
       ].join("; ")
     );
     next();
@@ -101,14 +100,7 @@ export async function createServer() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "https://challenges.cloudflare.com"],
-          frameSrc: ["'self'", "https://challenges.cloudflare.com"],
-          // weitere Direktiven wie nötig
-        },
-      },
+      contentSecurityPolicy: false,
     })
   );
 
