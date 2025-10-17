@@ -89,16 +89,16 @@ export async function createServer() {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          "default-src": ["'self'"],
-          "img-src": ["'self'", "data:", "https:"],
-          "script-src": [
+          defaultSrc: ["'self'"],
+          scriptSrc: [
             "'self'",
+            "https://challenges.cloudflare.com",
             "https://pagead2.googlesyndication.com",
             "https://securepubads.g.doubleclick.net",
             (_req, res) => `'nonce-${res.locals.cspNonce}'`,
           ],
-          "style-src": ["'self'", "'unsafe-inline'"],
-          "connect-src": connectOrigins,
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          connectSrc: connectOrigins,
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -190,17 +190,18 @@ export async function createServer() {
     }
 
     try {
+      const params = new URLSearchParams();
+      params.append("api_key", uptimeApiKey);
+      params.append("format", "json");
+      params.append("logs", "0");
+      params.append("custom_uptime_ratios", "1-7-30");
+
       const response = await fetch(
         "https://api.uptimerobot.com/v2/getMonitors",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            api_key: uptimeApiKey,
-            format: "json",
-            logs: 0,
-            custom_uptime_ratios: "1-7-30",
-          }),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
         }
       );
 
@@ -376,6 +377,14 @@ export async function createServer() {
   app.use((err, _req, res, _next) => {
     logger.error(`Unhandled error: ${err.stack || err.message}`);
     res.status(500).json({ error: "Internal Server Error" });
+  });
+
+  app.use((req, res, next) => {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net; frame-src 'self' https://challenges.cloudflare.com"
+    );
+    next();
   });
 
   return { app, port, logger };

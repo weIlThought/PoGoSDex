@@ -31,5 +31,8 @@
   "bugs": {
     "url": "https://github.com/weIlThought/PoGoSDex/issues"
   },
-  "homepage": "https://github.com/weIlThought/PoGoSDex#readme"
+  "homepage": "https://github.com/weIlThought/PoGoSDex#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }
