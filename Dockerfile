@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy root package files so workspace deps are installed once
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Copy all sources (so tailwind can read templates) and build CSS
 COPY . .
