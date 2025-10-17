@@ -404,6 +404,154 @@
           </div>
         </section>
 
+        <form id="contact-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+          <div class="mb-4">
+            <label for="name" class="block text-sm text-slate-300 mb-2">Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label for="email" class="block text-sm text-slate-300 mb-2">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label for="message" class="block text-sm text-slate-300 mb-2">Message</label>
+            <textarea
+              id="message"
+              name="message"
+              rows="4"
+              class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              required
+            ></textarea>
+          </div>
+          <div id="turnstile-container" class="mt-4"></div>
+          <button type="submit" class="btn-primary mt-4">Absenden</button>
+        </form>
+
+        <!-- Cloudflare Turnstile Script (explicit mode) -->
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+        <script src="/turnstile.js" defer></script>
+
+        <section
+          id="legalSection"
+          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
+        >
+          <h2
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="legal_notice_title"
+          >
+            Legal Notice
+          </h2>
+          <p data-i18n="legal_pgsharp">
+            PoGoSDex is an independent project and has no rights to PGSharp. We
+            provide information only; PGSharp remains the property of its
+            respective owner.
+          </p>
+          <p data-i18n="legal_pokemon">
+            Pokémon and Pokémon GO are trademarks of Nintendo, Game Freak,
+            Creatures, and Niantic. PoGoSDex is an unofficial fan project and is
+            not endorsed by these companies.
+          </p>
+          <p data-i18n="legal_brands">
+            All smartphone brand names and trademarks mentioned on this site are
+            the property of their respective owners. References are for
+            identification only.
+          </p>
+        </section>
+
+        <section
+          id="tosSummary"
+          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
+        >
+          <h2
+            class="text-lg font-semibold text-slate-100"
+            data-i18n="tos_summary_title"
+          >
+            Terms of Service
+          </h2>
+          <p data-i18n="tos_summary_text">
+            Learn how PoGoSDex may be used, what responsibilities you have as a
+            visitor, and which limitations apply. Please review our Terms of
+            Service before using the site or sharing content.
+          </p>
+          <a
+            href="/tos.html"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+            data-i18n="tos_read"
+          >
+            Read the Terms of Service →
+          </a>
+        </section>
+
+        <section
+          id="statusSection"
+          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
+        >
+          <div
+            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+          >
+            <div>
+              <h2
+                class="text-lg font-semibold text-slate-100"
+                data-i18n="status_heading"
+              >
+                Service status
+              </h2>
+              <p data-i18n="status_description">
+                Live uptime information supplied by UptimeRobot. Data is cached
+                for a few minutes.
+              </p>
+            </div>
+            <a
+              href="https://stats.uptimerobot.com/vf4OJASwdA"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+              data-i18n="status_link_label"
+            >
+              Open status page →
+            </a>
+          </div>
+
+          <div
+            id="statusCard"
+            class="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div class="flex items-center gap-2">
+              <span
+                id="statusIndicator"
+                class="h-3 w-3 rounded-full bg-yellow-400 animate-pulse"
+                aria-hidden="true"
+              ></span>
+              <span
+                id="statusMessage"
+                class="font-medium text-slate-200"
+                data-i18n="status_loading"
+              >
+                Checking status…
+              </span>
+            </div>
+            <span
+              id="statusUptime"
+              class="text-xs text-slate-400 uppercase tracking-wide"
+              data-i18n="status_uptime_unknown"
+            >
+              Uptime: — %
+            </span>
+          </div>
+        </section>
+
     <footer class="mt-12 border-t border-slate-800 py-6">
       <div
         class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"

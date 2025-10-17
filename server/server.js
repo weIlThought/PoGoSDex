@@ -268,6 +268,29 @@ export async function createServer() {
     }
   });
 
+  app.post(
+    "/api/turnstile-verify",
+    express.urlencoded({ extended: false }),
+    async (req, res) => {
+      const token = req.body.cf_turnstile_response;
+      const secret = process.env.TURNSTILE_SECRET;
+      const params = new URLSearchParams();
+      params.append("secret", secret);
+      params.append("response", token);
+      params.append("remoteip", req.ip);
+
+      const r = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          body: params,
+        }
+      );
+      const data = await r.json();
+      res.json({ success: !!data.success, score: data });
+    }
+  );
+
   const staticRoot = path.resolve(__dirname, "..", "public");
   const htmlCache = new Map();
   await Promise.all(
