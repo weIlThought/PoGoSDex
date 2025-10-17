@@ -197,6 +197,11 @@
     </main>
     <div id="turnstile-container">
       <div class="cf-turnstile" data-sitekey="{{TURNSTILE_SITEKEY}}"></div>
+      <script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        defer
+        nonce="{{CSP_NONCE}}"
+      ></script>
     </div>
     <script src="/pgsharp.js" defer nonce="{{CSP_NONCE}}"></script>
   </body>

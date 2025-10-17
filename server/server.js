@@ -71,7 +71,21 @@ export async function createServer() {
   app.disable("x-powered-by");
 
   app.use((req, res, next) => {
-    res.locals.cspNonce = crypto.randomBytes(16).toString("base64");
+    const nonce = crypto.randomBytes(16).toString("base64");
+    res.locals.cspNonce = nonce;
+    res.setHeader(
+      "Content-Security-Policy",
+      [
+        "default-src 'self'",
+        "script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net 'nonce-" +
+          nonce +
+          "'",
+        "frame-src 'self' https://challenges.cloudflare.com",
+        "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
+        "img-src 'self' data: https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
+        "style-src 'self' 'unsafe-inline'",
+      ].join("; ")
+    );
     next();
   });
 
@@ -347,7 +361,7 @@ export async function createServer() {
     })
   );
 
-  const sitekey = process.env.TURNSTILE_SITEKEY;
+  const sitekey = process.env.TURNSTILE_SITEKEY; // Wert aus Railway
 
   htmlRoutes.forEach(({ route, file }) => {
     app.get(route, (_req, res) => {
@@ -359,6 +373,24 @@ export async function createServer() {
         .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
       res.type("html").send(html);
     });
+  });
+
+  app.get("/privacy", (req, res) => {
+    const nonce = res.locals.cspNonce; // falls du CSP Nonce nutzt
+    const template = fs.readFileSync("public/privacy.html", "utf8");
+    const html = template
+      .replace(/{{CSP_NONCE}}/g, nonce)
+      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+    res.type("html").send(html);
+  });
+
+  app.get("/tos", (req, res) => {
+    const nonce = res.locals.cspNonce;
+    const template = fs.readFileSync("public/tos.html", "utf8");
+    const html = template
+      .replace(/{{CSP_NONCE}}/g, nonce)
+      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+    res.type("html").send(html);
   });
 
   app.use((req, res) => {
@@ -377,20 +409,6 @@ export async function createServer() {
   app.use((err, _req, res, _next) => {
     logger.error(`Unhandled error: ${err.stack || err.message}`);
     res.status(500).json({ error: "Internal Server Error" });
-  });
-
-  app.use((req, res, next) => {
-    res.setHeader(
-      "Content-Security-Policy",
-      [
-        "default-src 'self'",
-        "script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        "frame-src 'self' https://challenges.cloudflare.com",
-        "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        // ggf. weitere Quellen
-      ].join("; ")
-    );
-    next();
   });
 
   return { app, port, logger };
