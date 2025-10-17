@@ -6,11 +6,14 @@ WORKDIR /app
 
 # Copy root package files so workspace deps are installed once
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy all sources (so tailwind can read templates) and build CSS
 COPY . .
 RUN npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+
+# Remove devDependencies to make node_modules production-only for runtime image
+RUN npm prune --production
 
 # Runtime stage: use built node_modules and only needed files
 FROM node:22-alpine AS runtime
