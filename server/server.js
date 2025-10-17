@@ -90,18 +90,11 @@ export async function createServer() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: [
-            "'self'",
-            "https://challenges.cloudflare.com",
-            "https://pagead2.googlesyndication.com",
-            "https://securepubads.g.doubleclick.net",
-            (_req, res) => `'nonce-${res.locals.cspNonce}'`,
-          ],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          connectSrc: connectOrigins,
+          scriptSrc: ["'self'", "https://challenges.cloudflare.com"],
+          frameSrc: ["'self'", "https://challenges.cloudflare.com"],
+          // weitere Direktiven wie nötig
         },
       },
-      crossOriginEmbedderPolicy: false,
     })
   );
 
@@ -382,7 +375,7 @@ export async function createServer() {
   app.use((req, res, next) => {
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net; frame-src 'self' https://challenges.cloudflare.com"
+      "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com"
     );
     next();
   });
