@@ -14,6 +14,7 @@ import winston from "winston";
 import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
 import { validateData } from "./validate-data.js";
+import fetch from "node-fetch";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -272,22 +273,45 @@ export async function createServer() {
     "/api/turnstile-verify",
     express.urlencoded({ extended: false }),
     async (req, res) => {
-      const token = req.body.cf_turnstile_response;
-      const secret = process.env.TURNSTILE_SECRET;
-      const params = new URLSearchParams();
-      params.append("secret", secret);
-      params.append("response", token);
-      params.append("remoteip", req.ip);
+      const token = req.body["cf-turnstile_response"];
+      const remoteip =
+        req.headers["cf-connecting-ip"] ||
+        req.headers["x-forwarded-for"] ||
+        req.ip;
 
-      const r = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-          method: "POST",
-          body: params,
-        }
-      );
-      const data = await r.json();
-      res.json({ success: !!data.success, score: data });
+      // Hole Secret NUR aus Railway-Umgebungsvariablen!
+      const secret = process.env.TURNSTILE_SECRET;
+      if (!secret) {
+        return res
+          .status(500)
+          .json({ success: false, error: "Missing secret" });
+      }
+      if (!token) {
+        return res.status(400).json({ success: false, error: "Missing token" });
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.append("secret", secret);
+        params.append("response", token);
+        params.append("remoteip", remoteip);
+
+        const response = await fetch(
+          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+          {
+            method: "POST",
+            body: params,
+          }
+        );
+        const result = await response.json();
+
+        // Optional: weitere Checks (Hostname, Action etc.)
+        // if (result.success && result.hostname !== "pogosdex.com") { ... }
+
+        res.json(result);
+      } catch (err) {
+        res.status(500).json({ success: false, error: "Internal error" });
+      }
     }
   );
 
