@@ -1,10 +1,18 @@
-module.exports = {
+// module.exports = {
+//   testEnvironment: "node",
+
+//   rootDir: "./",
+
+//   moduleDirectories: ["node_modules", "server", "public"],
+
+//   moduleFileExtensions: ["js", "json", "ts"],
+//   testPathIgnorePatterns: ["/node_modules/", "/public/"],
+// };
+
+// jest.config.js
+export default {
   testEnvironment: "node",
-
-  rootDir: "./",
-
-  moduleDirectories: ["node_modules", "server", "public"],
-
+  transform: {},
   moduleFileExtensions: ["js", "json", "ts"],
   testPathIgnorePatterns: ["/node_modules/", "/public/"],
 };

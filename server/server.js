@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
+import path from "path";
+import { promises as fs } from "fs";
+import crypto from "crypto";
 
 import express from "express";
 import cors from "cors";
@@ -17,8 +17,8 @@ import { initDB } from "./db.js";
 import { validateData } from "./validate-data.js";
 import fetch from "node-fetch";
 // Scraper imports (neu)
-const { getPgsharpVersion } = require("./scrapers/pgsharp");
-const { getPokeminersApkVersion } = require("./scrapers/pokeminers");
+import { getPgsharpVersion } from "./scrapers/pgsharp.js";
+import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
 
 // SITEKEY debug (neu)
 const SITEKEY = process.env.TURNSTILE_SITEKEY || "";
@@ -398,7 +398,7 @@ export async function createServer() {
 
   // Static HTML serving with placeholder replacement for CSP nonce and TURNSTILE sitekey.
   // Wenn bereits eine statische Middleware vorhanden ist, wird diese Route vorangestellt.
-  app.get("/*.html", (req, res, next) => {
+  app.get(/^\/.*\.html$/, (req, res, next) => {
     const p = path.join(process.cwd(), "public", req.path);
     if (!fs.existsSync(p)) return next();
     let html = fs.readFileSync(p, "utf8");

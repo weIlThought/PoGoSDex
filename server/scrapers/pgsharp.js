@@ -1,4 +1,8 @@
-const fetch = global.fetch || require("node-fetch");
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import { load } from "cheerio";
+import db from "../db.js";
 
 async function getPgsharpVersion() {
   const res = await fetch("https://www.pgsharp.com");
@@ -16,4 +20,4 @@ async function getPgsharpVersion() {
   return { ok: true, pageVersion, apkVersion, rawInner: inner };
 }
 
-module.exports = { getPgsharpVersion };
+export { getPgsharpVersion };

@@ -1,4 +1,8 @@
-const fetch = global.fetch || require("node-fetch");
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import { load } from "cheerio";
+import db from "../db.js";
 
 async function getPokeminersApkVersion() {
   const res = await fetch("https://pokeminers.com");
@@ -17,4 +21,4 @@ async function getPokeminersApkVersion() {
   return { ok: true, apkVersion: v[1], raw: inner };
 }
 
-module.exports = { getPokeminersApkVersion };
+export { getPokeminersApkVersion };

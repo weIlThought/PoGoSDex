@@ -27,12 +27,14 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/weIlThought/PoGoSDex/issues"
   },
   "homepage": "https://github.com/weIlThought/PoGoSDex#readme",
   "dependencies": {
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
     "node-fetch": "^3.3.2"
   }
