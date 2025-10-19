@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+console.log("TURNSTILE_SITEKEY present:", !!process.env.TURNSTILE_SITEKEY);
 
 import path from "path";
 import { promises as fs } from "fs";
@@ -38,6 +39,9 @@ const uptimeCache = {
   payload: null,
   timestamp: 0,
 };
+
+// Definiere sitekey zentral (verwendet in HTML-Placeholder-Replacement)
+const sitekey = process.env.TURNSTILE_SITEKEY || "";
 
 export async function createServer() {
   const port = Number(process.env.PORT || 3000);
@@ -402,9 +406,9 @@ export async function createServer() {
     const p = path.join(process.cwd(), "public", req.path);
     if (!fs.existsSync(p)) return next();
     let html = fs.readFileSync(p, "utf8");
-    html = html
-      .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, SITEKEY);
+    html = html.replace("__CSP_NONCE__", nonce);
+    // sitekey kann leer sein — ersetze defensiv
+    html = html.replace("/*SITEKEY_PLACEHOLDER*/", sitekey || "");
     res.type("html").send(html);
   });
 
