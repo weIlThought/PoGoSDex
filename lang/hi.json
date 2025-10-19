@@ -61,18 +61,5 @@
   "placeholder_os": "ऑपरेटिंग सिस्टम",
   "placeholder_type": "प्रकार (फोन/टैबलेट)",
   "placeholder_notes": "नोट्स (कॉमा से अलग)",
-  "placeholder_rootlinks": "रूट लिंक (कॉमा से अलग URLs)",
-  "pgsharp_title": "PGSharp",
-  "pgsharp_page_version": "PGSharp पृष्ठ संस्करण",
-  "pgsharp_apk_version": "PGSharp APK (अंदरूनी)",
-  "pokeminers_apk": "Pokeminers APK",
-  "pgsharp_status": "स्थिति",
-  "pgsharp_status_compatible": "अनुकूल",
-  "pgsharp_status_not_compatible": "अनअनुकूल / PGSharp अपडेट का इंतजार",
-  "pgsharp_status_pgsharp_newer": "Pokeminers से नया PGSharp",
-  "pgsharp_ad_placeholder": "विज्ञापन प्लेसहोल्डर",
-  "pgsharp_coords_title": "निर्देशांक / रैडस्पॉट्स",
-  "pgsharp_coords_loading": "लोड हो रहा है...",
-  "pgsharp_support": "समस्याओं के लिए संपर्क करें",
-  "pgsharp_support_email": "support@pogosdex.com"
+  "placeholder_rootlinks": "रूट लिंक (कॉमा से अलग URLs)"
 }
