@@ -1,9 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import crypto from "crypto";
-import path from "path";
-import fs from "fs/promises";
+const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -15,6 +16,13 @@ import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
 import { validateData } from "./validate-data.js";
 import fetch from "node-fetch";
+// Scraper imports (neu)
+const { getPgsharpVersion } = require("./scrapers/pgsharp");
+const { getPokeminersApkVersion } = require("./scrapers/pokeminers");
+
+// SITEKEY debug (neu)
+const SITEKEY = process.env.TURNSTILE_SITEKEY || "";
+console.log("TURNSTILE_SITEKEY present:", SITEKEY ? "YES" : "NO");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,9 +78,12 @@ export async function createServer() {
 
   app.disable("x-powered-by");
 
+  // CSP-Nonce Middleware (falls noch nicht vorhanden) - ersetzt/respektiert bestehende Kopfzeilen
   app.use((req, res, next) => {
     const nonce = crypto.randomBytes(16).toString("base64");
     res.locals.cspNonce = nonce;
+
+    // Minimal, sicherer CSP für Turnstile + externe Ads
     res.setHeader(
       "Content-Security-Policy",
       [
@@ -80,11 +91,13 @@ export async function createServer() {
         "script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net 'nonce-" +
           nonce +
           "'",
-        "connect-src 'self' https://challenges.cloudflare.com https://api.uptimerobot.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
         "frame-src 'self' https://challenges.cloudflare.com",
-        "style-src 'self' 'nonce-" + nonce + "'",
+        "connect-src 'self' https://challenges.cloudflare.com https://api.uptimerobot.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
+        "img-src 'self' data: https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
+        "style-src 'self' 'unsafe-inline'",
       ].join("; ")
     );
+
     next();
   });
 
@@ -353,8 +366,6 @@ export async function createServer() {
     })
   );
 
-  const sitekey = process.env.TURNSTILE_SITEKEY; // Wert aus Railway
-
   htmlRoutes.forEach(({ route, file }) => {
     app.get(route, (_req, res) => {
       const nonce = res.locals.cspNonce;
@@ -382,6 +393,29 @@ export async function createServer() {
     const html = template
       .replace(/{{CSP_NONCE}}/g, nonce)
       .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+    res.type("html").send(html);
+  });
+
+  // Static HTML serving with placeholder replacement for CSP nonce and TURNSTILE sitekey.
+  // Wenn bereits eine statische Middleware vorhanden ist, wird diese Route vorangestellt.
+  app.get("/*.html", (req, res, next) => {
+    const p = path.join(process.cwd(), "public", req.path);
+    if (!fs.existsSync(p)) return next();
+    let html = fs.readFileSync(p, "utf8");
+    html = html
+      .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
+      .replace(/{{TURNSTILE_SITEKEY}}/g, SITEKEY);
+    res.type("html").send(html);
+  });
+
+  // Root -> index.html mit Platzhalter-Ersetzung
+  app.get("/", (req, res) => {
+    const p = path.join(process.cwd(), "public", "index.html");
+    if (!fs.existsSync(p)) return res.status(404).end();
+    let html = fs.readFileSync(p, "utf8");
+    html = html
+      .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
+      .replace(/{{TURNSTILE_SITEKEY}}/g, SITEKEY);
     res.type("html").send(html);
   });
 
