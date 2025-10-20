@@ -2,6 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 console.log("TURNSTILE_SITEKEY present:", !!process.env.TURNSTILE_SITEKEY);
 
+// zentrale, robuste Env‑Namen (unterstützt TURNSTILE_SECRET oder TURNSTILE_SECRET_KEY)
+// TURNSTILE envs: akzeptiere mehrere Namen, damit .env und Deployment passen
+const sitekey =
+  process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
+const turnstileSecret =
+  process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET || "";
+
 import path from "path";
 import { promises as fs } from "fs";
 import crypto from "crypto";
@@ -20,9 +27,9 @@ import fetch from "node-fetch";
 // Scraper imports (neu)
 import { getPgsharpVersion } from "./scrapers/pgsharp.js";
 import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
+import TurnstileValidator from "./turnstile.js";
 
 // SITEKEY debug (neu)
-const SITEKEY = process.env.TURNSTILE_SITEKEY || "";
 console.log("TURNSTILE_SITEKEY present:", SITEKEY ? "YES" : "NO");
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,9 +46,6 @@ const uptimeCache = {
   payload: null,
   timestamp: 0,
 };
-
-// Definiere sitekey zentral (verwendet in HTML-Placeholder-Replacement)
-const sitekey = process.env.TURNSTILE_SITEKEY || "";
 
 export async function createServer() {
   const port = Number(process.env.PORT || 3000);
@@ -286,6 +290,8 @@ export async function createServer() {
     }
   });
 
+  const turnstile = new TurnstileValidator(process.env.TURNSTILE_SECRET_KEY);
+
   app.post(
     "/api/turnstile-verify",
     express.urlencoded({ extended: false }),
@@ -407,8 +413,10 @@ export async function createServer() {
     if (!fs.existsSync(p)) return next();
     let html = fs.readFileSync(p, "utf8");
     html = html.replace("__CSP_NONCE__", nonce);
-    // sitekey kann leer sein — ersetze defensiv
-    html = html.replace("/*SITEKEY_PLACEHOLDER*/", sitekey || "");
+    // Ersetze Platzhalter in allen HTML-Dateien mit dem Sitekey (oder leerem String)
+    html = html.replace(/__TURNSTILE_SITEKEY__/g, sitekey || "");
+    // Falls Du alternativ ein JS-Kommentar‑Placeholder nutzt:
+    html = html.replace(/\/\*SITEKEY_PLACEHOLDER\*\/?/g, sitekey || "");
     res.type("html").send(html);
   });
 
@@ -456,3 +464,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       process.exit(1);
     });
 }
+
+// Optional: export turnstileSecret für Verwendung in Turnstile-Validator-Instanz
+export { sitekey, turnstileSecret };

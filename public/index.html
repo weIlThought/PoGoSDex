@@ -399,7 +399,7 @@
           </div>
         </section>
 
-        <form id="contact-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+        <form id="contact-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl" action="/contact" method="POST">
           <div class="mb-4">
             <label for="name" class="block text-sm text-slate-300 mb-2">Name</label>
             <input
@@ -430,15 +430,12 @@
               required
             ></textarea>
           </div>
-          <div id="turnstile-container">
-            <div class="cf-turnstile" data-sitekey="{{TURNSTILE_SITEKEY}}"></div>
-          </div>
+          <div class="cf-turnstile" data-sitekey="__TURNSTILE_SITEKEY__"></div>
           <button type="submit" class="btn-primary mt-4">Absenden</button>
         </form>
 
         <!-- Cloudflare Turnstile Script (explicit mode) -->
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer nonce="{{CSP_NONCE}}"></script>
-        <script src="/turnstile.js" defer nonce="{{CSP_NONCE}}"></script>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
         <section
           id="legalSection"
