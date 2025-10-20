@@ -131,7 +131,18 @@ jobs:
         env:
           HUSKY: 0
         run: |
-          npm test
+          echo "🧪 Running backend tests in /server ..."
+          cd server
+
+          # Stelle sicher, dass devDependencies (inkl. Jest) da sind
+          npm ci --include=dev
+
+          # Führe Jest-Tests aus (ESM kompatibel)
+          npx jest --runInBand --passWithNoTests
+
+          # Zurück ins Root für Lint & Audit
+          cd ..
+          echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
 
