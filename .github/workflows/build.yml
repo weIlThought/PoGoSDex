@@ -18,11 +18,9 @@ jobs:
       - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
-          # volle History nötig für git commit/push und für sichere diff-Prüfungen
           fetch-depth: 0
           persist-credentials: true
           submodules: true
-          # use exact PR head commit when running on a PR to avoid refs/pull/.../merge
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
 
       - name: Debug: show checked out ref
@@ -35,18 +33,22 @@ jobs:
           git rev-parse HEAD
           git log -1 --pretty=fuller
 
+      - name: Setup Node.js (latest LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
       - name: Lockfile integrity check & auto-commit (root + server)
         env:
           HUSKY: 0
         run: |
           set -e
-          # avoid loops if last commit was made by the action
           LAST_AUTHOR=$(git log -1 --pretty=%an || echo "")
           if [ "$LAST_AUTHOR" = "github-actions[bot]" ]; then
             echo "Last commit by github-actions[bot] — skipping to avoid loop."
             exit 0
           fi
-          # regen lockfiles for root and server
           for d in . server; do
             if [ -f "$d/package.json" ]; then
               pushd "$d" >/dev/null
@@ -54,13 +56,11 @@ jobs:
               popd >/dev/null
             fi
           done
-          # if changed, commit & push back to PR branch (works for PRs from same repo)
           if ! git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json server/package-lock.json || true
             git commit -m "chore(deps): normalize package-lock.json (CI) [skip ci]" || true
-            # push to PR head branch (only works if runner has write perms and PR branch is in same repo)
             if [ "${{ github.event_name }}" = "pull_request" ]; then
               BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
               REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
@@ -70,6 +70,7 @@ jobs:
             fi
           fi
       # --- Ende Lockfile-Check ---
+
       - name: Cache npm
         uses: actions/cache@v4
         with:
@@ -84,12 +85,12 @@ jobs:
         run: npm ci --omit=dev
 
       - name: Install deps for root and server (ci preferred, fallback to install & update lockfile)
+        id: install-deps
         env:
           HUSKY: 0
         run: |
           set -e
           CHANGED=0
-          # determine repo/branch for potential push (works in PR context)
           if [ -f "$GITHUB_EVENT_PATH" ]; then
             REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
             if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
@@ -106,7 +107,6 @@ jobs:
             if [ -f "$d/package.json" ]; then
               echo "=== Install in $d ==="
               pushd "$d" >/dev/null
-              # try npm ci first
               if npm ci --include=dev; then
                 echo "npm ci OK in $d"
               else
@@ -120,18 +120,21 @@ jobs:
             fi
           done
 
-          # If we updated lockfiles and this is a PR in same repo, commit & push them
           if [ "$CHANGED" -eq 1 ] && [ -n "$REPO" ] && [ -n "$BRANCH" ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json server/package-lock.json || true
             git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
             git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            echo "lockfile_updated=true" >> $GITHUB_OUTPUT
             echo "Updated lockfiles pushed to $REPO:$BRANCH"
           elif [ "$CHANGED" -eq 1 ]; then
             echo "Lockfiles changed but not a PR branch — please run 'npm install' locally and commit package-lock.json"
             git --no-pager diff -- package-lock.json server/package-lock.json || true
+            echo "lockfile_updated=false" >> $GITHUB_OUTPUT
             exit 1
+          else
+            echo "lockfile_updated=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Tailwind (install dev deps only for asset build)
@@ -147,7 +150,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           install: true
-          # use the docker-container driver so cache export (type=gha) is supported
           driver: docker-container
 
       - name: Build Docker image (use buildx + inline cache)
@@ -172,11 +174,21 @@ jobs:
           npm run lint || true
           npm audit --audit-level=moderate || true
 
-      # append as last step in the build job (runs only on PRs)
+      # 💬 Kommentar in Dependabot-PR, falls Lockfile auto-gefixt wurde
+      - name: Comment on Dependabot PR
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' && steps.install-deps.outputs.lockfile_updated == 'true' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🔄 **Lockfile wurde automatisch aktualisiert**
+            Der CI-Workflow hat bei `npm ci` einen Versionskonflikt erkannt, den Lockfile repariert und zurück in diesen PR gepusht.
+            Alles läuft jetzt automatisch ✅
+
+      # Optional: Automerge für Dependabot
       - name: Auto-merge Dependabot PR
         if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         uses: pascalgn/automerge-action@v0.16.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           merge_method: squash
-          # require labels if you want: required_labels: automerge
