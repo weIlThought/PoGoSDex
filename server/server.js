@@ -14,8 +14,8 @@ const turnstile = new TurnstileValidator(turnstileSecret);
 // optional exportieren, falls andere Module Zugriff brauchen
 export { sitekey, turnstileSecret, turnstile };
 
-import path from "path";
 import fs from "fs";
+import path from "path";
 import crypto from "crypto";
 
 import express from "express";
