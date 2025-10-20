@@ -139,21 +139,3 @@ jobs:
           echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
-
-      # -------- 🧠 Logausgabe für Dependabot PRs --------
-      - name: Debug Token Source
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        run: |
-          if [ -n "${{ secrets.PERSONAL_GITHUB_TOKEN }}" ]; then
-            echo "🔑 Using PERSONAL_GITHUB_TOKEN for automerge"
-          else
-            echo "⚠️ Using default GITHUB_TOKEN (limited permissions)"
-          fi
-
-      # -------- 🧠 Auto-Merge für Dependabot PRs --------
-      - name: Auto-merge Dependabot PR
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        uses: pascalgn/automerge-action@v0.16.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-          MERGE_METHOD: squash

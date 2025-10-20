@@ -16,3 +16,12 @@ updates:
     labels:
       - dependencies
       - automerge
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+      - ready-to-merge
