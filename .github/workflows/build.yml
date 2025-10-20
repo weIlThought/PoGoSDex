@@ -51,6 +51,18 @@ jobs:
           HUSKY: 0
         run: npm ci --omit=dev
 
+      - name: Install deps (ci preferred, fallback to install & update lockfile)
+        env:
+          HUSKY: 0
+        run: |
+          set -e
+          if npm ci --include=dev; then
+            echo "npm ci OK"
+          else
+            npm install
+            # commit & push updated package-lock.json back to PR branch (if pull_request)
+          fi
+
       - name: Build Tailwind (install dev deps only for asset build)
         env:
           HUSKY: 0
