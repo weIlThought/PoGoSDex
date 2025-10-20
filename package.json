@@ -12,7 +12,7 @@
     "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
-    "prepare": "if [ \"$HUSKY\" != \"0\" ]; then node -e \"try{require('husky').install()}catch(e){}\"; fi"
+    "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
   "devDependencies": {
     "husky": "^9.1.7",
@@ -36,6 +36,8 @@
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "node-fetch": "^3.3.2"
+    "lowdb": "^7.0.1",
+    "node-fetch": "^3.3.2",
+    "steno": "^4.0.2"
   }
 }
