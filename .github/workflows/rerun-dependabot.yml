@@ -1,0 +1,49 @@
+name: Rerun All Failed Dependabot PR Runs
+
+on:
+  schedule:
+    # Läuft jeden Tag um 02:00 UTC (kann angepasst werden)
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Ermöglicht manuelles Triggern
+
+jobs:
+  rerun-dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup GitHub CLI
+        uses: cli/gh-actions@v2
+
+      - name: Rerun all failed Dependabot PR runs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Fetching open Dependabot PRs..."
+          PRS=$(gh pr list -R "$REPO" --search "author:dependabot[bot] is:open" --json number,headRefName --jq '.[] | "\(.number) \t \(.headRefName)"')
+
+          if [ -z "$PRS" ]; then
+            echo "No open Dependabot PRs found."
+            exit 0
+          fi
+
+          echo "$PRS" | while IFS=$'\t' read -r pr branch; do
+            echo "Processing PR #$pr, branch: $branch"
+
+            # Alle fehlgeschlagenen Workflow Runs für diese Branch holen
+            RUN_IDS=$(gh run list -R "$REPO" --branch "$branch" --status completed --json databaseId,conclusion \
+              --jq '.[] | select(.conclusion=="failure") | .databaseId')
+
+            if [ -z "$RUN_IDS" ]; then
+              echo "  No failed runs found for this PR, skipping."
+              continue
+            fi
+
+            # Alle gefundenen Runs neu starten
+            echo "$RUN_IDS" | while read -r run_id; do
+              echo "  Rerunning run ID: $run_id"
+              gh run rerun -R "$REPO" "$run_id"
+            done
+          done
