@@ -1,0 +1,202 @@
+name: Build
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo + submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: true
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
+
+      - name: Debug: show checked out ref
+        run: |
+          echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "Current branch:"
+          git rev-parse --abbrev-ref HEAD || true
+          echo "Current commit:"
+          git rev-parse HEAD
+          git log -1 --pretty=fuller
+
+      - name: Setup Node.js (latest LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Lockfile integrity check & auto-commit (root + server)
+        env:
+          HUSKY: 0
+        run: |
+          set -e
+          LAST_AUTHOR=$(git log -1 --pretty=%an || echo "")
+          if [ "$LAST_AUTHOR" = "github-actions[bot]" ]; then
+            echo "Last commit by github-actions[bot] — skipping to avoid loop."
+            exit 0
+          fi
+          for d in . server; do
+            if [ -f "$d/package.json" ]; then
+              pushd "$d" >/dev/null
+              npm install --package-lock-only
+              popd >/dev/null
+            fi
+          done
+          if ! git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json server/package-lock.json || true
+            git commit -m "chore(deps): normalize package-lock.json (CI) [skip ci]" || true
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+              REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+              git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            else
+              git push origin HEAD || true
+            fi
+          fi
+      # --- Ende Lockfile-Check ---
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-cache-${{ runner.os }}-
+
+      - name: Install production deps (fast)
+        env:
+          HUSKY: 0
+        run: npm ci --omit=dev
+
+      - name: Install deps for root and server (ci preferred, fallback to install & update lockfile)
+        id: install-deps
+        env:
+          HUSKY: 0
+        run: |
+          set -e
+          CHANGED=0
+          if [ -f "$GITHUB_EVENT_PATH" ]; then
+            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+            else
+              BRANCH=$(echo "${GITHUB_REF#refs/heads/}")
+            fi
+          else
+            REPO=$(git remote get-url origin | sed -E 's#.*[:/](.+/.+)(\.git)?#\1#')
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          fi
+          for d in . server; do
+            if [ -f "$d/package.json" ]; then
+              echo "=== Install in $d ==="
+              pushd "$d" >/dev/null
+              # npm ci versuchen, aber Fehler abfangen
+              set +e
+              npm ci --include=dev
+              STATUS=$?
+              set -e
+              if [ $STATUS -ne 0 ]; then
+                echo "⚠️ npm ci failed in $d — running npm install to update lockfile"
+                npm install
+                CHANGED=1
+              else
+                echo "✅ npm ci OK in $d"
+              fi
+              popd >/dev/null
+            else
+              echo "skip $d (no package.json)"
+            fi
+          done
+          if [ "$CHANGED" -eq 1 ] && [ -n "$REPO" ] && [ -n "$BRANCH" ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json server/package-lock.json || true
+            git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            echo "lockfile_updated=true" >> $GITHUB_OUTPUT
+            echo "Updated lockfiles pushed to $REPO:$BRANCH"
+          elif [ "$CHANGED" -eq 1 ]; then
+            echo "Lockfiles changed but not a PR branch — please run 'npm install' locally and commit package-lock.json"
+            git --no-pager diff -- package-lock.json server/package-lock.json || true
+            echo "lockfile_updated=false" >> $GITHUB_OUTPUT
+            # Fail only if not Dependabot
+            if [ "$GITHUB_ACTOR" != "dependabot[bot]" ]; then
+              exit 1
+            else
+              echo "Dependabot detected — ignoring lockfile mismatch failures."
+            fi
+          else
+            echo "lockfile_updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Tailwind (install dev deps only for asset build)
+        env:
+          HUSKY: 0
+        run: |
+          npm ci --include=dev
+          npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          npm prune --production
+
+      - name: Cache Docker layers
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver: docker-container
+
+      - name: Build Docker image (use buildx + inline cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: pogosdex:ci
+          build-args: |
+            NODE_ENV=production
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests, lint and audit
+        env:
+          HUSKY: 0
+        run: |
+          npm ci
+          npm test
+          npm run lint || true
+          npm audit --audit-level=moderate || true
+
+      # 💬 Kommentar in Dependabot-PR, falls Lockfile auto-gefixt wurde
+      - name: Comment on Dependabot PR
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' && steps.install-deps.outputs.lockfile_updated == 'true' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🔄 **Lockfile wurde automatisch aktualisiert**
+            Der CI-Workflow hat bei `npm ci` einen Versionskonflikt erkannt, den Lockfile repariert und zurück in diesen PR gepusht.
+            Alles läuft jetzt automatisch ✅
+
+      # Optional: Automerge für Dependabot
+      - name: Auto-merge Dependabot PR
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
+        uses: pascalgn/automerge-action@v0.16.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          merge_method: squash
