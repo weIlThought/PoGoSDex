@@ -59,8 +59,17 @@ jobs:
           if npm ci --include=dev; then
             echo "npm ci OK"
           else
+            echo "npm ci failed — running npm install to update lockfile"
             npm install
-            # commit & push updated package-lock.json back to PR branch (if pull_request)
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+              REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add package-lock.json || true
+              git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
+              git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            fi
           fi
 
       - name: Build Tailwind (install dev deps only for asset build)
