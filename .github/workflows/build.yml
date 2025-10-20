@@ -75,6 +75,7 @@ jobs:
                 echo "✅ npm ci OK in $d"
               else
                 echo "⚠️ npm ci failed in $d — running npm install fallback"
+                HUSKY=0 npm install
                 npm install
                 CHANGED=1
               fi
