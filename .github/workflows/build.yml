@@ -51,35 +51,78 @@ jobs:
           HUSKY: 0
         run: npm ci --omit=dev
 
-      - name: Install deps (ci preferred, fallback to install & update lockfile)
+      - name: Install deps for root and server (ci preferred, fallback to install & update lockfile)
         env:
           HUSKY: 0
         run: |
           set -e
-          if npm ci --include=dev; then
-            echo "npm ci OK"
-          else
-            echo "npm ci failed — running npm install to update lockfile"
-            npm install
-            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
-              REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
-              git config user.name "github-actions[bot]"
-              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-              git add package-lock.json || true
-              git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
-              git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
-            fi
+          CHANGED=0
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
           fi
 
-      - name: Lockfile integrity check
+          for d in . server; do
+            if [ -f "$d/package.json" ]; then
+              echo "=== Processing $d ==="
+              pushd "$d" >/dev/null
+              if npm ci --include=dev; then
+                echo "npm ci OK for $d"
+              else
+                echo "npm ci failed for $d — running npm install"
+                npm install
+                CHANGED=1
+              fi
+              popd >/dev/null
+            else
+              echo "skip $d (no package.json)"
+            fi
+          done
+
+          # If we changed lockfiles during fallback, push them back to the PR branch
+          if [ "$CHANGED" -eq 1 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json server/package-lock.json || true
+            git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+          fi
+
+      - name: Lockfile integrity check for root and server (auto-commit on PR)
         env:
           HUSKY: 0
         run: |
-          # regenerate package-lock in-memory to detect divergences without installing deps
-          npm install --package-lock-only
-          # if package-lock.json would change, fail the build (keeps lockfile in sync)
-          git diff --exit-code -- package-lock.json || (echo "package-lock.json is out of sync with package.json. Run 'npm install' and commit the lockfile." && exit 1)
+          set -e
+          for d in . server; do
+            if [ -f "$d/package.json" ]; then
+              echo "=== Regenerating lock-only for $d ==="
+              pushd "$d" >/dev/null
+              npm install --package-lock-only
+              popd >/dev/null
+            fi
+          done
+
+          # if neither lockfile changed -> success
+          if git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
+            echo "package-lock.json files are in sync with package.json"
+            exit 0
+          fi
+
+          echo "package-lock.json changed"
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "Committing updated lockfiles back to PR branch"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json server/package-lock.json || true
+            git commit -m "chore(deps): normalize package-lock.json (CI)" || true
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            exit 0
+          fi
+
+          echo "Not a pull_request event — please run 'npm install' locally and commit package-lock.json"
+          git --no-pager diff -- package-lock.json server/package-lock.json || true
+          exit 1
 
       - name: Build Tailwind (install dev deps only for asset build)
         env:
