@@ -1,5 +1,9 @@
 name: Build
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   push:
     branches: [main]
@@ -75,3 +79,12 @@ jobs:
           npm test
           npm run lint || true
           npm audit --audit-level=moderate || true
+
+      # append as last step in the build job (runs only on PRs)
+      - name: Auto-merge Dependabot PR
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
+        uses: pascalgn/automerge-action@v0.16.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          merge_method: squash
+          # require labels if you want: required_labels: automerge
