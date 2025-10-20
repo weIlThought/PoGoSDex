@@ -90,25 +90,33 @@ export async function createServer() {
 
   app.disable("x-powered-by");
 
-  // CSP-Nonce Middleware (falls noch nicht vorhanden) - ersetzt/respektiert bestehende Kopfzeilen
+  // CSP middleware: conservative, backwards-compatible first step
   app.use((req, res, next) => {
+    // erzeugt optional einen nonce (kann später in inline <script nonce="..."> verwendet werden)
     const nonce = crypto.randomBytes(16).toString("base64");
     res.locals.cspNonce = nonce;
 
-    // Minimal, sicherer CSP für Turnstile + externe Ads
-    res.setHeader(
-      "Content-Security-Policy",
-      [
-        "default-src 'self'",
-        "script-src 'self' https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net 'nonce-" +
-          nonce +
-          "'",
-        "frame-src 'self' https://challenges.cloudflare.com",
-        "connect-src 'self' https://challenges.cloudflare.com https://api.uptimerobot.com https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        "img-src 'self' data: https://pagead2.googlesyndication.com https://securepubads.g.doubleclick.net",
-        "style-src 'self' 'unsafe-inline'",
-      ].join("; ")
-    );
+    const csp = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      // script-src: kein pagead/doubleclick, erlaubt 'self' und optional Cloudflare challenges
+      // (noch 'unsafe-inline' für Kompatibilität; entferne es später und nutze Nonces)
+      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com 'nonce-" +
+        nonce +
+        "'",
+      "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com",
+      "img-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      "frame-src 'self' https://challenges.cloudflare.com",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "require-trusted-types-for 'script'",
+      "report-uri /csp-report",
+    ].join("; ");
+
+    res.setHeader("Content-Security-Policy", csp);
+    // optional: also set Report-To header if endpoint exists
+    // res.setHeader("Report-To", JSON.stringify({ group: "csp", max_age: 10886400, endpoints: [{ url: "/csp-report" }] }));
 
     next();
   });

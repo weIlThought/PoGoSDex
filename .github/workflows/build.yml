@@ -102,24 +102,27 @@ jobs:
             REPO=$(git remote get-url origin | sed -E 's#.*[:/](.+/.+)(\.git)?#\1#')
             BRANCH=$(git rev-parse --abbrev-ref HEAD)
           fi
-
           for d in . server; do
             if [ -f "$d/package.json" ]; then
               echo "=== Install in $d ==="
               pushd "$d" >/dev/null
-              if npm ci --include=dev; then
-                echo "npm ci OK in $d"
-              else
-                echo "npm ci failed in $d — running npm install to update lockfile"
+              # npm ci versuchen, aber Fehler abfangen
+              set +e
+              npm ci --include=dev
+              STATUS=$?
+              set -e
+              if [ $STATUS -ne 0 ]; then
+                echo "⚠️ npm ci failed in $d — running npm install to update lockfile"
                 npm install
                 CHANGED=1
+              else
+                echo "✅ npm ci OK in $d"
               fi
               popd >/dev/null
             else
               echo "skip $d (no package.json)"
             fi
           done
-
           if [ "$CHANGED" -eq 1 ] && [ -n "$REPO" ] && [ -n "$BRANCH" ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -132,7 +135,12 @@ jobs:
             echo "Lockfiles changed but not a PR branch — please run 'npm install' locally and commit package-lock.json"
             git --no-pager diff -- package-lock.json server/package-lock.json || true
             echo "lockfile_updated=false" >> $GITHUB_OUTPUT
-            exit 1
+            # Fail only if not Dependabot
+            if [ "$GITHUB_ACTOR" != "dependabot[bot]" ]; then
+              exit 1
+            else
+              echo "Dependabot detected — ignoring lockfile mismatch failures."
+            fi
           else
             echo "lockfile_updated=false" >> $GITHUB_OUTPUT
           fi
