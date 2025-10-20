@@ -15,7 +15,7 @@ const turnstile = new TurnstileValidator(turnstileSecret);
 export { sitekey, turnstileSecret, turnstile };
 
 import path from "path";
-import { promises as fs } from "fs";
+import fs from "fs";
 import crypto from "crypto";
 
 import express from "express";
@@ -408,19 +408,54 @@ export async function createServer() {
     res.type("html").send(html);
   });
 
-  // Static HTML serving with placeholder replacement for CSP nonce and TURNSTILE sitekey.
-  // Wenn bereits eine statische Middleware vorhanden ist, wird diese Route vorangestellt.
-  app.get(/^\/.*\.html$/, (req, res, next) => {
-    const p = path.join(process.cwd(), "public", req.path);
+  // Middleware: HTML-Dateien zur Laufzeit ersetzen (muss VOR express.static registriert werden)
+  app.use((req, res, next) => {
+    // Nur HTML-Dateien und Root behandeln
+    if (!req.path.endsWith(".html") && req.path !== "/") return next();
+
+    const rel = req.path === "/" ? "/index.html" : req.path;
+    const p = path.join(process.cwd(), "public", rel);
+
     if (!fs.existsSync(p)) return next();
-    let html = fs.readFileSync(p, "utf8");
-    html = html.replace("__CSP_NONCE__", nonce);
-    // Ersetze Platzhalter in allen HTML-Dateien mit dem Sitekey (oder leerem String)
-    html = html.replace(/__TURNSTILE_SITEKEY__/g, sitekey || "");
-    // Falls Du alternativ ein JS-Kommentar‑Placeholder nutzt:
-    html = html.replace(/\/\*SITEKEY_PLACEHOLDER\*\/?/g, sitekey || "");
-    res.type("html").send(html);
+
+    try {
+      let html = fs.readFileSync(p, "utf8");
+      html = html.replace(/__TURNSTILE_SITEKEY__/g, sitekey || "");
+      html = html.replace(/__CSP_NONCE__/g, nonce || "");
+      res.type("html").send(html);
+    } catch (err) {
+      next(err);
+    }
   });
+
+  // Wichtig: express.static(...) muss NACH dieser Middleware kommen
+  app.use(
+    express.static(staticRoot, {
+      index: false,
+      extensions: ["html"],
+      etag: true,
+      maxAge: "12h",
+      setHeaders(res) {
+        res.setHeader("Cache-Control", "public, max-age=43200, immutable");
+      },
+    })
+  );
+
+  app.use(
+    "/data",
+    express.static(path.resolve(__dirname, "..", "data"), {
+      index: false,
+      maxAge: "1h",
+    })
+  );
+
+  app.use(
+    "/lang",
+    express.static(path.resolve(__dirname, "..", "lang"), {
+      index: false,
+      maxAge: "1h",
+    })
+  );
 
   // Root -> index.html mit Platzhalter-Ersetzung
   app.get("/", (req, res) => {
