@@ -22,8 +22,18 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
           submodules: true
-          # for PRs use the PR head ref (github.head_ref), otherwise use github.ref
-          ref: ${{ github.head_ref || github.ref }}
+          # use exact PR head commit when running on a PR to avoid refs/pull/.../merge
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
+
+      - name: Debug: show checked out ref
+        run: |
+          echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "Current branch:"
+          git rev-parse --abbrev-ref HEAD || true
+          echo "Current commit:"
+          git rev-parse HEAD
+          git log -1 --pretty=fuller
 
       - name: Lockfile integrity check & auto-commit (root + server)
         env:
