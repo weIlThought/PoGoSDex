@@ -121,6 +121,14 @@ jobs:
           npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           npm prune --production
 
+      - name: Cache Docker layers
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          # use the docker-container driver so cache export (type=gha) is supported
+          driver: docker-container
+
       - name: Build Docker image (use buildx + inline cache)
         uses: docker/build-push-action@v5
         with:
@@ -130,6 +138,7 @@ jobs:
           tags: pogosdex:ci
           build-args: |
             NODE_ENV=production
+          builder: ${{ steps.buildx.outputs.name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
