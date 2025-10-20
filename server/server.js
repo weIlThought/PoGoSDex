@@ -2,12 +2,17 @@ import dotenv from "dotenv";
 dotenv.config();
 console.log("TURNSTILE_SITEKEY present:", !!process.env.TURNSTILE_SITEKEY);
 
-// zentrale, robuste Env‑Namen (unterstützt TURNSTILE_SECRET oder TURNSTILE_SECRET_KEY)
-// TURNSTILE envs: akzeptiere mehrere Namen, damit .env und Deployment passen
+// Unterstütze mehrere env-Namen und erzeuge turnstileSecret
 const sitekey =
   process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
 const turnstileSecret =
   process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET || "";
+
+// Turnstile Validator initialisieren (server/turnstile.js)
+import TurnstileValidator from "./turnstile.js";
+const turnstile = new TurnstileValidator(turnstileSecret);
+// optional exportieren, falls andere Module Zugriff brauchen
+export { sitekey, turnstileSecret, turnstile };
 
 import path from "path";
 import { promises as fs } from "fs";
@@ -27,10 +32,9 @@ import fetch from "node-fetch";
 // Scraper imports (neu)
 import { getPgsharpVersion } from "./scrapers/pgsharp.js";
 import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
-import TurnstileValidator from "./turnstile.js";
 
 // SITEKEY debug (neu)
-console.log("TURNSTILE_SITEKEY present:", SITEKEY ? "YES" : "NO");
+console.log("TURNSTILE_SITEKEY present:", !!sitekey ? "YES" : "NO");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -290,8 +294,6 @@ export async function createServer() {
     }
   });
 
-  const turnstile = new TurnstileValidator(process.env.TURNSTILE_SECRET_KEY);
-
   app.post(
     "/api/turnstile-verify",
     express.urlencoded({ extended: false }),
@@ -464,6 +466,3 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       process.exit(1);
     });
 }
-
-// Optional: export turnstileSecret für Verwendung in Turnstile-Validator-Instanz
-export { sitekey, turnstileSecret };
