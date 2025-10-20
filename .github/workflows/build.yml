@@ -72,6 +72,15 @@ jobs:
             fi
           fi
 
+      - name: Lockfile integrity check
+        env:
+          HUSKY: 0
+        run: |
+          # regenerate package-lock in-memory to detect divergences without installing deps
+          npm install --package-lock-only
+          # if package-lock.json would change, fail the build (keeps lockfile in sync)
+          git diff --exit-code -- package-lock.json || (echo "package-lock.json is out of sync with package.json. Run 'npm install' and commit the lockfile." && exit 1)
+
       - name: Build Tailwind (install dev deps only for asset build)
         env:
           HUSKY: 0
