@@ -18,11 +18,11 @@ jobs:
       - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
-          # full history needed for git log / commits and push
+          # volle History nötig für git commit/push und für sichere diff-Prüfungen
           fetch-depth: 0
-          submodules: true
           persist-credentials: true
-          # checkout PR head if running in a PR, otherwise use default ref
+          submodules: true
+          # falls wir in einer PR laufen: checke die PR head ref aus, sonst den normalen ref
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
 
       - name: Lockfile integrity check & auto-commit (root + server)
