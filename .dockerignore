@@ -1,0 +1,17 @@
+# node
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+.vscode
+.DS_Store
+coverage
+dist
+public/output.css
+public/.cache
+# logs
+logs
+*.log
+# local build artifacts
+*.tgz

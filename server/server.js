@@ -460,6 +460,36 @@ export async function createServer() {
     })
   );
 
+  // TURNSTILE Sitekey aus Env (öffentlich, safe für Client)
+  const SITEKEY =
+    process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
+  console.log("TURNSTILE_SITEKEY present (env):", !!SITEKEY ? "YES" : "NO");
+
+  // --- Middleware: Ersetze __TURNSTILE_SITEKEY__ in HTML BEFORE static serving ---
+  app.use((req, res, next) => {
+    try {
+      if (!req.path.endsWith(".html") && req.path !== "/") return next();
+      const rel = req.path === "/" ? "/index.html" : req.path;
+      const p = path.join(process.cwd(), "public", rel);
+      if (!fs.existsSync(p)) return next();
+      let html = fs.readFileSync(p, "utf8");
+      const hadPlaceholder = html.includes("__TURNSTILE_SITEKEY__");
+      html = html.replace(/__TURNSTILE_SITEKEY__/g, SITEKEY);
+      // Prevent aggressive CDN caching of HTML so replacements appear immediately
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      if (hadPlaceholder) console.log(`[sitekey-replace] replaced in ${rel}`);
+      return res.type("html").send(html);
+    } catch (err) {
+      console.error("sitekey-replace error:", err);
+      return next(err);
+    }
+  });
+
+  // --- Lightweight /config endpoint as fallback for client-side injection ---
+  app.get("/config", (req, res) => {
+    res.json({ sitekey: SITEKEY });
+  });
+
   // Root -> index.html mit Platzhalter-Ersetzung
   app.get("/", (req, res) => {
     const p = path.join(process.cwd(), "public", "index.html");
@@ -469,6 +499,11 @@ export async function createServer() {
       .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
       .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
     res.type("html").send(html);
+  });
+
+  app.get("/config", (req, res) => {
+    // nur public sitekey ausliefern
+    res.json({ sitekey: process.env.TURNSTILE_SITEKEY || "" });
   });
 
   app.use((req, res) => {

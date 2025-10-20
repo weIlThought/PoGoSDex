@@ -827,3 +827,22 @@ window.addEventListener("keydown", (evt) => {
     closeNewsModal();
   }
 });
+
+(async function ensureSitekey() {
+  const el = document.querySelector(".cf-turnstile");
+  if (!el) return;
+  if (el.dataset.sitekey && el.dataset.sitekey !== "__TURNSTILE_SITEKEY__")
+    return;
+  try {
+    const r = await fetch("/config");
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.sitekey) {
+      el.dataset.sitekey = j.sitekey;
+      console.log("sitekey injected from /config");
+      // if explicit rendering: window.turnstile?.render(...)
+    }
+  } catch (e) {
+    console.warn("sitekey fetch failed", e);
+  }
+})();

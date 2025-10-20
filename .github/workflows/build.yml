@@ -10,12 +10,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo with submodules
+      - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
+          fetch-depth: 0
 
       - name: Configure submodule sparse checkout
         run: |
@@ -31,26 +31,47 @@ jobs:
           node-version: 22
           cache: "npm"
 
-      - name: Clean stray server installs (prevent duplicates)
-        run: |
-          # remove any accidental server/node_modules or server/package-lock.json that could cause duplicate installs
-          rm -rf server/node_modules || true
-          rm -f server/package-lock.json || true
+      - name: Cache Docker layers
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install root dependencies
-        run: npm ci --include=dev
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-cache-${{ runner.os }}-
+
+      - name: Install production deps (fast)
         env:
-          NODE_ENV: development
+          HUSKY: 0
+        run: npm ci --omit=dev
 
-      - name: Build Tailwind CSS
-        run: npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
-
-      - name: Sync submodule files
+      - name: Build Tailwind (install dev deps only for asset build)
+        env:
+          HUSKY: 0
         run: |
-          rm -rf lang
-          mkdir -p lang
-          cp -r external/content/lang/. lang/
-          cp external/content/data/devices.json data/devices.json
+          npm ci --include=dev
+          npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          npm prune --production
 
-      - name: Docker build
-        run: docker build .
+      - name: Build Docker image (use buildx + inline cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: pogosdex:ci
+          build-args: |
+            NODE_ENV=production
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests, lint and audit
+        env:
+          HUSKY: 0
+        run: |
+          npm ci
+          npm test
+          npm run lint || true
+          npm audit --audit-level=moderate || true

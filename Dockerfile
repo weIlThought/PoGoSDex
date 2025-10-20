@@ -6,6 +6,9 @@ WORKDIR /app
 
 # Copy root package files so workspace deps are installed once
 COPY package.json package-lock.json ./
+
+# Skip husky hooks during image build and install (prevents ".git can't be found")
+ENV HUSKY=0
 RUN npm ci --include=dev
 
 # Copy all sources (so tailwind can read templates) and build CSS
