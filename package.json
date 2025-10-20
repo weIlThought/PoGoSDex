@@ -12,7 +12,7 @@
     "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
-    "prepare": "husky"
+    "prepare": "node -e \"try{require('husky').install()}catch(e){}\""
   },
   "devDependencies": {
     "husky": "^9.1.7",
