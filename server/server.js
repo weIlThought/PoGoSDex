@@ -342,10 +342,12 @@ export async function createServer() {
 
   const staticRoot = path.resolve(__dirname, "..", "public");
   const htmlCache = new Map();
+  // Verwende die Promise-API von fs für await/async
+  const fsp = fs.promises;
   await Promise.all(
     htmlRoutes.map(async ({ file }) => {
       const fullPath = path.join(staticRoot, file);
-      const content = await fs.readFile(fullPath, "utf8");
+      const content = await fsp.readFile(fullPath, "utf8");
       htmlCache.set(file, content);
     })
   );
@@ -420,8 +422,9 @@ export async function createServer() {
 
     try {
       let html = fs.readFileSync(p, "utf8");
+      const reqNonce = res.locals.cspNonce || "";
       html = html.replace(/__TURNSTILE_SITEKEY__/g, sitekey || "");
-      html = html.replace(/__CSP_NONCE__/g, nonce || "");
+      html = html.replace(/__CSP_NONCE__/g, reqNonce);
       res.type("html").send(html);
     } catch (err) {
       next(err);
@@ -464,7 +467,7 @@ export async function createServer() {
     let html = fs.readFileSync(p, "utf8");
     html = html
       .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, SITEKEY);
+      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
     res.type("html").send(html);
   });
 
