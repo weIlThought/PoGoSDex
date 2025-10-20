@@ -18,55 +18,45 @@ jobs:
       - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
-          submodules: true
+          # full history needed for git log / commits and push
           fetch-depth: 0
+          submodules: true
+          persist-credentials: true
+          # checkout PR head if running in a PR, otherwise use default ref
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: "npm"
-
-      # --- WICHTIG: Lockfile check + auto-commit FIRST (vor npm ci) ---
       - name: Lockfile integrity check & auto-commit (root + server)
         env:
           HUSKY: 0
         run: |
           set -e
+          # avoid loops if last commit was made by the action
           LAST_AUTHOR=$(git log -1 --pretty=%an || echo "")
           if [ "$LAST_AUTHOR" = "github-actions[bot]" ]; then
             echo "Last commit by github-actions[bot] — skipping to avoid loop."
             exit 0
           fi
-          if [ -f "$GITHUB_EVENT_PATH" ]; then
-            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
-            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
-            else
-              BRANCH=$(echo "${GITHUB_REF#refs/heads/}")
-            fi
-          else
-            REPO=$(git remote get-url origin | sed -E 's#.*[:/](.+/.+)(\.git)?#\1#')
-            BRANCH=$(echo "${GITHUB_REF#refs/heads/}" || git rev-parse --abbrev-ref HEAD)
-          fi
+          # regen lockfiles for root and server
           for d in . server; do
             if [ -f "$d/package.json" ]; then
-              echo "=== Regenerating lock-only for $d ==="
               pushd "$d" >/dev/null
               npm install --package-lock-only
               popd >/dev/null
             fi
           done
-          if git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
-            echo "package-lock.json files are in sync with package.json"
-          else
-            echo "package-lock.json changed — committing updates."
+          # if changed, commit & push back to PR branch (works for PRs from same repo)
+          if ! git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json server/package-lock.json || true
             git commit -m "chore(deps): normalize package-lock.json (CI) [skip ci]" || true
-            if [ -n "$REPO" ] && [ -n "$BRANCH" ]; then
+            # push to PR head branch (only works if runner has write perms and PR branch is in same repo)
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+              REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
               git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            else
+              git push origin HEAD || true
             fi
           fi
       # --- Ende Lockfile-Check ---
