@@ -88,11 +88,33 @@ jobs:
             git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
           fi
 
-      - name: Lockfile integrity check for root and server (auto-commit on PR)
+      - name: Lockfile integrity check & auto-commit (root + server)
         env:
           HUSKY: 0
         run: |
           set -e
+
+          # avoid CI loop if last commit was made by this action
+          LAST_AUTHOR=$(git log -1 --pretty=%an || echo "")
+          if [ "$LAST_AUTHOR" = "github-actions[bot]" ]; then
+            echo "Last commit by github-actions[bot] — skipping lockfile auto-commit to avoid loop."
+            exit 0
+          fi
+
+          # determine PR branch info if available
+          if [ -f "$GITHUB_EVENT_PATH" ]; then
+            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+            else
+              BRANCH=$(echo "${GITHUB_REF#refs/heads/}")
+            fi
+          else
+            REPO=$(git remote get-url origin | sed -E 's#.*[:/](.+/.+)(\.git)?#\1#')
+            BRANCH=$(echo "${GITHUB_REF#refs/heads/}" || git rev-parse --abbrev-ref HEAD)
+          fi
+
+          CHANGED=0
           for d in . server; do
             if [ -f "$d/package.json" ]; then
               echo "=== Regenerating lock-only for $d ==="
@@ -102,25 +124,28 @@ jobs:
             fi
           done
 
-          # if neither lockfile changed -> success
+          # detect changes
           if git diff --quiet -- package-lock.json server/package-lock.json 2>/dev/null; then
             echo "package-lock.json files are in sync with package.json"
             exit 0
           fi
 
-          echo "package-lock.json changed"
+          echo "package-lock.json changed — committing updates."
 
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            echo "Committing updated lockfiles back to PR branch"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json server/package-lock.json || true
-            git commit -m "chore(deps): normalize package-lock.json (CI)" || true
+          # commit & push updated lockfiles back to the branch (works for PR branches in same repo)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json server/package-lock.json || true
+          git commit -m "chore(deps): normalize package-lock.json (CI) [skip ci]" || true
+
+          if [ -n "$REPO" ] && [ -n "$BRANCH" ]; then
+            echo "Pushing updated lockfiles to $REPO:$BRANCH"
             git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            echo "Pushed. Exiting success."
             exit 0
           fi
 
-          echo "Not a pull_request event — please run 'npm install' locally and commit package-lock.json"
+          echo "Could not determine target branch/repo to push. Please run 'npm install' locally and commit package-lock.json"
           git --no-pager diff -- package-lock.json server/package-lock.json || true
           exit 1
 
