@@ -22,8 +22,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
           submodules: true
-          # falls wir in einer PR laufen: checke die PR head ref aus, sonst den normalen ref
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
+          # for PRs use the PR head ref (github.head_ref), otherwise use github.ref
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Lockfile integrity check & auto-commit (root + server)
         env:
