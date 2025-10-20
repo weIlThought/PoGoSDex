@@ -298,7 +298,7 @@ export async function createServer() {
     "/api/turnstile-verify",
     express.urlencoded({ extended: false }),
     async (req, res) => {
-      const token = req.body["cf-turnstile_response"];
+      const token = req.body["cf-turnstile-response"];
       const remoteip =
         req.headers["cf-connecting-ip"] ||
         req.headers["x-forwarded-for"] ||
