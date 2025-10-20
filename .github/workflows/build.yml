@@ -83,34 +83,55 @@ jobs:
           HUSKY: 0
         run: npm ci --omit=dev
 
-      - name: Install deps (ci preferred, fallback to install & update lockfile)
+      - name: Install deps for root and server (ci preferred, fallback to install & update lockfile)
         env:
           HUSKY: 0
         run: |
           set -e
           CHANGED=0
+          # determine repo/branch for potential push (works in PR context)
+          if [ -f "$GITHUB_EVENT_PATH" ]; then
+            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
+            else
+              BRANCH=$(echo "${GITHUB_REF#refs/heads/}")
+            fi
+          else
+            REPO=$(git remote get-url origin | sed -E 's#.*[:/](.+/.+)(\.git)?#\1#')
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          fi
+
           for d in . server; do
             if [ -f "$d/package.json" ]; then
-              echo "=== Processing $d ==="
+              echo "=== Install in $d ==="
               pushd "$d" >/dev/null
+              # try npm ci first
               if npm ci --include=dev; then
-                echo "npm ci OK for $d"
+                echo "npm ci OK in $d"
               else
-                echo "npm ci failed for $d — running npm install"
+                echo "npm ci failed in $d — running npm install to update lockfile"
                 npm install
                 CHANGED=1
               fi
               popd >/dev/null
+            else
+              echo "skip $d (no package.json)"
             fi
           done
-          if [ "$CHANGED" -eq 1 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
-            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
+
+          # If we updated lockfiles and this is a PR in same repo, commit & push them
+          if [ "$CHANGED" -eq 1 ] && [ -n "$REPO" ] && [ -n "$BRANCH" ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json server/package-lock.json || true
             git commit -m "chore(deps): update package-lock.json (CI fallback)" || true
             git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
+            echo "Updated lockfiles pushed to $REPO:$BRANCH"
+          elif [ "$CHANGED" -eq 1 ]; then
+            echo "Lockfiles changed but not a PR branch — please run 'npm install' locally and commit package-lock.json"
+            git --no-pager diff -- package-lock.json server/package-lock.json || true
+            exit 1
           fi
 
       - name: Build Tailwind (install dev deps only for asset build)
