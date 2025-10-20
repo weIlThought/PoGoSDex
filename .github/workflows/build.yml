@@ -34,9 +34,7 @@ jobs:
         run: |
           echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
           echo "GITHUB_REF=$GITHUB_REF"
-          echo "Current branch:"
           git rev-parse --abbrev-ref HEAD || true
-          echo "Current commit:"
           git rev-parse HEAD
           git log -1 --pretty=fuller
 
@@ -49,6 +47,8 @@ jobs:
           restore-keys: |
             npm-cache-${{ runner.os }}-
       # ------------------------------------------
+
+      # -------- 🧩 Lockfile-Fix (npm ci fallback) --------
       - name: Install deps (root + server, ci with fallback)
         env:
           HUSKY: 0
@@ -66,7 +66,6 @@ jobs:
             fi
           fi
 
-          # Loop through root + server (if present)
           for d in . server; do
             if [ -f "$d/package.json" ]; then
               echo "=== Installing in $d ==="
@@ -76,7 +75,6 @@ jobs:
               else
                 echo "⚠️ npm ci failed in $d — running npm install fallback"
                 HUSKY=0 npm install
-                npm install
                 CHANGED=1
               fi
               popd >/dev/null
@@ -94,6 +92,7 @@ jobs:
           elif [ "$CHANGED" -eq 1 ]; then
             echo "Lockfiles changed (non-Dependabot PR) — no push performed."
           fi
+      # ------------------------------------------
 
       - name: Build Tailwind assets
         env:
@@ -106,8 +105,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           install: true
-          driver: docker-container   # wichtig für cache-from/cache-to Unterstützung
-          buildkitd-flags: --debug   # optional, hilft bei Fehlersuche
+          driver: docker-container
+          buildkitd-flags: --debug
 
       - name: Verify Docker environment
         run: |
@@ -120,7 +119,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: false                         # auf false lassen, CI-Test-Image
+          push: false
           tags: pogosdex:ci
           build-args: |
             NODE_ENV=production
@@ -134,55 +133,17 @@ jobs:
         run: |
           echo "🧪 Running backend tests in /server ..."
           cd server
-
-          # Stelle sicher, dass devDependencies (inkl. Jest) da sind
           npm ci --include=dev
-
-          # Führe Jest-Tests aus (ESM kompatibel)
           npx jest --runInBand --passWithNoTests
-
-          # Zurück ins Root für Lint & Audit
           cd ..
           echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
 
-      # -------- 🧠 Lockfile Sanity Check + Auto-Fix --------
-      - name: Lockfile sanity check + auto-fix
-        run: |
-          echo "🔍 Checking lockfile consistency..."
-          FIXED=0
-          REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH" 2>/dev/null || echo "")
-          BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH" 2>/dev/null || echo "")
-          for d in . server; do
-            if [ -f "$d/package.json" ]; then
-              pushd "$d" >/dev/null
-              if ! npm ls >/dev/null 2>&1; then
-                echo "⚠️ Detected lockfile mismatch in $d — running npm install to repair"
-                npm install
-                FIXED=1
-              else
-                echo "✅ $d lockfile looks good."
-              fi
-              popd >/dev/null
-            fi
-          done
-
-          if [ "$FIXED" -eq 1 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
-            echo "💾 Committing repaired lockfiles..."
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json server/package-lock.json 2>/dev/null || true
-            git commit -m "chore(deps): auto-repair lockfile mismatch (CI)" || true
-            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
-            echo "✅ Repaired lockfiles pushed to Dependabot branch."
-          elif [ "$FIXED" -eq 1 ]; then
-            echo "::warning::Lockfiles repaired locally (non-Dependabot PR) — please commit manually."
-          fi
-      # ------------------------------------------
+      # -------- 🧠 Auto-Merge für Dependabot PRs --------
       - name: Auto-merge Dependabot PR
         if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         uses: pascalgn/automerge-action@v0.16.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          merge_method: squash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
