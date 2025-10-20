@@ -27,10 +27,10 @@ jobs:
       - name: Setup Node.js (latest LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
+          node-version: "lts/*"
+          cache: "npm"
 
-      - name: Debug: show checked out ref
+      - name: Debug show checked out ref
         run: |
           echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
           echo "GITHUB_REF=$GITHUB_REF"
@@ -49,7 +49,6 @@ jobs:
           restore-keys: |
             npm-cache-${{ runner.os }}-
       # ------------------------------------------
-
       - name: Install deps (root + server, ci with fallback)
         env:
           HUSKY: 0
@@ -154,7 +153,6 @@ jobs:
             echo "::warning::Lockfiles repaired locally (non-Dependabot PR) — please commit manually."
           fi
       # ------------------------------------------
-
       - name: Auto-merge Dependabot PR
         if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         uses: pascalgn/automerge-action@v0.16.1
