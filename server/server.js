@@ -122,6 +122,19 @@ export async function createServer() {
     next();
   });
 
+  app.use((req, res, next) => {
+    const originalSend = res.send;
+    res.send = function (body) {
+      if (typeof body === "string" && res.locals.cspNonce) {
+        body = body
+          .replace(/\$\{nonce\}/g, res.locals.cspNonce)
+          .replace(/\{\{CSP_NONCE\}\}/g, res.locals.cspNonce);
+      }
+      return originalSend.call(this, body);
+    };
+    next();
+  });
+
   app.use(
     helmet({
       contentSecurityPolicy: false,
