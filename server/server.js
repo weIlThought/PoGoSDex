@@ -483,12 +483,10 @@ export async function createServer() {
     }
   });
 
-  // --- Lightweight /config endpoint as fallback for client-side injection ---
   app.get("/config", (req, res) => {
     res.json({ sitekey: SITEKEY });
   });
 
-  // Root -> index.html mit Platzhalter-Ersetzung
   app.get("/", (req, res) => {
     const p = path.join(process.cwd(), "public", "index.html");
     if (!fs.existsSync(p)) return res.status(404).end();
@@ -497,11 +495,6 @@ export async function createServer() {
       .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
       .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
     res.type("html").send(html);
-  });
-
-  app.get("/config", (req, res) => {
-    // nur public sitekey ausliefern
-    res.json({ sitekey: process.env.TURNSTILE_SITEKEY || "" });
   });
 
   app.use((req, res) => {
