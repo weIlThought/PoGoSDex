@@ -98,7 +98,8 @@ export async function createServer() {
       "base-uri 'self'",
       "form-action 'self'",
       `script-src 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
-      "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com",
+      "script-src-elem 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:",
+      "connect-src 'self' data: https://api.uptimerobot.com https://challenges.cloudflare.com",
       "img-src 'self' data:",
       "style-src 'self' 'unsafe-inline' https:",
       "frame-src 'self' https://challenges.cloudflare.com",
@@ -484,7 +485,7 @@ export async function createServer() {
   });
 
   app.get("/config", (req, res) => {
-    res.json({ sitekey: SITEKEY });
+    res.json({ sitekey });
   });
 
   app.get("/", (req, res) => {
