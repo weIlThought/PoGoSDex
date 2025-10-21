@@ -830,7 +830,7 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-(async function ensureSitekey() {
+(async function ensureSITEKEY() {
   const el = document.querySelector(".cf-turnstile");
   if (!el) return;
 

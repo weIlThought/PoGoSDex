@@ -458,7 +458,7 @@ export async function createServer() {
     })
   );
 
-  // TURNSTILE Sitekey aus Env (öffentlich, safe für Client)
+  // TURNSTILE SITEKEY aus Env (öffentlich, safe für Client)
   const SITEKEY =
     process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
   console.log("TURNSTILE_SITEKEY present (env):", !!SITEKEY ? "YES" : "NO");
