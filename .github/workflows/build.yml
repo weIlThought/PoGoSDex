@@ -90,24 +90,24 @@ jobs:
         run: |
           set -e
           echo "🎨 Building Tailwind assets..."
-          # Ensure dev deps are present (idempotent)
+          # ensure dev deps present (idempotent)
           npm ci --include=dev --no-audit || npm install --include=dev --no-audit
-          # Debug: list bin and check tailwind availability
+
           echo "node_modules/.bin contents:"
           ls -la node_modules/.bin || true
+
+          # prefer installed binary
           if command -v tailwindcss >/dev/null 2>&1; then
             echo "Using installed tailwindcss"
             tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          elif [ -x ./node_modules/.bin/tailwindcss ]; then
+            echo "Using local node_modules/.bin/tailwindcss"
+            ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           else
-            echo "tailwindcss not on PATH — try local binary"
-            if [ -f node_modules/.bin/tailwindcss ]; then
-              ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
-            else
-              echo "local binary missing — using npx to fetch/run tailwindcss"
-              npx -y -p tailwindcss tailwindcss -i ./public/styles.css -o ./public/output.css --minify
-            fi
+            echo "Local binary missing — using npx to fetch specific tailwind version"
+            npx -y tailwindcss@4.1.15 -i ./public/styles.css -o ./public/output.css --minify
           fi
-          # remove dev deps after build (restore prod-only state)
+
           npm prune --production
 
       # 🧪 Run tests (nur bei Codeänderung)
