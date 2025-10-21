@@ -16,29 +16,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 🧩 Checkout Repository
       - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
           submodules: true
+          persist-credentials: true
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
 
+      # 🧠 Detect what changed
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            deps:
+              - '**/package.json'
+              - '**/package-lock.json'
+            code:
+              - '**/*.js'
+              - '**/*.ts'
+              - '**/*.jsx'
+              - '**/*.tsx'
+              - '**/*.css'
+              - '**/*.html'
+              - '**/*.mjs'
+              - '**/*.cjs'
+              - '**/*.json'
+
+      # ⚙️ Setup Node.js
       - name: Setup Node.js (latest LTS)
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
           cache: "npm"
 
-      - name: Debug show checked out ref
-        run: |
-          echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
-          echo "GITHUB_REF=$GITHUB_REF"
-          git rev-parse --abbrev-ref HEAD || true
-          git rev-parse HEAD
-          git log -1 --pretty=fuller
-
-      # -------- 🚀 npm Cache --------
+      # 🚀 Cache npm modules
       - name: Cache npm modules
         uses: actions/cache@v4
         with:
@@ -46,89 +60,37 @@ jobs:
           key: npm-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             npm-cache-${{ runner.os }}-
-      # ------------------------------------------
 
-      # -------- 🧩 Lockfile-Fix (npm ci fallback) --------
-      - name: Install deps (root + server, ci with fallback)
+      # 📦 Install dependencies (root + server)
+      - name: Install deps (ci with fallback)
         env:
           HUSKY: 0
         run: |
           set -e
-          CHANGED=0
-
-          # detect repo + branch for potential commit
-          if [ -f "$GITHUB_EVENT_PATH" ]; then
-            REPO=$(jq -r .repository.full_name <"$GITHUB_EVENT_PATH")
-            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-              BRANCH=$(jq -r .pull_request.head.ref <"$GITHUB_EVENT_PATH")
-            else
-              BRANCH=$(echo "${GITHUB_REF#refs/heads/}")
-            fi
-          fi
-
           for d in . server; do
             if [ -f "$d/package.json" ]; then
               echo "=== Installing in $d ==="
               pushd "$d" >/dev/null
-              if npm ci --include=dev; then
-                echo "✅ npm ci OK in $d"
-              else
-                echo "⚠️ npm ci failed in $d — running npm install fallback"
+              if ! npm ci --include=dev; then
+                echo "⚠️ npm ci failed — using npm install fallback"
                 HUSKY=0 npm install
-                CHANGED=1
               fi
               popd >/dev/null
             fi
           done
 
-          # Commit and push lockfile fixes if Dependabot PR
-          if [ "$CHANGED" -eq 1 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json server/package-lock.json 2>/dev/null || true
-            git commit -m "chore(deps): update lockfiles (auto-fix for Dependabot)" || true
-            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$REPO" "HEAD:$BRANCH" || true
-            echo "✅ Dependabot lockfile fix pushed to $REPO:$BRANCH"
-          elif [ "$CHANGED" -eq 1 ]; then
-            echo "Lockfiles changed (non-Dependabot PR) — no push performed."
-          fi
-      # ------------------------------------------
-
+      # 🎨 Build Tailwind assets (nur wenn Code geändert wurde)
       - name: Build Tailwind assets
-        working-directory: .
+        if: steps.changes.outputs.code == 'true'
         env:
           HUSKY: 0
         run: |
-          npx --yes tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          echo "🎨 Building Tailwind assets..."
+          npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
 
-      # -------- 🐳 Docker Buildx Setup + Image Build --------
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-          driver: docker-container
-          buildkitd-flags: --debug
-
-      - name: Verify Docker environment
-        run: |
-          docker version
-          docker buildx version
-          docker info | grep -E 'Operating System|Architecture|Driver' || true
-
-      - name: Build Docker image with cache
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: pogosdex:ci
-          build-args: |
-            NODE_ENV=production
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      # -------- 🐳 Ende Docker Build --------
-
-      - name: Run tests, lint and audit
+      # 🧪 Run tests (nur bei Codeänderung)
+      - name: Run tests and lint
+        if: steps.changes.outputs.code == 'true'
         env:
           HUSKY: 0
         run: |
@@ -140,3 +102,17 @@ jobs:
           echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
+
+      # 🐳 Docker Build (nur bei Codeänderung)
+      - name: Docker Build (only if code changed)
+        if: steps.changes.outputs.code == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: pogosdex:ci
+          build-args: |
+            NODE_ENV=production
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
