@@ -952,42 +952,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- Section navigation, Devices loader, News filters, PGSharp init ---
 function showSectionByName(name) {
-  const id = name && name.endsWith && name.endsWith('Section') ? name : `${name}Section`;
+  const id =
+    name && name.endsWith && name.endsWith("Section") ? name : `${name}Section`;
   const target = document.getElementById(id) || document.getElementById(name);
   if (!target) {
-    console.warn('showSectionByName: no target for', name, id);
+    console.warn("showSectionByName: no target for", name, id);
     return;
   }
 
-  document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach(s => {
-    if (s === target) {
-      s.classList.remove('hidden');
-      s.style.display = '';
-      s.setAttribute('aria-hidden', 'false');
-    } else {
-      s.classList.add('hidden');
-      s.style.display = 'none';
-      s.setAttribute('aria-hidden', 'true');
-    }
-  });
+  document
+    .querySelectorAll('main section[id$="Section"], main .page, .page')
+    .forEach((s) => {
+      if (s === target) {
+        s.classList.remove("hidden");
+        s.style.display = "";
+        s.setAttribute("aria-hidden", "false");
+      } else {
+        s.classList.add("hidden");
+        s.style.display = "none";
+        s.setAttribute("aria-hidden", "true");
+      }
+    });
 
-  const plain = (id || '').replace(/Section$/, '');
-  try { history.replaceState(null, '', `#${plain}`); } catch(e){}
+  const plain = (id || "").replace(/Section$/, "");
+  try {
+    history.replaceState(null, "", `#${plain}`);
+  } catch (e) {}
 
   // section-specific hooks
-  if (plain === 'devices' && typeof loadDevices === 'function') {
-    loadDevices().catch(e => console.error('loadDevices:', e));
+  if (plain === "devices" && typeof loadDevices === "function") {
+    loadDevices().catch((e) => console.error("loadDevices:", e));
   }
-  if (plain === 'pgsharp') {
+  if (plain === "pgsharp") {
     // ensure section visible even if no setup function
-    const pg = document.getElementById('pgsharpSection');
-    if (pg) { pg.classList.remove('hidden'); pg.style.display = ''; }
-    if (typeof setupPgSharpTabs === 'function') {
-      try { setupPgSharpTabs(); } catch (e) { console.error('setupPgSharpTabs', e); }
+    const pg = document.getElementById("pgsharpSection");
+    if (pg) {
+      pg.classList.remove("hidden");
+      pg.style.display = "";
+    }
+    if (typeof setupPgSharpTabs === "function") {
+      try {
+        setupPgSharpTabs();
+      } catch (e) {
+        console.error("setupPgSharpTabs", e);
+      }
     }
   }
-  if (plain === 'news' && typeof initNewsFilters === 'function') {
-    try { initNewsFilters(); } catch(e){ console.warn('initNewsFilters', e); }
+  if (plain === "news" && typeof initNewsFilters === "function") {
+    try {
+      initNewsFilters();
+    } catch (e) {
+      console.warn("initNewsFilters", e);
+    }
   }
 }
 
@@ -1090,58 +1106,75 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-// --- end block ---
-{ changed code }
-// --- Section switcher (delegated) ---
-(function(){
+
+(function () {
   if (window.__pg_section_switcher_installed) return;
   window.__pg_section_switcher_installed = true;
 
   function showSectionByName(name) {
-    const id = name && name.endsWith && name.endsWith('Section') ? name : `${name}Section`;
+    const id =
+      name && name.endsWith && name.endsWith("Section")
+        ? name
+        : `${name}Section`;
     const target = document.getElementById(id) || document.getElementById(name);
     if (!target) {
-      console.warn('showSectionByName: no target for', name, id);
+      console.warn("showSectionByName: no target for", name, id);
       return;
     }
 
-    document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach(s => {
-      if (s === target) {
-        s.classList.remove('hidden');
-        s.style.display = '';
-        s.setAttribute('aria-hidden', 'false');
-      } else {
-        s.classList.add('hidden');
-        s.style.display = 'none';
-        s.setAttribute('aria-hidden', 'true');
-      }
-    });
+    document
+      .querySelectorAll('main section[id$="Section"], main .page, .page')
+      .forEach((s) => {
+        if (s === target) {
+          s.classList.remove("hidden");
+          s.style.display = "";
+          s.setAttribute("aria-hidden", "false");
+        } else {
+          s.classList.add("hidden");
+          s.style.display = "none";
+          s.setAttribute("aria-hidden", "true");
+        }
+      });
 
-    const plain = (id || '').replace(/Section$/, '');
-    try { history.replaceState(null, '', `#${plain}`); } catch(e){}
+    const plain = (id || "").replace(/Section$/, "");
+    try {
+      history.replaceState(null, "", `#${plain}`);
+    } catch (e) {}
 
     // section-specific hooks
-    if (plain === 'devices' && typeof loadDevices === 'function') {
-      loadDevices().catch(e => console.error('loadDevices:', e));
+    if (plain === "devices" && typeof loadDevices === "function") {
+      loadDevices().catch((e) => console.error("loadDevices:", e));
     }
-    if (plain === 'pgsharp') {
+    if (plain === "pgsharp") {
       // ensure section visible even if no setup function
-      const pg = document.getElementById('pgsharpSection');
-      if (pg) { pg.classList.remove('hidden'); pg.style.display = ''; }
-      if (typeof setupPgSharpTabs === 'function') {
-        try { setupPgSharpTabs(); } catch (e) { console.error('setupPgSharpTabs', e); }
+      const pg = document.getElementById("pgsharpSection");
+      if (pg) {
+        pg.classList.remove("hidden");
+        pg.style.display = "";
+      }
+      if (typeof setupPgSharpTabs === "function") {
+        try {
+          setupPgSharpTabs();
+        } catch (e) {
+          console.error("setupPgSharpTabs", e);
+        }
       }
     }
-    if (plain === 'news' && typeof initNewsFilters === 'function') {
-      try { initNewsFilters(); } catch(e){ console.warn('initNewsFilters', e); }
+    if (plain === "news" && typeof initNewsFilters === "function") {
+      try {
+        initNewsFilters();
+      } catch (e) {
+        console.warn("initNewsFilters", e);
+      }
     }
   }
 
-  document.addEventListener('click', (ev) => {
-    const btn = ev.target && ev.target.closest && ev.target.closest('[data-section]');
+  document.addEventListener("click", (ev) => {
+    const btn =
+      ev.target && ev.target.closest && ev.target.closest("[data-section]");
     if (!btn) return;
     ev.preventDefault();
-    const sectionName = btn.getAttribute('data-section');
+    const sectionName = btn.getAttribute("data-section");
     if (sectionName) showSectionByName(sectionName);
   });
 
