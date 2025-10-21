@@ -831,18 +831,35 @@ window.addEventListener("keydown", (evt) => {
 (async function ensureSitekey() {
   const el = document.querySelector(".cf-turnstile");
   if (!el) return;
-  if (el.dataset.sitekey && el.dataset.sitekey !== "__TURNSTILE_SITEKEY__")
-    return;
+
   try {
     const r = await fetch("/config");
     if (!r.ok) return;
     const j = await r.json();
+
     if (j.sitekey) {
       el.dataset.sitekey = j.sitekey;
-      console.log("sitekey injected from /config");
-      // if explicit rendering: window.turnstile?.render(...)
+      console.log("Turnstile sitekey injected from /config:", j.sitekey);
+
+      // Wait until Turnstile API is available, then render explicitly
+      const waitForTurnstile = () =>
+        new Promise((resolve) => {
+          if (window.turnstile) return resolve(window.turnstile);
+          const iv = setInterval(() => {
+            if (window.turnstile) {
+              clearInterval(iv);
+              resolve(window.turnstile);
+            }
+          }, 100);
+        });
+
+      const turnstile = await waitForTurnstile();
+      turnstile.render("#cf-turnstile", {
+        sitekey: j.sitekey,
+        theme: "auto", // or "light"/"dark"
+      });
     }
   } catch (e) {
-    console.warn("sitekey fetch failed", e);
+    console.warn("Turnstile sitekey fetch failed", e);
   }
 })();

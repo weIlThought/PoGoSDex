@@ -430,12 +430,8 @@
               required
             ></textarea>
           </div>
-          <div class="cf-turnstile" data-sitekey="__TURNSTILE_SITEKEY__"></div>
           <button type="submit" class="btn-primary mt-4">Absenden</button>
         </form>
-
-        <!-- Cloudflare Turnstile Script (explicit mode) -->
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer nonce="{{CSP_NONCE}}"></script>
 
         <section
           id="legalSection"
@@ -766,7 +762,14 @@
       </div>
     </div>
 
+    <div id="cf-turnstile" class="cf-turnstile"></div>
+    <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async defer
+    nonce="{{CSP_NONCE}}"
+    ></script>
+    <script src="/main.js" nonce="{{CSP_NONCE}}"></script>
+
     <script src="/cookie-consent.js" defer nonce="{{CSP_NONCE}}"></script>
-    <script src="/main.js" defer nonce="{{CSP_NONCE}}"></script>
   </body>
 </html>

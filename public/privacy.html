@@ -130,14 +130,14 @@
           >pogosdex@gmail.com</a
         >.
       </p>
-      <div id="turnstile-container">
-        <div class="cf-turnstile" data-sitekey="__TURNSTILE_SITEKEY__"></div>
-      </div>
+      <div id="cf-turnstile" class="cf-turnstile"></div>
       <script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        async
         defer
         nonce="{{CSP_NONCE}}"
       ></script>
+      <script src="/main.js" nonce="{{CSP_NONCE}}"></script>
     </main>
   </body>
 </html>
