@@ -90,33 +90,41 @@ export async function createServer() {
 
   app.disable("x-powered-by");
 
-  // CSP middleware: conservative, backwards-compatible first step
+  // --- CSP middleware (modernized, nonce + strict-dynamic) ---
   app.use((req, res, next) => {
-    // erzeugt optional einen nonce (kann später in inline <script nonce="..."> verwendet werden)
+    // Generate a unique nonce for each response
     const nonce = crypto.randomBytes(16).toString("base64");
     res.locals.cspNonce = nonce;
 
-    const csp = [
+    const cspDirectives = [
       "default-src 'self'",
       "base-uri 'self'",
-      // script-src: kein pagead/doubleclick, erlaubt 'self' und optional Cloudflare challenges
-      // (noch 'unsafe-inline' für Kompatibilität; entferne es später und nutze Nonces)
-      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com 'nonce-" +
-        nonce +
-        "'",
+      "form-action 'self'",
+      // Use nonces + strict-dynamic for scripts.
+      // Keep https: for legacy browsers and CF Turnstile.
+      `script-src 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
       "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com",
       "img-src 'self' data:",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https:",
       "frame-src 'self' https://challenges.cloudflare.com",
-      "object-src 'none'",
       "frame-ancestors 'none'",
-      "require-trusted-types-for 'script'",
+      "object-src 'none'",
+      // Comment these in only after implementing Trusted Types policies:
+      // "require-trusted-types-for 'script'",
+      // "trusted-types default myPolicyName",
+      "report-to csp-endpoint",
       "report-uri /csp-report",
     ].join("; ");
 
-    res.setHeader("Content-Security-Policy", csp);
-    // optional: also set Report-To header if endpoint exists
-    // res.setHeader("Report-To", JSON.stringify({ group: "csp", max_age: 10886400, endpoints: [{ url: "/csp-report" }] }));
+    res.setHeader("Content-Security-Policy", cspDirectives);
+    res.setHeader(
+      "Report-To",
+      JSON.stringify({
+        group: "csp-endpoint",
+        max_age: 10886400,
+        endpoints: [{ url: "/csp-report" }],
+      })
+    );
 
     next();
   });

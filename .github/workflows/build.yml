@@ -79,6 +79,10 @@ jobs:
             fi
           done
 
+          # zusätzliche Sicherheit: installiere explizit mit --prefix server
+          echo "=== Also running 'npm install --prefix server' as safety ==="
+          HUSKY=0 npm install --prefix server
+
       # 🎨 Build Tailwind assets (nur wenn Code geändert wurde)
       - name: Build Tailwind assets
         if: steps.changes.outputs.code == 'true'

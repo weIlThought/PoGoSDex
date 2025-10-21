@@ -435,7 +435,7 @@
         </form>
 
         <!-- Cloudflare Turnstile Script (explicit mode) -->
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer nonce="{{CSP_NONCE}}"></script>
 
         <section
           id="legalSection"
