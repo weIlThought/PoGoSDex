@@ -949,3 +949,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Ensure sections map and nav routing (add near top of file or in DOMContentLoaded)
+function showSectionByName(name) {
+  const targetId = name.endsWith("Section") ? name : `${name}Section`;
+  const target = document.getElementById(targetId);
+  if (!target) {
+    console.warn("showSectionByName: no target for", targetId);
+    return;
+  }
+  document
+    .querySelectorAll('main section[id$="Section"], main section.page, .page')
+    .forEach((s) => {
+      s.id === targetId
+        ? s.classList.remove("hidden")
+        : s.classList.add("hidden");
+    });
+  // update aria / history
+  target.setAttribute("aria-hidden", "false");
+  history.replaceState(null, "", `#${name}`);
+}
+
+document.addEventListener("click", (ev) => {
+  const btn = ev.target.closest && ev.target.closest("[data-section]");
+  if (!btn) return;
+  ev.preventDefault();
+  const sectionName = btn.getAttribute("data-section");
+  if (!sectionName) return;
+  showSectionByName(sectionName);
+});
+
+// On load: honor hash (#pgsharp etc.)
+window.addEventListener("load", () => {
+  const h = (location.hash || "").replace("#", "");
+  if (h) {
+    showSectionByName(h);
+  } else {
+    // default: show overview
+    showSectionByName("overview");
+  }
+});
