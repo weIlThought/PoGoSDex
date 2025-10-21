@@ -488,7 +488,7 @@ export async function createServer() {
 
   app.get("/config", (req, res) => {
     res.json({
-      SITEKEY: process.env.TURNSTILE_SITEKEY || "",
+      sitekey: SITEKEY,
     });
   });
 
