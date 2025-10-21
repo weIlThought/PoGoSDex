@@ -50,7 +50,9 @@
       "Root scene limited; spoof stability poor"
     ],
     "manufacturerUrl": "https://www.lenovo.com/us/en/p/tablets/android-tablets/tab-series/tab-m10/",
-    "rootLinks": ["https://forum.xda-developers.com/f/lenovo-tab-m10.9131/"],
+    "rootLinks": [
+      "https://forum.xda-developers.com/f/lenovo-tab-m10.9131/"
+    ],
     "priceRange": "Budget",
     "PoGoComp": "Limited"
   },
@@ -308,7 +310,9 @@
       "GPS accuracy excellent for walking routes"
     ],
     "manufacturerUrl": "https://consumer.huawei.com/en/phones/p30-pro/",
-    "rootLinks": ["https://forum.xda-developers.com/f/huawei-p30-pro.9145/"],
+    "rootLinks": [
+      "https://forum.xda-developers.com/f/huawei-p30-pro.9145/"
+    ],
     "priceRange": "Flagship",
     "PoGoComp": "Good"
   },
