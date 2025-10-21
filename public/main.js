@@ -54,10 +54,12 @@ async function loadLang(lang) {
   }
 }
 
+// add pgsharp section to sections map
 const sections = {
   overview: qs("#overviewSection"),
   devices: qs("#devicesSection"),
   news: qs("#newsSection"),
+  pgsharp: qs("#pgsharpSection"),
 };
 let activeSection = "overview";
 
@@ -839,7 +841,6 @@ window.addEventListener("keydown", (evt) => {
 
     if (j.sitekey) {
       el.dataset.sitekey = j.sitekey;
-      console.log("Turnstile sitekey injected from /config:", j.sitekey);
 
       // Wait until Turnstile API is available, then render explicitly
       const waitForTurnstile = () =>
@@ -863,3 +864,88 @@ window.addEventListener("keydown", (evt) => {
     console.warn("Turnstile sitekey fetch failed", e);
   }
 })();
+
+// --- PGSharp tab setup (was in public/pgsharp.js) ---
+function setupPgSharpTabs() {
+  const root = qs("#pgsharpSection");
+  if (!root) return;
+  const tabBtns = Array.from(root.querySelectorAll("[data-pgsharp-tab]"));
+  const tabContents = Array.from(
+    root.querySelectorAll("[data-pgsharp-content]")
+  );
+  let active = "faq";
+
+  function activate(tab) {
+    tabBtns.forEach((btn) => {
+      const isActive = btn.dataset.pgsharpTab === tab;
+      btn.classList.toggle("bg-emerald-400", isActive);
+      btn.classList.toggle("text-slate-900", isActive);
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+    tabContents.forEach((content) => {
+      if (content.dataset.pgsharpContent === tab) {
+        content.classList.remove("hidden");
+        content.classList.add("active");
+        content.classList.remove("fade");
+      } else {
+        content.classList.add("hidden");
+        content.classList.remove("active");
+        content.classList.add("fade");
+      }
+    });
+    active = tab;
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => activate(btn.dataset.pgsharpTab));
+  });
+
+  // initial
+  activate(active);
+}
+
+// call setup in DOMContentLoaded (or init)
+document.addEventListener("DOMContentLoaded", () => {
+  // existing DOMContentLoaded logic remains...
+  // ensure PGSharp tabs and any PGSharp-specific hydration run
+  setupPgSharpTabs();
+
+  // optional: wire pgsharp-specific simple behaviors (coords list placeholder)
+  const coordsList = qs("#coords-list");
+  if (coordsList) {
+    // try to load coords from /data/coords.json if present
+    fetch("/data/coords.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((coords) => {
+        if (!coords || !coords.length) {
+          coordsList.textContent = "No coords available.";
+          return;
+        }
+        coordsList.innerHTML = coords
+          .slice(0, 10)
+          .map(
+            (c) =>
+              `<div class="py-1">${esc(c.name || c.label || "—")} — ${esc(
+                c.lat
+              )}, ${esc(c.lng)}</div>`
+          )
+          .join("");
+      })
+      .catch(() => {
+        coordsList.textContent = "Failed to load coords.";
+      });
+  }
+
+  // handle PGSharp report form (simple client-side submit behavior)
+  const reportForm = qs("#pgsharp-report-form");
+  if (reportForm) {
+    reportForm.addEventListener("submit", (evt) => {
+      evt.preventDefault();
+      const email = qs("#pgsharp-report-email")?.value || "";
+      const message = qs("#pgsharp-report-message")?.value || "";
+      // For privacy, just show a local confirmation — server endpoint not configured here.
+      reportForm.innerHTML = `<div class="text-green-400">Danke — deine Nachricht wurde lokal verarbeitet.</div>`;
+      console.log("PGSharp report (local):", { email, message });
+    });
+  }
+});

@@ -88,7 +88,14 @@
           >
             News
           </button>
-          <a href="/pgsharp.html" class="soft-button px-4 py-2 rounded transition-colors hover:text-emerald-400">PGSharp</a>
+          <button
+            type="button"
+            data-section="pgsharp"
+            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
+            aria-selected="false"
+          >
+            PGSharp
+          </button>
         </nav>
       </div>
     </header>
@@ -542,6 +549,96 @@
           </div>
         </section>
 
+    <!-- INSERT: PGSharp Section (moved from public/pgsharp.html) -->
+    <section id="pgsharpSection" class="hidden">
+      <div class="max-w-3xl mx-auto px-4 py-10">
+        <div class="card-gradient rounded-xl shadow-xl p-6 bg-slate-900">
+          <h2 class="text-2xl font-semibold mb-4" data-i18n="pgsharp_title">PGSharp</h2>
+
+          <div id="pgsharp-version-ticker" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
+            <h3 class="text-lg font-semibold mb-2">Version Status</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div>PGSharp page version: <strong id="pg-page">–</strong></div>
+              <div>PGSharp APK (inner): <strong id="pg-apk">–</strong></div>
+              <div>Pokeminers APK: <strong id="pk-apk">–</strong></div>
+              <div>Status: <span id="pg-status" class="font-semibold">–</span></div>
+            </div>
+            <div class="mt-3 text-sm">
+              <a id="link-pg" class="text-emerald-300 underline" href="https://www.pgsharp.com" target="_blank" rel="noopener">PGSharp</a>
+              <span class="mx-2 text-slate-500">|</span>
+              <a id="link-pk" class="text-emerald-300 underline" href="https://pokeminers.com" target="_blank" rel="noopener">Pokeminers</a>
+            </div>
+          </div>
+
+          <div id="pgsharp-ad" class="mb-6">
+            <h3 class="text-lg font-semibold mb-2">Werbung</h3>
+            <div class="ad-placeholder border border-dashed border-slate-700 rounded p-4 text-center text-sm text-slate-400">AD PLACEHOLDER</div>
+          </div>
+
+          <div id="pgsharp-coords" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
+            <h3 class="text-lg font-semibold mb-2">Koordinaten / Raidspots</h3>
+            <div id="coords-list" class="text-sm text-slate-300">Loading...</div>
+          </div>
+
+          <nav id="pgsharp-tabs" class="flex gap-2 mb-8" role="tablist" aria-label="PGSharp Tabs">
+            <button type="button" data-pgsharp-tab="faq" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="true" data-i18n="pgsharp_tab_faq">FAQ</button>
+            <button type="button" data-pgsharp-tab="features" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_features">Features</button>
+            <button type="button" data-pgsharp-tab="issues" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_issues">Known Issues</button>
+            <button type="button" data-pgsharp-tab="report" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_report">Bug Report / Questions</button>
+          </nav>
+
+          <div class="relative min-h-[180px]">
+            <section data-pgsharp-content="faq" class="fade">
+              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_faq_title">PGSharp FAQ</h3>
+              <ul class="space-y-3 text-sm text-slate-300">
+                <li>
+                  <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
+                  <p data-i18n="pgsharp_faq_a1">PGSharp is a tool for spoofing location in Pokémon GO on Android devices.</p>
+                </li>
+                <li>
+                  <strong data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</strong>
+                  <p data-i18n="pgsharp_faq_a2">Use at your own risk. Spoofing may violate Niantic's terms of service.</p>
+                </li>
+                <li>
+                  <strong data-i18n="pgsharp_faq_q3">How do I install PGSharp?</strong>
+                  <p data-i18n="pgsharp_faq_a3">Visit the official PGSharp website and follow the installation instructions for your device.</p>
+                </li>
+              </ul>
+            </section>
+
+            <section data-pgsharp-content="features" class="fade hidden">
+              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_features_title">Features</h3>
+              <ul class="space-y-3 text-sm text-slate-300">
+                <li><strong data-i18n="pgsharp_features_f1">Joystick for movement</strong><p data-i18n="pgsharp_features_f1_desc">Move your avatar freely on the map using a virtual joystick.</p></li>
+                <li><strong data-i18n="pgsharp_features_f2">Teleportation</strong><p data-i18n="pgsharp_features_f2_desc">Jump instantly to any location worldwide.</p></li>
+                <li><strong data-i18n="pgsharp_features_f3">Auto-walk</strong><p data-i18n="pgsharp_features_f3_desc">Automatically walk a route for hatching eggs or collecting items.</p></li>
+              </ul>
+            </section>
+
+            <section data-pgsharp-content="issues" class="fade hidden">
+              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_issues_title">Known Issues</h3>
+              <ul class="space-y-3 text-sm text-slate-300">
+                <li><strong data-i18n="pgsharp_issues_i1">App crashes on some devices</strong><p data-i18n="pgsharp_issues_i1_desc">Try updating PGSharp or your device firmware.</p></li>
+                <li><strong data-i18n="pgsharp_issues_i2">Location not updating</strong><p data-i18n="pgsharp_issues_i2_desc">Check location permissions and restart the app.</p></li>
+              </ul>
+            </section>
+
+            <section data-pgsharp-content="report" class="fade hidden">
+              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_report_title">Bug Report / Questions</h3>
+              <form id="pgsharp-report-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+                <label for="pgsharp-report-email" class="block mb-2 font-medium" data-i18n="pgsharp_report_email_label">Your Email</label>
+                <input id="pgsharp-report-email" type="email" class="input mb-4" placeholder="you@example.com" />
+                <label for="pgsharp-report-message" class="block mb-2 font-medium" data-i18n="pgsharp_report_message_label">Message</label>
+                <textarea id="pgsharp-report-message" class="input mb-4" rows="4" placeholder="Describe your issue or question..."></textarea>
+                <button type="submit" class="btn-primary" data-i18n="pgsharp_report_submit">Send</button>
+              </form>
+              <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">Alternatively, contact <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline">pogosdex@gmail.com</a>.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer class="mt-12 border-t border-slate-800 py-6">
       <div
         class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
@@ -769,7 +866,6 @@
     nonce="{{CSP_NONCE}}"
     ></script>
     <script src="/main.js" nonce="{{CSP_NONCE}}"></script>
-
     <script src="/cookie-consent.js" defer nonce="{{CSP_NONCE}}"></script>
   </body>
 </html>
