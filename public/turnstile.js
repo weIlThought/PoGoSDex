@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderWidget() {
     if (typeof turnstile === "undefined") return;
     turnstile.render(containerSelector, {
-      SITEKEY: SITEKEY,
+      sitekey: SITEKEY,
       callback: attachToken,
       "error-callback": () => console.warn("Turnstile error"),
     });
