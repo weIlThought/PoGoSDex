@@ -950,89 +950,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// --- Section navigation + Devices loader + PGSharp init (robust) ---
-
+// --- Section navigation, Devices loader, News filters, PGSharp init ---
 function showSectionByName(name) {
-  const normalized = name.endsWith("Section") ? name : `${name}Section`;
-  const target =
-    document.getElementById(normalized) || document.getElementById(name);
+  const id = name && name.endsWith && name.endsWith('Section') ? name : `${name}Section`;
+  const target = document.getElementById(id) || document.getElementById(name);
   if (!target) {
-    console.warn("showSectionByName: target not found for", name, normalized);
+    console.warn('showSectionByName: no target for', name, id);
     return;
   }
 
-  // Hide all main sections (pattern: id ending with "Section" or class "page")
-  document
-    .querySelectorAll('main section[id$="Section"], main .page, .page')
-    .forEach((s) => {
-      const el = s;
-      if (el === target) {
-        el.classList.remove("hidden");
-        el.style.display = "";
-        el.setAttribute("aria-hidden", "false");
-      } else {
-        el.classList.add("hidden");
-        el.style.display = "none";
-        el.setAttribute("aria-hidden", "true");
-      }
-    });
+  document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach(s => {
+    if (s === target) {
+      s.classList.remove('hidden');
+      s.style.display = '';
+      s.setAttribute('aria-hidden', 'false');
+    } else {
+      s.classList.add('hidden');
+      s.style.display = 'none';
+      s.setAttribute('aria-hidden', 'true');
+    }
+  });
 
-  // init hooks for specific sections
-  const plain = normalized.replace(/Section$/, "");
-  if (plain === "devices")
-    loadDevices().catch((e) => console.error("loadDevices:", e));
-  if (plain === "pgsharp" && typeof setupPgSharpTabs === "function")
-    setupPgSharpTabs();
-  if (history && history.replaceState)
-    history.replaceState(null, "", `#${plain}`);
+  const plain = (id || '').replace(/Section$/, '');
+  try { history.replaceState(null, '', `#${plain}`); } catch(e){}
+
+  // section-specific hooks
+  if (plain === 'devices' && typeof loadDevices === 'function') {
+    loadDevices().catch(e => console.error('loadDevices:', e));
+  }
+  if (plain === 'pgsharp') {
+    // ensure section visible even if no setup function
+    const pg = document.getElementById('pgsharpSection');
+    if (pg) { pg.classList.remove('hidden'); pg.style.display = ''; }
+    if (typeof setupPgSharpTabs === 'function') {
+      try { setupPgSharpTabs(); } catch (e) { console.error('setupPgSharpTabs', e); }
+    }
+  }
+  if (plain === 'news' && typeof initNewsFilters === 'function') {
+    try { initNewsFilters(); } catch(e){ console.warn('initNewsFilters', e); }
+  }
 }
 
 document.addEventListener("click", (ev) => {
   const btn = ev.target.closest && ev.target.closest("[data-section]");
   if (!btn) return;
   ev.preventDefault();
-  const sectionName = btn.getAttribute("data-section");
-  if (!sectionName) return;
-  showSectionByName(sectionName);
+  const name = btn.getAttribute("data-section");
+  if (name) showSectionByName(name);
 });
 
-// on load: honor hash and init default
 window.addEventListener("load", () => {
-  const hash = (location.hash || "").replace(/^#/, "");
-  if (hash) {
-    showSectionByName(hash);
-  } else {
-    // adjust default section name if your app uses something else
-    showSectionByName("overview");
-  }
-
-  // Ensure PGSharp tabs are available if section present at load
-  if (typeof setupPgSharpTabs === "function") {
-    try {
-      setupPgSharpTabs();
-    } catch (e) {
-      /* ignore */
-    }
-  }
+  const h = (location.hash || "").replace("#", "");
+  if (h) showSectionByName(h);
+  else showSectionByName("overview");
 });
 
-// Devices loader: fetch /data/devices.json and render inside element with id "devicesSection"
+// Devices loader
 async function loadDevices() {
-  const root = document.getElementById("devicesSection");
+  const root =
+    document.getElementById("gridWrap") ||
+    document.getElementById("devicesSection") ||
+    document.querySelector(".devices");
   if (!root) {
-    console.warn("loadDevices: #devicesSection not found");
+    console.warn("loadDevices: target missing");
     return;
   }
   root.innerHTML = '<div class="text-slate-400">Loading devices…</div>';
   try {
     const res = await fetch("/data/devices.json", { cache: "no-store" });
     if (!res.ok) {
-      root.innerHTML = `<div class="text-red-400">Failed to load devices (HTTP ${res.status})</div>`;
+      root.innerHTML = `Failed to load devices (HTTP ${res.status})`;
       return;
     }
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
-      root.innerHTML = `<div class="text-slate-400">No devices available.</div>`;
+      root.innerHTML =
+        '<div class="text-slate-400">No devices available.</div>';
       return;
     }
     root.innerHTML = data
@@ -1050,7 +1043,42 @@ async function loadDevices() {
       .join("");
   } catch (e) {
     console.error("loadDevices error", e);
-    root.innerHTML = `<div class="text-red-400">Error loading devices.</div>`;
+    root.innerHTML = '<div class="text-red-400">Error loading devices.</div>';
+  }
+}
+
+// News filter init
+async function initNewsFilters() {
+  const container =
+    document.getElementById("newsTagFilter") ||
+    document.getElementById("newsFilters") ||
+    document.querySelector(".news-filters");
+  if (!container) return;
+  try {
+    const res = await fetch("/data/news.json", { cache: "no-store" });
+    if (!res.ok) return;
+    const news = await res.json();
+    const tags = Array.from(new Set((news || []).flatMap((n) => n.tags || [])));
+    if (container.tagName === "SELECT") {
+      container.innerHTML =
+        `<option value="all">All</option>` +
+        tags
+          .map(
+            (t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`
+          )
+          .join("");
+    } else {
+      container.innerHTML = tags
+        .map(
+          (t) =>
+            `<button class="tag" data-filter="${escapeHtml(t)}">${escapeHtml(
+              t
+            )}</button>`
+        )
+        .join(" ");
+    }
+  } catch (e) {
+    console.warn("initNewsFilters failed", e);
   }
 }
 
@@ -1062,5 +1090,61 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
 // --- end block ---
+{ changed code }
+// --- Section switcher (delegated) ---
+(function(){
+  if (window.__pg_section_switcher_installed) return;
+  window.__pg_section_switcher_installed = true;
+
+  function showSectionByName(name) {
+    const id = name && name.endsWith && name.endsWith('Section') ? name : `${name}Section`;
+    const target = document.getElementById(id) || document.getElementById(name);
+    if (!target) {
+      console.warn('showSectionByName: no target for', name, id);
+      return;
+    }
+
+    document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach(s => {
+      if (s === target) {
+        s.classList.remove('hidden');
+        s.style.display = '';
+        s.setAttribute('aria-hidden', 'false');
+      } else {
+        s.classList.add('hidden');
+        s.style.display = 'none';
+        s.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    const plain = (id || '').replace(/Section$/, '');
+    try { history.replaceState(null, '', `#${plain}`); } catch(e){}
+
+    // section-specific hooks
+    if (plain === 'devices' && typeof loadDevices === 'function') {
+      loadDevices().catch(e => console.error('loadDevices:', e));
+    }
+    if (plain === 'pgsharp') {
+      // ensure section visible even if no setup function
+      const pg = document.getElementById('pgsharpSection');
+      if (pg) { pg.classList.remove('hidden'); pg.style.display = ''; }
+      if (typeof setupPgSharpTabs === 'function') {
+        try { setupPgSharpTabs(); } catch (e) { console.error('setupPgSharpTabs', e); }
+      }
+    }
+    if (plain === 'news' && typeof initNewsFilters === 'function') {
+      try { initNewsFilters(); } catch(e){ console.warn('initNewsFilters', e); }
+    }
+  }
+
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target && ev.target.closest && ev.target.closest('[data-section]');
+    if (!btn) return;
+    ev.preventDefault();
+    const sectionName = btn.getAttribute('data-section');
+    if (sectionName) showSectionByName(sectionName);
+  });
+
+  // expose for debugging/tests
+  window.showSectionByName = showSectionByName;
+})();
