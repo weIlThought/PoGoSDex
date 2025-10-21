@@ -192,13 +192,6 @@ function getVisibleDevices() {
   return devices.slice(0, devicesPageSize);
 }
 
-function renderDevices() {
-  const list = qs("[data-devices-list]");
-  if (!list) return;
-  const rows = getVisibleDevices().map(createDeviceRow).join("");
-  list.innerHTML = rows || `<li class="text-slate-500">No devices found.</li>`;
-}
-
 function renderDevices(list) {
   const container = qs("[data-devices-grid]");
   if (!container) return;
@@ -1020,48 +1013,6 @@ window.addEventListener("load", () => {
   if (h) showSectionByName(h);
   else showSectionByName("overview");
 });
-
-// Devices loader
-async function loadDevices() {
-  const root =
-    document.getElementById("gridWrap") ||
-    document.getElementById("devicesSection") ||
-    document.querySelector(".devices");
-  if (!root) {
-    console.warn("loadDevices: target missing");
-    return;
-  }
-  root.innerHTML = '<div class="text-slate-400">Loading devices…</div>';
-  try {
-    const res = await fetch("/data/devices.json", { cache: "no-store" });
-    if (!res.ok) {
-      root.innerHTML = `Failed to load devices (HTTP ${res.status})`;
-      return;
-    }
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) {
-      root.innerHTML =
-        '<div class="text-slate-400">No devices available.</div>';
-      return;
-    }
-    root.innerHTML = data
-      .map((d) => {
-        const kv = Object.entries(d)
-          .map(
-            ([k, v]) =>
-              `<div class="text-sm"><strong>${escapeHtml(
-                k
-              )}:</strong> ${escapeHtml(String(v))}</div>`
-          )
-          .join("");
-        return `<div class="device-card p-3 mb-2 bg-slate-800 rounded">${kv}</div>`;
-      })
-      .join("");
-  } catch (e) {
-    console.error("loadDevices error", e);
-    root.innerHTML = '<div class="text-red-400">Error loading devices.</div>';
-  }
-}
 
 // News filter init
 async function initNewsFilters() {
