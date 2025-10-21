@@ -12,7 +12,7 @@ const turnstileSecret =
 import TurnstileValidator from "./turnstile.js";
 const turnstile = new TurnstileValidator(turnstileSecret);
 // optional exportieren, falls andere Module Zugriff brauchen
-export { sitekey, turnstileSecret, turnstile };
+export { SITEKEY, turnstileSecret, turnstile };
 
 import fs from "fs";
 import path from "path";
@@ -421,7 +421,7 @@ export async function createServer() {
     try {
       let html = fs.readFileSync(p, "utf8");
       const reqNonce = res.locals.cspNonce || "";
-      html = html.replace(/__TURNSTILE_SITEKEY__/g, sitekey || "");
+      html = html.replace(/__TURNSTILE_SITEKEY__/g, SITEKEY || "");
       html = html.replace(/__CSP_NONCE__/g, reqNonce);
       res.type("html").send(html);
     } catch (err) {
@@ -478,17 +478,17 @@ export async function createServer() {
       );
       // Prevent aggressive CDN caching of HTML so replacements appear immediately
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      if (hadPlaceholder) console.log(`[sitekey-replace] replaced in ${rel}`);
+      if (hadPlaceholder) console.log(`[SITEKEY-replace] replaced in ${rel}`);
       return res.type("html").send(html);
     } catch (err) {
-      console.error("sitekey-replace error:", err);
+      console.error("SITEKEY-replace error:", err);
       return next(err);
     }
   });
 
   app.get("/config", (req, res) => {
     res.json({
-      sitekey: process.env.TURNSTILE_SITEKEY || "",
+      SITEKEY: process.env.TURNSTILE_SITEKEY || "",
     });
   });
 

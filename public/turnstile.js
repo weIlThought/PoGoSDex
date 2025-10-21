@@ -3,9 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const containerSelector = "#turnstile-container";
 
   const container = document.querySelector(containerSelector);
-  const siteKey = container?.dataset?.sitekey || null;
+  const siteKey = container?.dataset?.SITEKEY || null;
   if (!siteKey) {
-    console.error("Turnstile: Kein siteKey in data-sitekey gefunden.");
+    console.error("Turnstile: Kein siteKey in data-SITEKEY gefunden.");
     return;
   }
 
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderWidget() {
     if (typeof turnstile === "undefined") return;
     turnstile.render(containerSelector, {
-      sitekey: siteKey,
+      SITEKEY: siteKey,
       callback: attachToken,
       "error-callback": () => console.warn("Turnstile error"),
     });

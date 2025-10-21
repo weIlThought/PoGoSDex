@@ -839,8 +839,8 @@ window.addEventListener("keydown", (evt) => {
     if (!r.ok) return;
     const j = await r.json();
 
-    if (j.sitekey) {
-      el.dataset.sitekey = j.sitekey;
+    if (j.SITEKEY) {
+      el.dataset.SITEKEY = j.SITEKEY;
 
       // Wait until Turnstile API is available, then render explicitly
       const waitForTurnstile = () =>
@@ -856,12 +856,12 @@ window.addEventListener("keydown", (evt) => {
 
       const turnstile = await waitForTurnstile();
       turnstile.render("#cf-turnstile", {
-        sitekey: j.sitekey,
+        SITEKEY: j.SITEKEY,
         theme: "auto", // or "light"/"dark"
       });
     }
   } catch (e) {
-    console.warn("Turnstile sitekey fetch failed", e);
+    console.warn("Turnstile SITEKEY fetch failed", e);
   }
 })();
 
