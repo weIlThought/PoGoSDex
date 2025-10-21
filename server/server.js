@@ -3,7 +3,7 @@ dotenv.config();
 console.log("TURNSTILE_SITEKEY present:", !!process.env.TURNSTILE_SITEKEY);
 
 // Unterstütze mehrere env-Namen und erzeuge turnstileSecret
-const sitekey =
+const SITEKEY =
   process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
 const turnstileSecret =
   process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET || "";
@@ -385,7 +385,7 @@ export async function createServer() {
       // Ersetze {{CSP_NONCE}} und {{TURNSTILE_SITEKEY}} im HTML
       const html = template
         .replace(/{{CSP_NONCE}}/g, nonce)
-        .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+        .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
       res.type("html").send(html);
     });
   });
@@ -395,7 +395,7 @@ export async function createServer() {
     const template = fs.readFileSync("public/privacy.html", "utf8");
     const html = template
       .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
     res.type("html").send(html);
   });
 
@@ -404,7 +404,7 @@ export async function createServer() {
     const template = fs.readFileSync("public/tos.html", "utf8");
     const html = template
       .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
     res.type("html").send(html);
   });
 
@@ -472,7 +472,10 @@ export async function createServer() {
       if (!fs.existsSync(p)) return next();
       let html = fs.readFileSync(p, "utf8");
       const hadPlaceholder = html.includes("__TURNSTILE_SITEKEY__");
-      html = html.replace(/__TURNSTILE_SITEKEY__/g, SITEKEY);
+      html = html.replace(
+        /(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g,
+        SITEKEY
+      );
       // Prevent aggressive CDN caching of HTML so replacements appear immediately
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       if (hadPlaceholder) console.log(`[sitekey-replace] replaced in ${rel}`);
@@ -484,7 +487,9 @@ export async function createServer() {
   });
 
   app.get("/config", (req, res) => {
-    res.json({ sitekey });
+    res.json({
+      sitekey: process.env.TURNSTILE_SITEKEY || "",
+    });
   });
 
   app.get("/", (req, res) => {
@@ -493,7 +498,7 @@ export async function createServer() {
     let html = fs.readFileSync(p, "utf8");
     html = html
       .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
     res.type("html").send(html);
   });
 
@@ -506,7 +511,7 @@ export async function createServer() {
     const template = htmlCache.get("index.html");
     const html = template
       .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/{{TURNSTILE_SITEKEY}}/g, sitekey);
+      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
     res.type("html").send(html);
   });
 
