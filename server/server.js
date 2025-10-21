@@ -33,9 +33,6 @@ import fetch from "node-fetch";
 import { getPgsharpVersion } from "./scrapers/pgsharp.js";
 import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
 
-// SITEKEY debug (neu)
-console.log("TURNSTILE_SITEKEY present:", !!sitekey ? "YES" : "NO");
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -100,8 +97,6 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
-      // Use nonces + strict-dynamic for scripts.
-      // Keep https: for legacy browsers and CF Turnstile.
       `script-src 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
       "connect-src 'self' https://api.uptimerobot.com https://challenges.cloudflare.com",
       "img-src 'self' data:",
@@ -109,9 +104,6 @@ export async function createServer() {
       "frame-src 'self' https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      // Comment these in only after implementing Trusted Types policies:
-      // "require-trusted-types-for 'script'",
-      // "trusted-types default myPolicyName",
       "report-to csp-endpoint",
       "report-uri /csp-report",
     ].join("; ");
@@ -128,16 +120,6 @@ export async function createServer() {
 
     next();
   });
-
-  const connectOrigins =
-    allowedOrigin === "*"
-      ? ["'self'", "*", "data:", "https://pagead2.googlesyndication.com"]
-      : [
-          "'self'",
-          "data:",
-          "https://pagead2.googlesyndication.com",
-          ...allowedOrigin.split(",").map((value) => value.trim()),
-        ];
 
   app.use(
     helmet({
