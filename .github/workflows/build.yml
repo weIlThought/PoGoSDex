@@ -95,10 +95,11 @@ jobs:
       # ------------------------------------------
 
       - name: Build Tailwind assets
+        working-directory: .
         env:
           HUSKY: 0
         run: |
-          npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          npx --yes tailwindcss -i ./public/styles.css -o ./public/output.css --minify
 
       # -------- 🐳 Docker Buildx Setup + Image Build --------
       - name: Set up Docker Buildx
