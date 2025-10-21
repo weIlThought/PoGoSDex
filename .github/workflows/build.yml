@@ -83,14 +83,32 @@ jobs:
           echo "=== Also running 'npm install --prefix server' as safety ==="
           HUSKY=0 npm install --prefix server
 
-      # 🎨 Build Tailwind assets (nur wenn Code geändert wurde)
-      - name: Build Tailwind assets
-        if: steps.changes.outputs.code == 'true'
+      # 🎨 Build Tailwind (install dev deps only for asset build)
+      - name: Build Tailwind
         env:
           HUSKY: 0
         run: |
+          set -e
           echo "🎨 Building Tailwind assets..."
-          npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          # Ensure dev deps are present (idempotent)
+          npm ci --include=dev --no-audit || npm install --include=dev --no-audit
+          # Debug: list bin and check tailwind availability
+          echo "node_modules/.bin contents:"
+          ls -la node_modules/.bin || true
+          if command -v tailwindcss >/dev/null 2>&1; then
+            echo "Using installed tailwindcss"
+            tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          else
+            echo "tailwindcss not on PATH — try local binary"
+            if [ -f node_modules/.bin/tailwindcss ]; then
+              ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+            else
+              echo "local binary missing — using npx to fetch/run tailwindcss"
+              npx -y -p tailwindcss tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+            fi
+          fi
+          # remove dev deps after build (restore prod-only state)
+          npm prune --production
 
       # 🧪 Run tests (nur bei Codeänderung)
       - name: Run tests and lint
