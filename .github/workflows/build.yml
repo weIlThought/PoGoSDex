@@ -126,6 +126,12 @@ jobs:
           npm audit --audit-level=moderate || true
 
       # 🐳 Docker Build (nur bei Codeänderung)
+      - name: Set up Docker Buildx
+        if: steps.changes.outputs.code == 'true'
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container
+
       - name: Docker Build (only if code changed)
         if: steps.changes.outputs.code == 'true'
         uses: docker/build-push-action@v5
