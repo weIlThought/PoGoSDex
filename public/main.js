@@ -950,24 +950,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Ensure sections map and nav routing (add near top of file or in DOMContentLoaded)
+// --- Section navigation + Devices loader + PGSharp init (robust) ---
+
 function showSectionByName(name) {
-  const targetId = name.endsWith("Section") ? name : `${name}Section`;
-  const target = document.getElementById(targetId);
+  const normalized = name.endsWith("Section") ? name : `${name}Section`;
+  const target =
+    document.getElementById(normalized) || document.getElementById(name);
   if (!target) {
-    console.warn("showSectionByName: no target for", targetId);
+    console.warn("showSectionByName: target not found for", name, normalized);
     return;
   }
+
+  // Hide all main sections (pattern: id ending with "Section" or class "page")
   document
-    .querySelectorAll('main section[id$="Section"], main section.page, .page')
+    .querySelectorAll('main section[id$="Section"], main .page, .page')
     .forEach((s) => {
-      s.id === targetId
-        ? s.classList.remove("hidden")
-        : s.classList.add("hidden");
+      const el = s;
+      if (el === target) {
+        el.classList.remove("hidden");
+        el.style.display = "";
+        el.setAttribute("aria-hidden", "false");
+      } else {
+        el.classList.add("hidden");
+        el.style.display = "none";
+        el.setAttribute("aria-hidden", "true");
+      }
     });
-  // update aria / history
-  target.setAttribute("aria-hidden", "false");
-  history.replaceState(null, "", `#${name}`);
+
+  // init hooks for specific sections
+  const plain = normalized.replace(/Section$/, "");
+  if (plain === "devices")
+    loadDevices().catch((e) => console.error("loadDevices:", e));
+  if (plain === "pgsharp" && typeof setupPgSharpTabs === "function")
+    setupPgSharpTabs();
+  if (history && history.replaceState)
+    history.replaceState(null, "", `#${plain}`);
 }
 
 document.addEventListener("click", (ev) => {
@@ -979,13 +996,71 @@ document.addEventListener("click", (ev) => {
   showSectionByName(sectionName);
 });
 
-// On load: honor hash (#pgsharp etc.)
+// on load: honor hash and init default
 window.addEventListener("load", () => {
-  const h = (location.hash || "").replace("#", "");
-  if (h) {
-    showSectionByName(h);
+  const hash = (location.hash || "").replace(/^#/, "");
+  if (hash) {
+    showSectionByName(hash);
   } else {
-    // default: show overview
+    // adjust default section name if your app uses something else
     showSectionByName("overview");
   }
+
+  // Ensure PGSharp tabs are available if section present at load
+  if (typeof setupPgSharpTabs === "function") {
+    try {
+      setupPgSharpTabs();
+    } catch (e) {
+      /* ignore */
+    }
+  }
 });
+
+// Devices loader: fetch /data/devices.json and render inside element with id "devicesSection"
+async function loadDevices() {
+  const root = document.getElementById("devicesSection");
+  if (!root) {
+    console.warn("loadDevices: #devicesSection not found");
+    return;
+  }
+  root.innerHTML = '<div class="text-slate-400">Loading devices…</div>';
+  try {
+    const res = await fetch("/data/devices.json", { cache: "no-store" });
+    if (!res.ok) {
+      root.innerHTML = `<div class="text-red-400">Failed to load devices (HTTP ${res.status})</div>`;
+      return;
+    }
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      root.innerHTML = `<div class="text-slate-400">No devices available.</div>`;
+      return;
+    }
+    root.innerHTML = data
+      .map((d) => {
+        const kv = Object.entries(d)
+          .map(
+            ([k, v]) =>
+              `<div class="text-sm"><strong>${escapeHtml(
+                k
+              )}:</strong> ${escapeHtml(String(v))}</div>`
+          )
+          .join("");
+        return `<div class="device-card p-3 mb-2 bg-slate-800 rounded">${kv}</div>`;
+      })
+      .join("");
+  } catch (e) {
+    console.error("loadDevices error", e);
+    root.innerHTML = `<div class="text-red-400">Error loading devices.</div>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// --- end block ---
