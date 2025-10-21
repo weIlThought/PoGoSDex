@@ -87,9 +87,7 @@ export async function createServer() {
 
   app.disable("x-powered-by");
 
-  // --- CSP middleware (modernized, nonce + strict-dynamic) ---
   app.use((req, res, next) => {
-    // Generate a unique nonce for each response
     const nonce = crypto.randomBytes(16).toString("base64");
     res.locals.cspNonce = nonce;
 
@@ -97,8 +95,9 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
+      // ✅ Use backticks here so ${nonce} expands
       `script-src 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
-      "script-src-elem 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:",
+      `script-src-elem 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
       "connect-src 'self' data: https://api.uptimerobot.com https://challenges.cloudflare.com",
       "img-src 'self' data:",
       "style-src 'self' 'unsafe-inline' https:",
@@ -119,19 +118,6 @@ export async function createServer() {
       })
     );
 
-    next();
-  });
-
-  app.use((req, res, next) => {
-    const originalSend = res.send;
-    res.send = function (body) {
-      if (typeof body === "string" && res.locals.cspNonce) {
-        body = body
-          .replace(/\$\{nonce\}/g, res.locals.cspNonce)
-          .replace(/\{\{CSP_NONCE\}\}/g, res.locals.cspNonce);
-      }
-      return originalSend.call(this, body);
-    };
     next();
   });
 
