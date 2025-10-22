@@ -823,7 +823,7 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-(async function ensureSITEKEY() {
+(async function ensureSitekey() {
   const el = document.querySelector("#cf-turnstile");
   if (!el) return;
   try {
@@ -831,7 +831,6 @@ window.addEventListener("keydown", (evt) => {
     if (!r.ok) return;
     const j = await r.json();
     if (j.sitekey) {
-      el.dataset.sitekey = j.sitekey;
       const waitForTurnstile = () =>
         new Promise((resolve) => {
           if (window.turnstile) return resolve(window.turnstile);
