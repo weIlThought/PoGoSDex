@@ -132,7 +132,30 @@
               </div>
               <div id="pgsharp-coords" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
                 <h3 class="text-lg font-semibold mb-2">Koordinaten / Raidspots</h3>
-                <div id="coords-list" class="text-sm text-slate-300">Loading...</div>
+
+                <div class="flex items-center justify-between mb-3">
+                  <div id="coords-tags" class="flex gap-2 flex-wrap"></div>
+                  <div id="coords-time" class="text-xs text-slate-400">--:--:--</div>
+                </div>
+
+                <div id="coords-list" class="text-sm text-slate-300">
+                  Loading...
+                </div>
+              </div>
+
+              <!-- Koords Modal -->
+              <div id="coordsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+                <div class="bg-slate-900 rounded-lg shadow-xl max-w-lg w-full mx-4 p-6">
+                  <button id="coordsModalClose" class="ml-auto text-slate-400">✕</button>
+                  <h3 id="coordsModalTitle" class="text-2xl font-semibold mt-2"></h3>
+                  <div id="coordsModalMeta" class="text-xs text-slate-400 mt-1"></div>
+                  <div id="coordsModalTags" class="mt-3 flex flex-wrap gap-2"></div>
+                  <p id="coordsModalNote" class="mt-3 text-slate-300"></p>
+                  <p class="mt-3 text-sm text-slate-400" id="coordsModalCoords"></p>
+                  <div class="mt-4">
+                    <a id="coordsModalMaps" class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition" target="_blank" rel="noopener">Open in Maps</a>
+                  </div>
+                </div>
               </div>
               <nav id="pgsharp-tabs" class="flex gap-2 mb-8" role="tablist" aria-label="PGSharp Tabs">
                 <button type="button" data-pgsharp-tab="faq" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="true" data-i18n="pgsharp_tab_faq">FAQ</button>

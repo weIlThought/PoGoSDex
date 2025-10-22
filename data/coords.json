@@ -4,61 +4,71 @@
       "name": "Central Park, NYC",
       "lat": 40.785091,
       "lng": -73.968285,
-      "note": "Top spawn area"
+      "note": "Top spawn area",
+      "tags": ["park", "top10", "popular"]
     },
     {
       "name": "Tower Bridge, London",
       "lat": 51.5055,
       "lng": -0.0754,
-      "note": "Good raids"
+      "note": "Good raids",
+      "tags": ["bridge", "top10", "raids"]
     },
     {
       "name": "Shinjuku Gyoen, Tokyo",
       "lat": 35.685176,
       "lng": 139.710052,
-      "note": "High spawn density"
+      "note": "High spawn density",
+      "tags": ["park", "asia", "top10"]
     },
     {
       "name": "Brandenburg Gate, Berlin",
       "lat": 52.516275,
       "lng": 13.377704,
-      "note": ""
+      "note": "",
+      "tags": ["monument", "europe", "landmark"]
     },
     {
       "name": "Eiffel Tower, Paris",
       "lat": 48.85837,
       "lng": 2.294481,
-      "note": ""
+      "note": "",
+      "tags": ["monument", "europe", "tourist"]
     },
     {
       "name": "Sydney Opera House",
       "lat": -33.856784,
       "lng": 151.215297,
-      "note": ""
+      "note": "",
+      "tags": ["landmark", "oceania", "top10"]
     },
     {
       "name": "CN Tower, Toronto",
       "lat": 43.642566,
       "lng": -79.387057,
-      "note": ""
+      "note": "",
+      "tags": ["landmark", "north-america", "top10"]
     },
     {
       "name": "Colosseum, Rome",
       "lat": 41.89021,
       "lng": 12.492231,
-      "note": ""
+      "note": "",
+      "tags": ["monument", "europe", "historic"]
     },
     {
       "name": "Golden Gate Park, SF",
       "lat": 37.76942,
       "lng": -122.486213,
-      "note": ""
+      "note": "",
+      "tags": ["park", "north-america", "popular"]
     },
     {
       "name": "Marina Bay, Singapore",
       "lat": 1.2834,
       "lng": 103.8607,
-      "note": ""
+      "note": "",
+      "tags": ["landmark", "asia", "top10"]
     }
   ],
   "notable": [],

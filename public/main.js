@@ -720,6 +720,7 @@ showSection(activeSection);
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
+  loadCoords();
   init();
 });
 
@@ -852,32 +853,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ensure PGSharp tabs and any PGSharp-specific hydration run
   setupPgSharpTabs();
 
-  // optional: wire pgsharp-specific simple behaviors (coords list placeholder)
-  const coordsList = qs("#coords-list");
-  if (coordsList) {
-    // try to load coords from /data/coords.json if present
-    fetch("/data/coords.json", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((coords) => {
-        if (!coords || !coords.length) {
-          coordsList.textContent = "No coords available.";
-          return;
-        }
-        coordsList.innerHTML = coords
-          .slice(0, 10)
-          .map(
-            (c) =>
-              `<div class="py-1">${esc(c.name || c.label || "—")} — ${esc(
-                c.lat
-              )}, ${esc(c.lng)}</div>`
-          )
-          .join("");
-      })
-      .catch(() => {
-        coordsList.textContent = "Failed to load coords.";
-      });
-  }
-
   // handle PGSharp report form (simple client-side submit behavior)
   const reportForm = qs("#pgsharp-report-form");
   if (reportForm) {
@@ -1006,3 +981,218 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+// --- Coords: Lade, render, filter, modal, Uhrzeit ---
+
+let coordsData = []; // vollständige Liste (flattened)
+let coordsFilterTag = null;
+
+function flattenCoords(raw) {
+  // raw kann Objekt mit Arrays sein (top10, notable, raid_spots)
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  const arrays = [];
+  for (const k of Object.keys(raw)) {
+    const v = raw[k];
+    if (Array.isArray(v)) arrays.push(...v);
+  }
+  return arrays;
+}
+
+async function loadCoords() {
+  const el = qs("#coords-list");
+  if (!el) return;
+  el.textContent = "Loading...";
+  try {
+    const res = await fetch("/data/coords.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list = flattenCoords(json);
+    coordsData = list.map((it, idx) => ({
+      id: it.id || `coord-${idx}`,
+      name: it.name || it.label || it.title || `Spot ${idx + 1}`,
+      lat: typeof it.lat !== "undefined" ? Number(it.lat) : undefined,
+      lng: typeof it.lng !== "undefined" ? Number(it.lng) : undefined,
+      note: it.note || it.notes || "",
+      tags: Array.isArray(it.tags)
+        ? it.tags.map((t) => t.toString())
+        : it.tags
+        ? [String(it.tags)]
+        : [],
+    }));
+    renderCoords(coordsData);
+    renderCoordsTags(coordsData);
+    updateCoordsTime();
+  } catch (err) {
+    console.error("Failed to load coords:", err);
+    el.textContent = "Failed to load coords.";
+  }
+}
+
+function renderCoords(list) {
+  const wrap = qs("#coords-list");
+  if (!wrap) return;
+  let filtered = list;
+  if (coordsFilterTag) {
+    filtered = list.filter((c) =>
+      (c.tags || [])
+        .map((t) => t.toLowerCase())
+        .includes(coordsFilterTag.toLowerCase())
+    );
+  }
+
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="text-slate-400">No coordinates found.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = filtered
+    .map(
+      (c) => `
+    <div class="py-2 border-b border-slate-800 last:border-b-0">
+      <button type="button" class="w-full text-left coords-item" data-id="${esc(
+        c.id
+      )}" data-lat="${esc(c.lat)}" data-lng="${esc(c.lng)}">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-medium text-slate-100">${esc(c.name)}</div>
+            <div class="text-xs text-slate-400">${esc(c.note || "")}</div>
+          </div>
+          <div class="text-xs text-slate-400">${
+            typeof c.lat !== "undefined"
+              ? `${Number(c.lat).toFixed ? Number(c.lat).toFixed(4) : c.lat}, ${
+                  Number(c.lng).toFixed ? Number(c.lng).toFixed(4) : c.lng
+                }`
+              : "—"
+          }</div>
+        </div>
+      </button>
+      ${
+        c.tags && c.tags.length
+          ? `<div class="mt-2 flex gap-2 flex-wrap">${c.tags
+              .map(
+                (t) =>
+                  `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+                    t
+                  )}</span>`
+              )
+              .join("")}</div>`
+          : ""
+      }
+    </div>`
+    )
+    .join("");
+
+  wrap.querySelectorAll(".coords-item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const item = coordsData.find((c) => c.id === id);
+      if (item) openCoordsModal(item);
+    });
+  });
+}
+
+function renderCoordsTags(all) {
+  const wrap = qs("#coords-tags");
+  if (!wrap) return;
+  const tags = new Set();
+  all.forEach((c) =>
+    (c.tags || []).forEach((t) => {
+      if (t && t.toString().trim()) tags.add(t.toString().trim());
+    })
+  );
+  const arr = Array.from(tags).sort((a, b) => a.localeCompare(b));
+  if (!arr.length) {
+    wrap.innerHTML = ""; // nothing to show
+    return;
+  }
+  wrap.innerHTML = [
+    `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="">All</button>`,
+    ...arr.map(
+      (t) =>
+        `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="${esc(
+          t
+        )}">${esc(t)}</button>`
+    ),
+  ].join(" ");
+  wrap.querySelectorAll(".coords-tag").forEach((b) => {
+    b.addEventListener("click", () => {
+      const tag = b.dataset.tag || null;
+      coordsFilterTag = tag && tag !== "" ? tag : null;
+      wrap
+        .querySelectorAll(".coords-tag")
+        .forEach((bb) =>
+          bb.classList.remove(
+            "bg-emerald-600",
+            "border-emerald-400",
+            "text-slate-900"
+          )
+        );
+      b.classList.add("bg-emerald-600", "border-emerald-400", "text-slate-900");
+      renderCoords(coordsData);
+    });
+  });
+}
+
+function openCoordsModal(item) {
+  const backdrop = qs("#coordsModalBackdrop");
+  if (!backdrop) return;
+  qs("#coordsModalTitle").textContent = item.name;
+  qs("#coordsModalMeta").textContent = `Lat: ${item.lat ?? "—"} • Lng: ${
+    item.lng ?? "—"
+  }`;
+  qs("#coordsModalNote").textContent = item.note || "";
+  const tagsWrap = qs("#coordsModalTags");
+  if (tagsWrap)
+    tagsWrap.innerHTML = (item.tags || [])
+      .map(
+        (t) =>
+          `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+            t
+          )}</span>`
+      )
+      .join(" ");
+  const mapsLink = qs("#coordsModalMaps");
+  if (mapsLink) {
+    if (typeof item.lat !== "undefined" && typeof item.lng !== "undefined") {
+      mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        item.lat + "," + item.lng
+      )}`;
+    } else {
+      mapsLink.removeAttribute("href");
+    }
+  }
+  backdrop.classList.remove("hidden");
+  backdrop.classList.add("flex");
+  document.body.style.overflow = "hidden";
+}
+
+function closeCoordsModal() {
+  const backdrop = qs("#coordsModalBackdrop");
+  if (!backdrop) return;
+  backdrop.classList.add("hidden");
+  backdrop.classList.remove("flex");
+  document.body.style.overflow = "";
+}
+
+qs("#coordsModalClose")?.addEventListener("click", closeCoordsModal);
+qs("#coordsModalBackdrop")?.addEventListener("click", (e) => {
+  if (e.target === qs("#coordsModalBackdrop")) closeCoordsModal();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeCoordsModal();
+});
+
+function updateCoordsTime() {
+  const el = qs("#coords-time");
+  if (!el) return;
+  function tick() {
+    const now = new Date();
+    el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()}`;
+  }
+  tick();
+  if (!updateCoordsTime._interval)
+    updateCoordsTime._interval = setInterval(tick, 1000);
+}
+
+// --- Ende Coords ---
