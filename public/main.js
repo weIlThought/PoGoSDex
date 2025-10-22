@@ -983,12 +983,10 @@ function escapeHtml(s) {
 }
 
 // --- Coords: Lade, render, filter, modal, Uhrzeit ---
-
-let coordsData = []; // vollständige Liste (flattened)
+let coordsData = [];
 let coordsFilterTag = null;
 
 function flattenCoords(raw) {
-  // raw kann Objekt mit Arrays sein (top10, notable, raid_spots)
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   const arrays = [];
@@ -1040,19 +1038,17 @@ function renderCoords(list) {
         .includes(coordsFilterTag.toLowerCase())
     );
   }
-
   if (!filtered.length) {
     wrap.innerHTML = `<div class="text-slate-400">No coordinates found.</div>`;
     return;
   }
-
   wrap.innerHTML = filtered
     .map(
       (c) => `
     <div class="py-2 border-b border-slate-800 last:border-b-0">
       <button type="button" class="w-full text-left coords-item" data-id="${esc(
         c.id
-      )}" data-lat="${esc(c.lat)}" data-lng="${esc(c.lng)}">
+      )}">
         <div class="flex items-center justify-between">
           <div>
             <div class="font-medium text-slate-100">${esc(c.name)}</div>
@@ -1060,9 +1056,7 @@ function renderCoords(list) {
           </div>
           <div class="text-xs text-slate-400">${
             typeof c.lat !== "undefined"
-              ? `${Number(c.lat).toFixed ? Number(c.lat).toFixed(4) : c.lat}, ${
-                  Number(c.lng).toFixed ? Number(c.lng).toFixed(4) : c.lng
-                }`
+              ? `${Number(c.lat).toFixed(4)}, ${Number(c.lng).toFixed(4)}`
               : "—"
           }</div>
         </div>
@@ -1103,7 +1097,7 @@ function renderCoordsTags(all) {
   );
   const arr = Array.from(tags).sort((a, b) => a.localeCompare(b));
   if (!arr.length) {
-    wrap.innerHTML = ""; // nothing to show
+    wrap.innerHTML = "";
     return;
   }
   wrap.innerHTML = [
@@ -1166,7 +1160,6 @@ function openCoordsModal(item) {
   backdrop.classList.add("flex");
   document.body.style.overflow = "hidden";
 }
-
 function closeCoordsModal() {
   const backdrop = qs("#coordsModalBackdrop");
   if (!backdrop) return;
@@ -1174,7 +1167,6 @@ function closeCoordsModal() {
   backdrop.classList.remove("flex");
   document.body.style.overflow = "";
 }
-
 qs("#coordsModalClose")?.addEventListener("click", closeCoordsModal);
 qs("#coordsModalBackdrop")?.addEventListener("click", (e) => {
   if (e.target === qs("#coordsModalBackdrop")) closeCoordsModal();
