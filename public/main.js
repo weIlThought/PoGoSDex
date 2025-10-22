@@ -576,17 +576,23 @@ async function loadCoords() {
   try {
     const response = await fetch("/data/coords.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const json = await response.json();
-
-    const list = Array.isArray(json) ? json : Object.values(json).flat();
-
+    let list = [];
+    if (Array.isArray(json)) {
+      list = json;
+    } else if (json && typeof json === "object") {
+      for (const [key, value] of Object.entries(json)) {
+        if (Array.isArray(value)) {
+          list.push(...value);
+        }
+      }
+    }
+    console.log(`[coords] Anzahl geladen: ${list.length}`);
     if (!list.length) {
       console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
+      console.debug("coords.json Inhalt:", json);
       return;
     }
-
-    console.log(`[coords] Gerenderte Anzahl: ${list.length}`);
     renderCoords(list);
   } catch (err) {
     console.error("[coords] Fehler beim Laden:", err);
