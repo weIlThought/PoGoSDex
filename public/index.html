@@ -4,263 +4,96 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>PoGoSDex – Devices & PGSharp Info</title>
-    <meta
-      name="description"
-      content="A searchable collection of phones and tablets compatible with Pokémon GO."
-    />
+    <meta name="description" content="A searchable collection of phones and tablets compatible with Pokémon GO." />
     <link rel="stylesheet" href="/output.css" />
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
-  <body
-    class="min-h-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 antialiased"
-  >
-    <header
-      class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800"
-    >
+  <body class="min-h-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
+    <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-3">
-            <img
-              src="/assets/logo.png"
-              alt="PoGoSDex logo"
-              class="w-12 h-12 rounded-xl shadow-lg"
-            />
+            <img src="/assets/logo.png" alt="PoGoSDex logo" class="w-12 h-12 rounded-xl shadow-lg" />
             <div>
-              <h1
-                id="siteTitle"
-                data-i18n="site_name"
-                class="text-lg font-semibold"
-              >
-                PoGoSDex
-              </h1>
-              <p
-                id="siteSubtitle"
-                data-i18n="site_subtitle"
-                class="text-xs text-slate-400"
-              >
-                Devices & PGSharp info
-              </p>
+              <h1 id="siteTitle" data-i18n="site_name" class="text-lg font-semibold"> PoGoSDex </h1>
+              <p id="siteSubtitle" data-i18n="site_subtitle" class="text-xs text-slate-400"> Devices & PGSharp info </p>
             </div>
           </div>
-
           <div class="flex items-center space-x-3">
-            <select
-              id="langSelect"
-              class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
-            >
+            <select id="langSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
               <option value="en">EN</option>
               <option value="de">DE</option>
               <option value="es">ES</option>
               <option value="fr">FR</option>
-              <option value="hi">HI</option>
               <option value="it">IT</option>
               <option value="pt">PT</option>
               <option value="ru">RU</option>
             </select>
           </div>
         </div>
-
         <nav class="mt-4 flex gap-2">
-          <button
-            type="button"
-            data-section="overview"
-            class="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-sm transition"
-            data-i18n="nav_overview"
-            aria-selected="true"
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            data-section="devices"
-            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
-            data-i18n="nav_devices"
-            aria-selected="false"
-          >
-            Devices
-          </button>
-          <button
-            type="button"
-            data-section="news"
-            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
-            data-i18n="nav_news"
-            aria-selected="false"
-          >
-            News
-          </button>
-          <button
-            type="button"
-            data-section="pgsharp"
-            class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition"
-            aria-selected="false"
-          >
-            PGSharp
-          </button>
+          <button type="button" data-section="overview" class="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-sm transition" data-i18n="nav_overview" aria-selected="true"> Overview </button>
+          <button type="button" data-section="devices" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" data-i18n="nav_devices" aria-selected="false"> Devices </button>
+          <button type="button" data-section="news" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" data-i18n="nav_news" aria-selected="false"> News </button>
+          <button type="button" data-section="pgsharp" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" aria-selected="false"> PGSharp </button>
         </nav>
       </div>
     </header>
-
     <main class="py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <section id="overviewSection" aria-labelledby="overviewTitle">
-          <h2
-            id="overviewTitle"
-            class="text-2xl font-semibold"
-            data-i18n="overview_intro_heading"
-          >
-            Welcome to PoGoSDex
-          </h2>
-          <p class="mt-3 text-slate-300" data-i18n="overview_intro_text">
-            Discover compatible devices, keep track of PGSharp updates, and stay
-            informed with curated news.
-          </p>
+          <h2 id="overviewTitle" class="text-2xl font-semibold" data-i18n="overview_intro_heading"> Welcome to PoGoSDex </h2>
+          <p class="mt-3 text-slate-300" data-i18n="overview_intro_text"> Discover compatible devices, keep track of PGSharp updates, and stay informed with curated news. </p>
           <div class="mt-6 grid sm:grid-cols-2 gap-4">
             <div class="bg-slate-900 border border-slate-800 rounded-lg p-5">
-              <h3
-                class="text-lg font-semibold"
-                data-i18n="overview_devices_cta"
-              >
-                Browse compatible devices
-              </h3>
-              <p
-                class="text-sm text-slate-400 mt-2"
-                data-i18n="overview_devices_desc"
-              >
-                Explore phones and tablets, filter by type, and open the modal
-                to see details and notes.
-              </p>
+              <h3 class="text-lg font-semibold" data-i18n="overview_devices_cta"> Browse compatible devices </h3>
+              <p class="text-sm text-slate-400 mt-2" data-i18n="overview_devices_desc"> Explore phones and tablets, filter by type, and open the modal to see details and notes. </p>
             </div>
             <div class="bg-slate-900 border border-slate-800 rounded-lg p-5">
-              <h3 class="text-lg font-semibold" data-i18n="overview_news_cta">
-                Stay up to date with PGSharp news
-              </h3>
-              <p
-                class="text-sm text-slate-400 mt-2"
-                data-i18n="overview_news_desc"
-              >
-                Read curated PGSharp announcements, feature updates, and
-                community alerts in the News tab.
-              </p>
+              <h3 class="text-lg font-semibold" data-i18n="overview_news_cta"> Stay up to date with PGSharp news </h3>
+              <p class="text-sm text-slate-400 mt-2" data-i18n="overview_news_desc"> Read curated PGSharp announcements, feature updates, and community alerts in the News tab. </p>
             </div>
           </div>
         </section>
-
-        <section
-          id="devicesSection"
-          class="hidden space-y-6"
-          aria-labelledby="devicesTitle"
-        >
+        <section id="devicesSection" class="hidden space-y-6" aria-labelledby="devicesTitle">
           <div class="space-y-2">
-            <h2
-              id="devicesTitle"
-              class="text-2xl font-semibold"
-              data-i18n="devices_section_heading"
-            >
-              Compatible devices
-            </h2>
-            <p class="text-slate-300" data-i18n="devices_section_intro">
-              Filter the device catalog and open any entry for more detailed
-              notes, compatibility hints, and helpful links.
-            </p>
+            <h2 id="devicesTitle" class="text-2xl font-semibold" data-i18n="devices_section_heading"> Compatible devices </h2>
+            <p class="text-slate-300" data-i18n="devices_section_intro"> Filter the device catalog and open any entry for more detailed notes, compatibility hints, and helpful links. </p>
           </div>
-
-          <section
-            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-slate-900 border border-slate-800 rounded-lg p-4"
-          >
+          <section class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-slate-900 border border-slate-800 rounded-lg p-4">
             <div class="md:col-span-3 flex flex-wrap gap-3">
               <div class="relative">
-                <input
-                  id="searchInput"
-                  type="search"
-                  placeholder="Search model or brand..."
-                  data-i18n-target="placeholder"
-                  class="w-64 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-                <svg
-                  class="w-4 h-4 text-slate-400 absolute right-3 top-2.5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-                  />
+                <input id="searchInput" type="search" placeholder="Search model or brand..." data-i18n-target="placeholder" class="w-64 pl-3 pr-10 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                <svg class="w-4 h-4 text-slate-400 absolute right-3 top-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
               </div>
-              <select
-                id="typeFilter"
-                class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
-              >
+              <select id="typeFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
                 <option value="all" data-i18n="type_all">All Devices</option>
                 <option value="Phone" data-i18n="type_phone">Phones</option>
                 <option value="Tablet" data-i18n="type_tablet">Tablets</option>
               </select>
-              <select
-                id="sortSelect"
-                class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="default" data-i18n="sort_default">
-                  Sort: Default
-                </option>
-                <option value="brand" data-i18n="sort_brand">
-                  Brand (A–Z)
-                </option>
-                <option value="model" data-i18n="sort_model">
-                  Model (A–Z)
-                </option>
+              <select id="sortSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+                <option value="default" data-i18n="sort_default"> Sort: Default </option>
+                <option value="brand" data-i18n="sort_brand"> Brand (A–Z) </option>
+                <option value="model" data-i18n="sort_model"> Model (A–Z) </option>
                 <option value="os" data-i18n="sort_os">OS Version</option>
               </select>
             </div>
           </section>
-
-          <section
-            id="gridWrap"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          ></section>
-
-          <section
-            class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4"
-          >
-            <div
-              class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-            >
+          <section id="gridWrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></section>
+          <section class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3
-                  class="text-xl font-semibold"
-                  data-i18n="device_builder_title"
-                >
-                  Prepare a new device entry
-                </h3>
-                <p
-                  class="text-sm text-slate-300"
-                  data-i18n="device_builder_intro"
-                >
-                  Fill out the form to generate a JSON snippet you can paste
-                  into data/devices.json.
-                </p>
+                <h3 class="text-xl font-semibold" data-i18n="device_builder_title"> Prepare a new device entry </h3>
+                <p class="text-sm text-slate-300" data-i18n="device_builder_intro"> Fill out the form to generate a JSON snippet you can paste into data/devices.json. </p>
               </div>
-              <button
-                id="deviceModalOpen"
-                class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
-                data-i18n="device_builder_open_modal"
-              >
-                Open builder
-              </button>
+              <button id="deviceModalOpen" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_open_modal"> Open builder </button>
             </div>
           </section>
-
           <div class="flex items-center gap-3">
-            <label for="device-page-size" class="text-sm text-slate-300"
-              >Devices per page</label
-            >
-            <select
-              id="device-page-size"
-              class="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
-            >
+            <label for="device-page-size" class="text-sm text-slate-300">Devices per page</label>
+            <select id="device-page-size" class="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100">
               <option value="10" selected>10</option>
               <option value="25">25</option>
               <option value="50">50</option>
@@ -269,26 +102,11 @@
             </select>
           </div>
         </section>
-
         <section id="newsSection" class="hidden flex-col gap-4">
-          <div
-            class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-          >
-            <input
-              id="newsSearchInput"
-              type="search"
-              class="w-full md:w-72 px-4 py-2 rounded border border-slate-700 bg-slate-900 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-              data-i18n-placeholder="news_search_placeholder"
-              placeholder="Search news…"
-            />
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <input id="newsSearchInput" type="search" class="w-full md:w-72 px-4 py-2 rounded border border-slate-700 bg-slate-900 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" data-i18n-placeholder="news_search_placeholder" placeholder="Search news…" />
             <div class="w-full md:w-auto">
-              <label
-                for="newsTagFilter"
-                class="block text-sm text-slate-400 mb-2"
-                data-i18n="news_filter_tags_label"
-              >
-                Filter by tags
-              </label>
+              <label for="newsTagFilter" class="block text-sm text-slate-400 mb-2" data-i18n="news_filter_tags_label"> Filter by tags </label>
               <select id="newsTagFilter" name="newsTagFilter" class="input">
                 <!-- ...options... -->
               </select>
@@ -296,421 +114,209 @@
           </div>
           <div id="newsWrap" class="grid gap-4"></div>
         </section>
-        <section
-          id="legalSection"
-          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
-        >
-          <h2
-            class="text-lg font-semibold text-slate-100"
-            data-i18n="legal_notice_title"
-          >
-            Legal Notice
-          </h2>
-          <p data-i18n="legal_pgsharp">
-            PoGoSDex is an independent project and has no rights to PGSharp. We
-            provide information only; PGSharp remains the property of its
-            respective owner.
-          </p>
-          <p data-i18n="legal_pokemon">
-            Pokémon and Pokémon GO are trademarks of Nintendo, Game Freak,
-            Creatures, and Niantic. PoGoSDex is an unofficial fan project and is
-            not endorsed by these companies.
-          </p>
-          <p data-i18n="legal_brands">
-            All smartphone brand names and trademarks mentioned on this site are
-            the property of their respective owners. References are for
-            identification only.
-          </p>
+        <section id="pgsharpSection" class="hidden">
+          <div class="max-w-3xl mx-auto px-4 py-10">
+            <div class="card-gradient rounded-xl shadow-xl p-6 bg-slate-900">
+              <h2 class="text-2xl font-semibold mb-4" data-i18n="pgsharp_title">PGSharp</h2>
+              <div id="pgsharp-version-ticker" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
+                <h3 class="text-lg font-semibold mb-2">Version Status</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div>PGSharp page version: <strong id="pg-page">–</strong>
+                  </div>
+                  <div>PGSharp APK (inner): <strong id="pg-apk">–</strong>
+                  </div>
+                  <div>Pokeminers APK: <strong id="pk-apk">–</strong>
+                  </div>
+                  <div>Status: <span id="pg-status" class="font-semibold">–</span>
+                  </div>
+                </div>
+                <div class="mt-3 text-sm">
+                  <a id="link-pg" class="text-emerald-300 underline" href="https://www.pgsharp.com" target="_blank" rel="noopener">PGSharp</a>
+                  <span class="mx-2 text-slate-500">|</span>
+                  <a id="link-pk" class="text-emerald-300 underline" href="https://pokeminers.com" target="_blank" rel="noopener">Pokeminers</a>
+                </div>
+              </div>
+              <div id="pgsharp-ad" class="mb-6">
+                <h3 class="text-lg font-semibold mb-2">Werbung</h3>
+                <div class="ad-placeholder border border-dashed border-slate-700 rounded p-4 text-center text-sm text-slate-400">AD PLACEHOLDER</div>
+              </div>
+              <div id="pgsharp-coords" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
+                <h3 class="text-lg font-semibold mb-2">Koordinaten / Raidspots</h3>
+                <div id="coords-list" class="text-sm text-slate-300">Loading...</div>
+              </div>
+              <nav id="pgsharp-tabs" class="flex gap-2 mb-8" role="tablist" aria-label="PGSharp Tabs">
+                <button type="button" data-pgsharp-tab="faq" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="true" data-i18n="pgsharp_tab_faq">FAQ</button>
+                <button type="button" data-pgsharp-tab="features" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_features">Features</button>
+                <button type="button" data-pgsharp-tab="issues" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_issues">Known Issues</button>
+                <button type="button" data-pgsharp-tab="report" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_report">Bug Report / Questions</button>
+              </nav>
+              <div class="relative min-h-[180px]">
+                <section data-pgsharp-content="faq" class="fade">
+                  <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_faq_title">PGSharp FAQ</h3>
+                  <ul class="space-y-3 text-sm text-slate-300">
+                    <li>
+                      <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
+                      <p data-i18n="pgsharp_faq_a1">PGSharp is a tool for spoofing location in Pokémon GO on Android devices.</p>
+                    </li>
+                    <li>
+                      <strong data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</strong>
+                      <p data-i18n="pgsharp_faq_a2">Use at your own risk. Spoofing may violate Niantic's terms of service.</p>
+                    </li>
+                    <li>
+                      <strong data-i18n="pgsharp_faq_q3">How do I install PGSharp?</strong>
+                      <p data-i18n="pgsharp_faq_a3">Visit the official PGSharp website and follow the installation instructions for your device.</p>
+                    </li>
+                  </ul>
+                </section>
+                <section data-pgsharp-content="features" class="fade hidden">
+                  <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_features_title">Features</h3>
+                  <ul class="space-y-3 text-sm text-slate-300">
+                    <li>
+                      <strong data-i18n="pgsharp_features_f1">Joystick for movement</strong>
+                      <p data-i18n="pgsharp_features_f1_desc">Move your avatar freely on the map using a virtual joystick.</p>
+                    </li>
+                    <li>
+                      <strong data-i18n="pgsharp_features_f2">Teleportation</strong>
+                      <p data-i18n="pgsharp_features_f2_desc">Jump instantly to any location worldwide.</p>
+                    </li>
+                    <li>
+                      <strong data-i18n="pgsharp_features_f3">Auto-walk</strong>
+                      <p data-i18n="pgsharp_features_f3_desc">Automatically walk a route for hatching eggs or collecting items.</p>
+                    </li>
+                  </ul>
+                </section>
+                <section data-pgsharp-content="issues" class="fade hidden">
+                  <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_issues_title">Known Issues</h3>
+                  <ul class="space-y-3 text-sm text-slate-300">
+                    <li>
+                      <strong data-i18n="pgsharp_issues_i1">App crashes on some devices</strong>
+                      <p data-i18n="pgsharp_issues_i1_desc">Try updating PGSharp or your device firmware.</p>
+                    </li>
+                    <li>
+                      <strong data-i18n="pgsharp_issues_i2">Location not updating</strong>
+                      <p data-i18n="pgsharp_issues_i2_desc">Check location permissions and restart the app.</p>
+                    </li>
+                  </ul>
+                </section>
+                <section data-pgsharp-content="report" class="fade hidden">
+                  <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_report_title">Bug Report / Questions</h3>
+                  <form id="pgsharp-report-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
+                    <label for="pgsharp-report-email" class="block mb-2 font-medium" data-i18n="pgsharp_report_email_label">Your Email</label>
+                    <input id="pgsharp-report-email" type="email" class="input mb-4" placeholder="you@example.com" />
+                    <label for="pgsharp-report-message" class="block mb-2 font-medium" data-i18n="pgsharp_report_message_label">Message</label>
+                    <textarea id="pgsharp-report-message" class="input mb-4" rows="4" placeholder="Describe your issue or question..."></textarea>
+                    <button type="submit" class="btn-primary" data-i18n="pgsharp_report_submit">Send</button>
+                  </form>
+                  <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">Alternatively, contact <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline">pogosdex@gmail.com</a>. </p>
+                </section>
+              </div>
+            </div>
+          </div>
         </section>
-
-        <section
-          id="tosSummary"
-          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
-        >
-          <h2
-            class="text-lg font-semibold text-slate-100"
-            data-i18n="tos_summary_title"
-          >
-            Terms of Service
-          </h2>
-          <p data-i18n="tos_summary_text">
-            Learn how PoGoSDex may be used, what responsibilities you have as a
-            visitor, and which limitations apply. Please review our Terms of
-            Service before using the site or sharing content.
-          </p>
-          <a
-            href="/tos.html"
-            class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
-            data-i18n="tos_read"
-          >
-            Read the Terms of Service →
-          </a>
+        <section id="legalSection" class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3">
+          <h2 class="text-lg font-semibold text-slate-100" data-i18n="legal_notice_title"> Legal Notice </h2>
+          <p data-i18n="legal_pgsharp"> PoGoSDex is an independent project and has no rights to PGSharp. We provide information only; PGSharp remains the property of its respective owner. </p>
+          <p data-i18n="legal_pokemon"> Pokémon and Pokémon GO are trademarks of Nintendo, Game Freak, Creatures, and Niantic. PoGoSDex is an unofficial fan project and is not endorsed by these companies. </p>
+          <p data-i18n="legal_brands"> All smartphone brand names and trademarks mentioned on this site are the property of their respective owners. References are for identification only. </p>
         </section>
-        <section
-          id="statusSection"
-          class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3"
-        >
-          <div
-            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-          >
+        <section id="tosSummary" class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3">
+          <h2 class="text-lg font-semibold text-slate-100" data-i18n="tos_summary_title"> Terms of Service </h2>
+          <p data-i18n="tos_summary_text"> Learn how PoGoSDex may be used, what responsibilities you have as a visitor, and which limitations apply. Please review our Terms of Service before using the site or sharing content. </p>
+          <a href="/tos.html" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300" data-i18n="tos_read"> Read the Terms of Service → </a>
+        </section>
+        <section id="statusSection" class="border border-slate-800 bg-slate-900 rounded-2xl px-6 py-8 text-sm text-slate-300 space-y-3">
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2
-                class="text-lg font-semibold text-slate-100"
-                data-i18n="status_heading"
-              >
-                Service status
-              </h2>
-              <p data-i18n="status_description">
-                Live uptime information supplied by UptimeRobot. Data is cached
-                for a few minutes.
+              <h2 class="text-lg font-semibold text-slate-100" data-i18n="status_heading"> Service status </h2>
+              <p data-i18n="status_description"> Live uptime information supplied by UptimeRobot. Data is cached for a few minutes. </p>
+            </div>
+            <a href="https://stats.uptimerobot.com/vf4OJASwdA" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300" data-i18n="status_link_label"> Open status page → </a>
+          </div>
+          <div id="statusCard" class="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2">
+              <span id="statusIndicator" class="h-3 w-3 rounded-full bg-yellow-400 animate-pulse" aria-hidden="true"></span>
+              <span id="statusMessage" class="font-medium text-slate-200" data-i18n="status_loading"> Checking status… </span>
+            </div>
+            <span id="statusUptime" class="text-xs text-slate-400 uppercase tracking-wide" data-i18n="status_uptime_unknown"> Uptime: — % </span>
+          </div>
+        </section>
+        <footer class="mt-12 border-t border-slate-800 py-6">
+          <div class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <span>2025 - PoGoSDex. All rights reserved by their respective owners.</span>
+            <div class="flex gap-4">
+              <!-- <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a> -->
+              <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
+              <a href="/tos.html" class="hover:text-emerald-400">Terms</a>
+            </div>
+          </div>
+        </footer>
+        <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform">
+            <button id="closeModal" class="ml-auto text-slate-400">✕</button>
+            <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
+            <p id="modalMeta" class="text-sm text-slate-400"></p>
+            <p id="modalDesc" class="mt-3 text-slate-200"></p>
+            <div id="modalExtra" class="mt-4 text-slate-300 space-y-1">
+              <p>
+                <strong data-i18n="modal_price_range_label">Price Range:</strong>
+                <span id="modalPriceRange" class="text-slate-400">—</span>
+              </p>
+              <p>
+                <strong data-i18n="modal_pogo_label">PoGO Compatibility:</strong>
+                <span id="modalPoGoComp" class="text-slate-400">—</span>
               </p>
             </div>
-            <a
-              href="https://stats.uptimerobot.com/vf4OJASwdA"
-              target="_blank"
-              rel="noopener"
-              class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
-              data-i18n="status_link_label"
-            >
-              Open status page →
-            </a>
+            <div id="modalNotesList" class="mt-4 text-slate-300"></div>
+            <div id="modalRootLinks" class="mt-4"></div>
           </div>
-          <div
-            id="statusCard"
-            class="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div class="flex items-center gap-2">
-              <span
-                id="statusIndicator"
-                class="h-3 w-3 rounded-full bg-yellow-400 animate-pulse"
-                aria-hidden="true"
-              ></span>
-              <span
-                id="statusMessage"
-                class="font-medium text-slate-200"
-                data-i18n="status_loading"
-              >
-                Checking status…
-              </span>
-            </div>
-            <span
-              id="statusUptime"
-              class="text-xs text-slate-400 uppercase tracking-wide"
-              data-i18n="status_uptime_unknown"
-            >
-              Uptime: — %
-            </span>
-          </div>
-        </section>
-    <section id="pgsharpSection" class="hidden">
-      <div class="max-w-3xl mx-auto px-4 py-10">
-        <div class="card-gradient rounded-xl shadow-xl p-6 bg-slate-900">
-          <h2 class="text-2xl font-semibold mb-4" data-i18n="pgsharp_title">PGSharp</h2>
-
-          <div id="pgsharp-version-ticker" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
-            <h3 class="text-lg font-semibold mb-2">Version Status</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <div>PGSharp page version: <strong id="pg-page">–</strong></div>
-              <div>PGSharp APK (inner): <strong id="pg-apk">–</strong></div>
-              <div>Pokeminers APK: <strong id="pk-apk">–</strong></div>
-              <div>Status: <span id="pg-status" class="font-semibold">–</span></div>
-            </div>
-            <div class="mt-3 text-sm">
-              <a id="link-pg" class="text-emerald-300 underline" href="https://www.pgsharp.com" target="_blank" rel="noopener">PGSharp</a>
-              <span class="mx-2 text-slate-500">|</span>
-              <a id="link-pk" class="text-emerald-300 underline" href="https://pokeminers.com" target="_blank" rel="noopener">Pokeminers</a>
+        </div>
+        <div id="newsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform">
+            <button id="closeNewsModal" class="ml-auto text-slate-400">✕</button>
+            <h3 id="newsModalTitle" class="text-2xl font-semibold mt-2"></h3>
+            <div id="newsModalMeta" class="text-xs text-slate-400 mt-1"></div>
+            <div id="newsModalBody" class="mt-4 space-y-3 text-sm text-slate-200"></div>
+            <div id="newsModalTagsWrap" class="mt-4 hidden">
+              <h4 class="text-sm font-semibold mb-2 text-slate-300" data-i18n="news_modal_tags"> Tags </h4>
+              <div id="newsModalTags" class="flex flex-wrap gap-2"></div>
             </div>
           </div>
-
-          <div id="pgsharp-ad" class="mb-6">
-            <h3 class="text-lg font-semibold mb-2">Werbung</h3>
-            <div class="ad-placeholder border border-dashed border-slate-700 rounded p-4 text-center text-sm text-slate-400">AD PLACEHOLDER</div>
-          </div>
-
-          <div id="pgsharp-coords" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
-            <h3 class="text-lg font-semibold mb-2">Koordinaten / Raidspots</h3>
-            <div id="coords-list" class="text-sm text-slate-300">Loading...</div>
-          </div>
-
-          <nav id="pgsharp-tabs" class="flex gap-2 mb-8" role="tablist" aria-label="PGSharp Tabs">
-            <button type="button" data-pgsharp-tab="faq" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="true" data-i18n="pgsharp_tab_faq">FAQ</button>
-            <button type="button" data-pgsharp-tab="features" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_features">Features</button>
-            <button type="button" data-pgsharp-tab="issues" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_issues">Known Issues</button>
-            <button type="button" data-pgsharp-tab="report" class="soft-button px-4 py-2 rounded transition-colors font-medium" aria-selected="false" data-i18n="pgsharp_tab_report">Bug Report / Questions</button>
-          </nav>
-
-          <div class="relative min-h-[180px]">
-            <section data-pgsharp-content="faq" class="fade">
-              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_faq_title">PGSharp FAQ</h3>
-              <ul class="space-y-3 text-sm text-slate-300">
-                <li>
-                  <strong data-i18n="pgsharp_faq_q1">What is PGSharp?</strong>
-                  <p data-i18n="pgsharp_faq_a1">PGSharp is a tool for spoofing location in Pokémon GO on Android devices.</p>
-                </li>
-                <li>
-                  <strong data-i18n="pgsharp_faq_q2">Is PGSharp safe to use?</strong>
-                  <p data-i18n="pgsharp_faq_a2">Use at your own risk. Spoofing may violate Niantic's terms of service.</p>
-                </li>
-                <li>
-                  <strong data-i18n="pgsharp_faq_q3">How do I install PGSharp?</strong>
-                  <p data-i18n="pgsharp_faq_a3">Visit the official PGSharp website and follow the installation instructions for your device.</p>
-                </li>
-              </ul>
-            </section>
-
-            <section data-pgsharp-content="features" class="fade hidden">
-              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_features_title">Features</h3>
-              <ul class="space-y-3 text-sm text-slate-300">
-                <li><strong data-i18n="pgsharp_features_f1">Joystick for movement</strong><p data-i18n="pgsharp_features_f1_desc">Move your avatar freely on the map using a virtual joystick.</p></li>
-                <li><strong data-i18n="pgsharp_features_f2">Teleportation</strong><p data-i18n="pgsharp_features_f2_desc">Jump instantly to any location worldwide.</p></li>
-                <li><strong data-i18n="pgsharp_features_f3">Auto-walk</strong><p data-i18n="pgsharp_features_f3_desc">Automatically walk a route for hatching eggs or collecting items.</p></li>
-              </ul>
-            </section>
-
-            <section data-pgsharp-content="issues" class="fade hidden">
-              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_issues_title">Known Issues</h3>
-              <ul class="space-y-3 text-sm text-slate-300">
-                <li><strong data-i18n="pgsharp_issues_i1">App crashes on some devices</strong><p data-i18n="pgsharp_issues_i1_desc">Try updating PGSharp or your device firmware.</p></li>
-                <li><strong data-i18n="pgsharp_issues_i2">Location not updating</strong><p data-i18n="pgsharp_issues_i2_desc">Check location permissions and restart the app.</p></li>
-              </ul>
-            </section>
-
-            <section data-pgsharp-content="report" class="fade hidden">
-              <h3 class="text-xl font-semibold mb-2" data-i18n="pgsharp_report_title">Bug Report / Questions</h3>
-              <form id="pgsharp-report-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
-                <label for="pgsharp-report-email" class="block mb-2 font-medium" data-i18n="pgsharp_report_email_label">Your Email</label>
-                <input id="pgsharp-report-email" type="email" class="input mb-4" placeholder="you@example.com" />
-                <label for="pgsharp-report-message" class="block mb-2 font-medium" data-i18n="pgsharp_report_message_label">Message</label>
-                <textarea id="pgsharp-report-message" class="input mb-4" rows="4" placeholder="Describe your issue or question..."></textarea>
-                <button type="submit" class="btn-primary" data-i18n="pgsharp_report_submit">Send</button>
-              </form>
-              <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">Alternatively, contact <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline">pogosdex@gmail.com</a>.</p>
-            </section>
+        </div>
+        <div id="deviceModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur">
+          <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_builder_title"> Prepare a new device entry </h3>
+                <p class="text-xs text-slate-400" data-i18n="device_builder_intro"> Fill out the form to generate a JSON snippet you can paste into data/devices.json. </p>
+              </div>
+              <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close"> Close </button>
+            </div>
+            <form id="deviceBuilderForm" class="grid md:grid-cols-2 gap-3" autocomplete="off">
+              <input class="input" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
+              <input class="input" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
+              <input class="input" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
+              <input class="input" type="text" id="builderType" placeholder="Type (Phone/Tablet)" data-i18n-target="placeholder" data-i18n="placeholder_type" />
+              <input class="input" type="text" id="builderPrice" placeholder="Price range (optional)" data-i18n-target="placeholder" data-i18n="device_builder_price_placeholder" />
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="builderCompatible" />
+                <label for="builderCompatible" class="text-sm" data-i18n="table_compatible">Compatible</label>
+              </div>
+              <textarea class="input md:col-span-2" id="builderNotes" placeholder="Notes (comma separated)" data-i18n-target="placeholder" data-i18n="placeholder_notes"></textarea>
+              <textarea class="input md:col-span-2" id="builderRootLinks" placeholder="Root Links (comma separated URLs)" data-i18n-target="placeholder" data-i18n="placeholder_rootlinks"></textarea>
+              <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
+                <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_clear"> Clear </button>
+                <a href="https://github.com/weIlThought/pogosdex-data/pulls" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition" data-i18n="device_builder_upload"> ↥ Upload (Pull Request) </a>
+                <button type="submit" class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_submit"> Generate JSON </button>
+                <button type="button" id="copyDeviceJson" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_copy"> Copy JSON </button>
+              </div>
+            </form>
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
+              <pre id="deviceJsonOutput" class="whitespace-pre-wrap text-xs text-slate-200"></pre>
+            </div>
+            <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_builder_empty"> Fill in the form to generate JSON. </p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <footer class="mt-12 border-t border-slate-800 py-6">
-      <div
-        class="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-      >
-        <span
-          >2025 - PoGoSDex. All rights reserved by their respective
-          owners.</span
-        >
-        <div class="flex gap-4">
-          <!-- <a href="/impressum.html" class="hover:text-emerald-400">Impressum</a> -->
-          <a href="/privacy.html" class="hover:text-emerald-400">Privacy</a>
-          <a href="/tos.html" class="hover:text-emerald-400">Terms</a>
-        </div>
-      </div>
-    </footer>
-
-    <div
-      id="modalBackdrop"
-      class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50"
-    >
-      <div
-        class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform"
-      >
-        <button id="closeModal" class="ml-auto text-slate-400">✕</button>
-        <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
-        <p id="modalMeta" class="text-sm text-slate-400"></p>
-        <p id="modalDesc" class="mt-3 text-slate-200"></p>
-        <div id="modalExtra" class="mt-4 text-slate-300 space-y-1">
-          <p>
-            <strong data-i18n="modal_price_range_label">Price Range:</strong>
-            <span id="modalPriceRange" class="text-slate-400">—</span>
-          </p>
-          <p>
-            <strong data-i18n="modal_pogo_label">PoGO Compatibility:</strong>
-            <span id="modalPoGoComp" class="text-slate-400">—</span>
-          </p>
-        </div>
-        <div id="modalNotesList" class="mt-4 text-slate-300"></div>
-        <div id="modalRootLinks" class="mt-4"></div>
-      </div>
-    </div>
-
-    <div
-      id="newsModalBackdrop"
-      class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50"
-    >
-      <div
-        class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform"
-      >
-        <button id="closeNewsModal" class="ml-auto text-slate-400">✕</button>
-        <h3 id="newsModalTitle" class="text-2xl font-semibold mt-2"></h3>
-        <div id="newsModalMeta" class="text-xs text-slate-400 mt-1"></div>
-        <div
-          id="newsModalBody"
-          class="mt-4 space-y-3 text-sm text-slate-200"
-        ></div>
-        <div id="newsModalTagsWrap" class="mt-4 hidden">
-          <h4
-            class="text-sm font-semibold mb-2 text-slate-300"
-            data-i18n="news_modal_tags"
-          >
-            Tags
-          </h4>
-          <div id="newsModalTags" class="flex flex-wrap gap-2"></div>
-        </div>
-      </div>
-    </div>
-
-    <div
-      id="deviceModal"
-      class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur"
-    >
-      <div
-        class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <h3
-              class="text-lg font-semibold text-slate-100"
-              data-i18n="device_builder_title"
-            >
-              Prepare a new device entry
-            </h3>
-            <p class="text-xs text-slate-400" data-i18n="device_builder_intro">
-              Fill out the form to generate a JSON snippet you can paste into
-              data/devices.json.
-            </p>
-          </div>
-          <button
-            id="deviceModalClose"
-            class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition"
-            data-i18n="modal_close"
-          >
-            Close
-          </button>
-        </div>
-
-        <form
-          id="deviceBuilderForm"
-          class="grid md:grid-cols-2 gap-3"
-          autocomplete="off"
-        >
-          <input
-            class="input"
-            type="text"
-            id="builderBrand"
-            placeholder="Brand"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_brand"
-            required
-          />
-          <input
-            class="input"
-            type="text"
-            id="builderModel"
-            placeholder="Model"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_model"
-            required
-          />
-          <input
-            class="input"
-            type="text"
-            id="builderOs"
-            placeholder="Operating System"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_os"
-          />
-          <input
-            class="input"
-            type="text"
-            id="builderType"
-            placeholder="Type (Phone/Tablet)"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_type"
-          />
-          <input
-            class="input"
-            type="text"
-            id="builderPrice"
-            placeholder="Price range (optional)"
-            data-i18n-target="placeholder"
-            data-i18n="device_builder_price_placeholder"
-          />
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="builderCompatible" />
-            <label
-              for="builderCompatible"
-              class="text-sm"
-              data-i18n="table_compatible"
-              >Compatible</label
-            >
-          </div>
-          <textarea
-            class="input md:col-span-2"
-            id="builderNotes"
-            placeholder="Notes (comma separated)"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_notes"
-          ></textarea>
-          <textarea
-            class="input md:col-span-2"
-            id="builderRootLinks"
-            placeholder="Root Links (comma separated URLs)"
-            data-i18n-target="placeholder"
-            data-i18n="placeholder_rootlinks"
-          ></textarea>
-
-          <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
-            <button
-              type="button"
-              id="deviceFormClear"
-              class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition"
-              data-i18n="device_builder_clear"
-            >
-              Clear
-            </button>
-            <a
-              href="https://github.com/weIlThought/pogosdex-data/pulls"
-              target="_blank"
-              rel="noopener"
-              class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition"
-              data-i18n="device_builder_upload"
-            >
-              ↥ Upload (Pull Request)
-            </a>
-            <button
-              type="submit"
-              class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
-              data-i18n="device_builder_submit"
-            >
-              Generate JSON
-            </button>
-            <button
-              type="button"
-              id="copyDeviceJson"
-              class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition"
-              data-i18n="device_builder_copy"
-            >
-              Copy JSON
-            </button>
-          </div>
-        </form>
-
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <pre
-            id="deviceJsonOutput"
-            class="whitespace-pre-wrap text-xs text-slate-200"
-          ></pre>
-        </div>
-        <p
-          id="deviceBuilderStatus"
-          class="text-sm text-slate-400"
-          data-i18n="device_builder_empty"
-        >
-          Fill in the form to generate JSON.
-        </p>
-      </div>
-    </div>
-    <script src="/main.js" nonce="{{CSP_NONCE}}"></script>
-    <!-- <script src="/cookie-consent.js" defer nonce="{{CSP_NONCE}}"></script> -->
+        <script src="/main.js" nonce="{{CSP_NONCE}}"></script>
+        <!-- <script src="/cookie-consent.js" defer nonce="{{CSP_NONCE}}"></script> -->
   </body>
 </html>
