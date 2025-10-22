@@ -823,7 +823,7 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-(async function ensureSitekey() {
+/* (async function ensureSitekey() {
   const el = document.querySelector("#cf-turnstile");
   if (!el) return;
   try {
@@ -850,7 +850,7 @@ window.addEventListener("keydown", (evt) => {
   } catch (e) {
     console.warn("Turnstile sitekey fetch failed", e);
   }
-})();
+})(); */
 
 // --- PGSharp tab setup (was in public/pgsharp.js) ---
 function setupPgSharpTabs() {
