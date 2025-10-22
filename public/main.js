@@ -823,19 +823,15 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-(async function ensureSitekey() {
-  const el = document.querySelector(".cf-turnstile");
+(async function ensureSITEKEY() {
+  const el = document.querySelector("#cf-turnstile");
   if (!el) return;
-
   try {
     const r = await fetch("/config");
     if (!r.ok) return;
     const j = await r.json();
-
     if (j.sitekey) {
-      el.dataset.sitekey = j.sitekey; // lowercase key
-
-      // Wait until Turnstile API is available
+      el.dataset.sitekey = j.sitekey;
       const waitForTurnstile = () =>
         new Promise((resolve) => {
           if (window.turnstile) return resolve(window.turnstile);
@@ -846,9 +842,8 @@ window.addEventListener("keydown", (evt) => {
             }
           }, 100);
         });
-
       const turnstile = await waitForTurnstile();
-      turnstile.render("#turnstile-container", {
+      turnstile.render(el, {
         sitekey: j.sitekey,
         theme: "auto",
       });
