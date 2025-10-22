@@ -326,7 +326,7 @@ export async function createServer() {
 
   app.use(
     "/data",
-    express.static(path.resolve(__dirname, "..", "data"), {
+    express.static(path.join(__dirname, "data"), {
       index: false,
       maxAge: "1h",
     })
