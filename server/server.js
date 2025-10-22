@@ -328,9 +328,8 @@ export async function createServer() {
     "/data",
     express.static(path.resolve(__dirname, "..", "data"), {
       index: false,
-      maxAge: 0,
-      setHeaders: (res) => {
-        res.setHeader("Cache-Control", "no-store");
+      setHeaders(res) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       },
     })
   );
