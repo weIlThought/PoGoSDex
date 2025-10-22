@@ -299,6 +299,11 @@ export async function createServer() {
     })
   );
 
+  app.get("/data/coords.json", (req, res) => {
+    res.type("application/json");
+    res.sendFile(path.join(__dirname, "data", "coords.json"));
+  });
+
   app.use(
     "/data",
     express.static(path.resolve(__dirname, "..", "data"), {

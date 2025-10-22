@@ -572,50 +572,35 @@ function flattenCoords(raw) {
 }
 
 async function loadCoords() {
-  const el = qs("#coords-list");
-  if (!el) {
-    cerr("loadCoords: #coords-list nicht gefunden.");
+  const listEl = document.getElementById("coords-list");
+  if (!listEl) {
+    console.warn("⚠️ Element #coords-list nicht gefunden.");
     return;
   }
-  clog("Starting loadCoords()");
-  el.textContent = "Loading...";
 
   try {
-    const res = await fetch("/data/coords.json", { cache: "no-store" });
-    if (!res.ok) {
-      cerr("fetch coords.json failed:", res.status, res.statusText);
-      el.textContent = `Failed to load coords: HTTP ${res.status}`;
+    console.debug("📡 Lade /data/coords.json ...");
+    const res = await fetch("/data/coords.json");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
+      listEl.innerHTML = "<li>No coords available.</li>";
       return;
     }
-    const json = await res.json();
-    clog("raw coords keys:", Object.keys(json || {}));
-    const list = flattenCoords(json);
-    clog("flattened coords length:", list.length);
 
-    coordsData = list.map((it, idx) => ({
-      id: it.id || `coord-${idx}`,
-      name: it.name || it.label || it.title || `Spot ${idx + 1}`,
-      lat: typeof it.lat !== "undefined" ? Number(it.lat) : undefined,
-      lng: typeof it.lng !== "undefined" ? Number(it.lng) : undefined,
-      note: it.note || it.notes || "",
-      tags: Array.isArray(it.tags)
-        ? it.tags.map((t) => t.toString())
-        : it.tags
-        ? [String(it.tags)]
-        : [],
-    }));
-
-    // für Live-Debugging im Browser verfügbar machen
-    window.__coordsData = coordsData;
-
-    renderCoords(coordsData);
-    renderCoordsTags(coordsData);
-    updateCoordsTime();
+    listEl.innerHTML = data
+      .map((coord) => `<li>${coord.name} — ${coord.lat}, ${coord.lng}</li>`)
+      .join("");
+    console.debug("✅ Coords geladen:", data.length);
   } catch (err) {
-    cerr("loadCoords error:", err);
-    el.textContent = "Failed to load coords.";
+    console.error("❌ Fehler beim Laden der Coords:", err);
+    listEl.innerHTML = "<li>Fehler beim Laden der Daten.</li>";
   }
 }
+
+document.addEventListener("DOMContentLoaded", loadCoords);
 
 function renderCoords(list) {
   const wrap = qs("#coords-list");
@@ -1124,61 +1109,6 @@ function flattenCoords(raw) {
     if (Array.isArray(v)) arrays.push(...v);
   }
   return arrays;
-}
-
-async function loadCoords() {
-  const el = qs("#coords-list");
-  if (!el) {
-    console.error(
-      "Element #coords-list nicht gefunden im DOM. Abbruch loadCoords."
-    );
-    return;
-  }
-
-  console.log("Starting loadCoords()...");
-  el.textContent = "Loading...";
-
-  try {
-    const url = "/data/coords.json";
-    console.log("fetch >", url);
-    const res = await fetch(url, { cache: "no-store" });
-    console.debug("fetch response:", res);
-    if (!res.ok) {
-      console.error("Fetch failed:", res.status, res.statusText);
-      el.textContent = `Failed to load coords: HTTP ${res.status}`;
-      return;
-    }
-
-    const json = await res.json().catch((e) => {
-      cerr("Failed to parse coords JSON:", e);
-      throw e;
-    });
-
-    cdebug("raw coords json keys:", Object.keys(json || {}));
-    const list = flattenCoords(json);
-    cdebug("flattened coords length:", list.length);
-
-    coordsData = list.map((it, idx) => ({
-      id: it.id || `coord-${idx}`,
-      name: it.name || it.label || it.title || `Spot ${idx + 1}`,
-      lat: typeof it.lat !== "undefined" ? Number(it.lat) : undefined,
-      lng: typeof it.lng !== "undefined" ? Number(it.lng) : undefined,
-      note: it.note || it.notes || "",
-      tags: Array.isArray(it.tags)
-        ? it.tags.map((t) => t.toString())
-        : it.tags
-        ? [String(it.tags)]
-        : [],
-    }));
-
-    cdebug("coordsData sample (first 3):", coordsData.slice(0, 3));
-    renderCoords(coordsData);
-    renderCoordsTags(coordsData);
-    updateCoordsTime();
-  } catch (err) {
-    cerr("loadCoords error:", err);
-    el.textContent = "Failed to load coords.";
-  }
 }
 
 function renderCoords(list) {
