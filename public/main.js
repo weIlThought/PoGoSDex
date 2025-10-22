@@ -841,11 +841,11 @@ window.addEventListener("keydown", (evt) => {
             }
           }, 100);
         });
-      const turnstile = await waitForTurnstile();
-      turnstile.render(el, {
-        sitekey: j.sitekey,
-        theme: "auto",
-      });
+      // const turnstile = await waitForTurnstile();
+      // turnstile.render(el, {
+      //   sitekey: j.sitekey,
+      //   theme: "auto",
+      // });
     }
   } catch (e) {
     console.warn("Turnstile sitekey fetch failed", e);
