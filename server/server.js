@@ -344,6 +344,33 @@ export async function createServer() {
     })
   );
 
+  // -- Debug/startup check: confirm static root and index.html exist --
+  logger.info(`[startup] staticRoot=${staticRoot}`);
+  try {
+    await fsp.access(path.join(staticRoot, "index.html"), fs.constants.R_OK);
+    logger.info("[startup] index.html found in staticRoot");
+  } catch (err) {
+    logger.warn(
+      "[startup] index.html NOT found in staticRoot - this may cause GET / to 404"
+    );
+  }
+
+  // Serve the preloaded HTML files (replace runtime placeholders like CSP nonce)
+  for (const { route, file } of htmlRoutes) {
+    app.get(route, (req, res) => {
+      const content = htmlCache.get(file);
+      if (!content) {
+        return res.status(404).send("Not found");
+      }
+      // Replace per-request placeholders
+      let out = content.replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || "");
+      // if you had other placeholders (e.g. __TURNSTILE_SITEKEY__), replace here:
+      // out = out.replace(/__TURNSTILE_SITEKEY__/g, process.env.TURNSTILE_SITEKEY || "");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(out);
+    });
+  }
+
   // return created server objects and close createServer scope
   return { app, port, logger };
 }
