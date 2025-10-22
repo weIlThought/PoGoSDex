@@ -572,42 +572,30 @@ function flattenCoords(raw) {
 }
 
 async function loadCoords() {
-  console.log("📡 Lade /data/coords.json ...");
+  // Frische Anfrage mit Cache-Buster (ts)
   try {
-    const res = await fetch("/data/coords.json", { cache: "no-store" });
+    const res = await fetch(`/data/coords.json?ts=${Date.now()}`, {
+      cache: "no-store",
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
 
-    console.debug("[coords] json empfangen:", json);
-
-    // 💡 Flache Liste aus allen Kategorien erzeugen
-    let list = [];
-
+    let coords = [];
     if (Array.isArray(json)) {
-      list = json;
+      coords = json;
     } else if (json && typeof json === "object") {
-      for (const key of Object.keys(json)) {
-        const arr = json[key];
-        if (Array.isArray(arr) && arr.length) {
-          console.debug(`[coords] ${key}: ${arr.length} Einträge`);
-          list.push(...arr);
-        }
-      }
+      // top10 + notable + raid_spots zusammenführen
+      coords = Object.values(json).flat();
     }
 
-    console.debug(`[coords] Gesamteinträge: ${list.length}`);
-
-    console.log(`[coords] Anzahl geladen: ${list.length}`);
-
-    if (!list.length) {
+    if (!coords.length) {
       console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
-      console.debug("coords.json Inhalt:", json);
       return;
     }
 
-    // Render-Funktion sicher aufrufen
+    console.log(`[coords] ${coords.length} Einträge geladen.`);
     if (typeof renderCoords === "function") {
-      renderCoords(list);
+      renderCoords(coords);
     } else {
       console.error("❌ renderCoords() nicht definiert!");
     }
