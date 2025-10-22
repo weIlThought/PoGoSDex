@@ -364,7 +364,7 @@ export async function createServer() {
       }
       // Replace per-request placeholders
       let out = content.replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || "");
-      // if you had other placeholders (e.g. __TURNSTILE_SITEKEY__), replace here:
+      // Replace any other placeholders if present, e.g. __TURNSTILE_SITEKEY__
       // out = out.replace(/__TURNSTILE_SITEKEY__/g, process.env.TURNSTILE_SITEKEY || "");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(out);
