@@ -187,29 +187,48 @@ if (deviceLimitSelect) {
 
 let devicesPageSize = 10;
 
+// Helper: get visible devices according to page-size
 function getVisibleDevices() {
   if (devicesPageSize === "all") return devices;
-  return devices.slice(0, devicesPageSize);
+  const n = Number(devicesPageSize) || 10;
+  return devices.slice(0, n);
 }
 
+// Replace existing renderDevices with this improved version:
 function renderDevices(list) {
-  const container = qs("[data-devices-grid]");
+  const container = qs("[data-devices-grid]") || qs("#gridWrap");
   if (!container) return;
 
-  const limited =
-    deviceRenderLimit === Infinity ? list : list.slice(0, deviceRenderLimit);
+  // 'list' may be passed from applyFilters(); fall back to global 'devices'
+  const fullList = Array.isArray(list) ? list : devices;
+
+  // compute page-limit from devicesPageSize
+  const pageLimit =
+    devicesPageSize === "all" ? Infinity : Number(devicesPageSize) || Infinity;
+
+  // deviceRenderLimit might be used elsewhere; combine both limits conservatively
+  const renderLimit =
+    deviceRenderLimit === Infinity
+      ? pageLimit
+      : Math.min(deviceRenderLimit, pageLimit);
+
+  const items =
+    renderLimit === Infinity ? fullList : fullList.slice(0, renderLimit);
+
   container.innerHTML = "";
-  if (!limited.length) {
+  if (!items.length) {
     container.innerHTML = `<div class="col-span-full text-center text-slate-400">${t(
       "no_devices_found",
       "No devices found"
     )}</div>`;
     return;
   }
-  limited.forEach((d) => {
+
+  items.forEach((d) => {
     const tmp = document.createElement("div");
     tmp.innerHTML = cardHtml(d);
     const card = tmp.firstElementChild;
+    if (!card) return;
     card.addEventListener("click", () => openModal(d));
     container.appendChild(card);
   });
@@ -688,10 +707,16 @@ window.hydrateNews = hydrateNews;
 document.addEventListener("DOMContentLoaded", () => {
   const pageSizeSelect = qs("#device-page-size");
   if (pageSizeSelect) {
+    // initialize select to current value (in case variable changed)
+    if (devicesPageSize) {
+      pageSizeSelect.value = String(devicesPageSize);
+    }
+
     pageSizeSelect.addEventListener("change", (event) => {
-      devicesPageSize =
-        event.target.value === "all" ? "all" : Number(event.target.value);
-      renderDevices();
+      const val = event.target.value;
+      devicesPageSize = val === "all" ? "all" : Number(val) || 10;
+      // Re-apply filters and re-render using the new page size
+      applyFilters();
     });
   }
 
