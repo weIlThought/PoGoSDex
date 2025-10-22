@@ -3,11 +3,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const containerSelector = "#turnstile-container";
 
   const container = document.querySelector(containerSelector);
-  const SITEKEY = container?.dataset?.SITEKEY || null;
-  if (!SITEKEY) {
-    console.error("Turnstile: Kein SITEKEY in data-SITEKEY gefunden.");
+  const sitekey = container?.dataset?.sitekey || null;
+  if (!sitekey) {
+    console.error("Turnstile: Kein sitekey in data-sitekey gefunden.");
     return;
   }
+  turnstile.render(containerSelector, {
+    sitekey,
+    callback: attachToken,
+    "error-callback": () => console.warn("Turnstile error"),
+  });
 
   function attachToken(token) {
     let input = form.querySelector('input[name="cf_turnstile_response"]');

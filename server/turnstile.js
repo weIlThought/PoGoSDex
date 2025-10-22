@@ -1,11 +1,3 @@
-/**
- * Minimaler Turnstile-Validator + Express-Middleware
- * Benutzt globales fetch (Node 18+) oder node-fetch/polyfill.
- *
- * Env:
- * - TURNSTILE_SECRET_KEY
- */
-
 export class TurnstileValidator {
   constructor(secretKey, timeout = 10000) {
     this.secretKey = secretKey;
@@ -77,12 +69,10 @@ export class TurnstileValidator {
         // hänge Ergebnis an req an
         req.turnstile = result;
         if (!result.success) {
-          return res
-            .status(400)
-            .json({
-              error: "turnstile_failed",
-              "error-codes": result["error-codes"] || [],
-            });
+          return res.status(400).json({
+            error: "turnstile_failed",
+            "error-codes": result["error-codes"] || [],
+          });
         }
         next();
       } catch (e) {
