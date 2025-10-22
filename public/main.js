@@ -572,32 +572,56 @@ function flattenCoords(raw) {
 }
 
 async function loadCoords() {
-  const listEl = document.getElementById("coords-list");
-  if (!listEl) {
-    console.warn("⚠️ Element #coords-list nicht gefunden.");
-    return;
-  }
-
+  console.log("📡 Lade /data/coords.json ...");
   try {
-    console.debug("📡 Lade /data/coords.json ...");
-    const res = await fetch("/data/coords.json");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const response = await fetch("/data/coords.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    if (!Array.isArray(data) || data.length === 0) {
+    const json = await response.json();
+
+    const list = Array.isArray(json) ? json : Object.values(json).flat();
+
+    if (!list.length) {
       console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
-      listEl.innerHTML = "<li>No coords available.</li>";
       return;
     }
 
-    listEl.innerHTML = data
-      .map((coord) => `<li>${coord.name} — ${coord.lat}, ${coord.lng}</li>`)
-      .join("");
-    console.debug("✅ Coords geladen:", data.length);
+    console.log(`[coords] Gerenderte Anzahl: ${list.length}`);
+    renderCoords(list);
   } catch (err) {
-    console.error("❌ Fehler beim Laden der Coords:", err);
-    listEl.innerHTML = "<li>Fehler beim Laden der Daten.</li>";
+    console.error("[coords] Fehler beim Laden:", err);
   }
+}
+
+function renderCoords(list) {
+  const wrap = document.getElementById("coords-list");
+  if (!wrap) {
+    console.warn("⚠️ Kein #coords-list Element gefunden");
+    return;
+  }
+
+  wrap.innerHTML = list
+    .map(
+      (c, i) => `
+      <div class="py-2 border-b border-slate-700">
+        <div class="text-slate-200 font-medium">${c.name || "(Unbenannt)"}</div>
+        <div class="text-slate-400 text-sm">${c.lat}, ${c.lng}</div>
+        ${
+          c.note
+            ? `<div class="text-xs text-slate-500 italic">${c.note}</div>`
+            : ""
+        }
+        ${
+          c.tags && c.tags.length
+            ? `<div class="mt-1 text-xs text-sky-400">${c.tags.join(
+                ", "
+              )}</div>`
+            : ""
+        }
+      </div>
+    `
+    )
+    .join("");
 }
 
 document.addEventListener("DOMContentLoaded", loadCoords);
