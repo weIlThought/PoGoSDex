@@ -582,15 +582,20 @@ async function loadCoords() {
 
     // 💡 Flache Liste aus allen Kategorien erzeugen
     let list = [];
+
     if (Array.isArray(json)) {
       list = json;
     } else if (json && typeof json === "object") {
-      Object.entries(json).forEach(([key, value]) => {
-        if (Array.isArray(value) && value.length) {
-          list = list.concat(value);
+      for (const key of Object.keys(json)) {
+        const arr = json[key];
+        if (Array.isArray(arr) && arr.length) {
+          console.debug(`[coords] ${key}: ${arr.length} Einträge`);
+          list.push(...arr);
         }
-      });
+      }
     }
+
+    console.debug(`[coords] Gesamteinträge: ${list.length}`);
 
     console.log(`[coords] Anzahl geladen: ${list.length}`);
 
