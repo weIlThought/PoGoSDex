@@ -577,6 +577,13 @@ async function loadCoords() {
     const response = await fetch("/data/coords.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const json = await response.json();
+    console.debug("[coords] json empfangen:", json);
+    console.debug(
+      "[coords] Typ:",
+      typeof json,
+      "Keys:",
+      Object.keys(json || {})
+    );
     let list = [];
     if (Array.isArray(json)) {
       list = json;
