@@ -74,28 +74,28 @@ function bindNavigation() {
   });
 }
 
-function showSection(name = "overview") {
-  if (!sections[name]) return;
-  Object.entries(sections).forEach(([key, node]) => {
-    if (!node) return;
-    if (key === name) {
-      node.classList.remove("hidden");
-    } else {
-      node.classList.add("hidden");
-    }
-  });
-  navButtons.forEach((btn) => {
-    const isActive = btn.dataset.section === name;
-    btn.setAttribute("aria-selected", String(isActive));
-    btn.classList.toggle("border-slate-700", isActive);
-    btn.classList.toggle("bg-slate-800", isActive);
-    btn.classList.toggle("bg-slate-800/60", !isActive);
-    btn.classList.toggle("border-transparent", !isActive);
-  });
-  activeSection = name;
-  if (name === "devices") applyFilters();
-  if (name === "news") renderNews(news);
-}
+// function showSection(name = "overview") {
+//   if (!sections[name]) return;
+//   Object.entries(sections).forEach(([key, node]) => {
+//     if (!node) return;
+//     if (key === name) {
+//       node.classList.remove("hidden");
+//     } else {
+//       node.classList.add("hidden");
+//     }
+//   });
+//   navButtons.forEach((btn) => {
+//     const isActive = btn.dataset.section === name;
+//     btn.setAttribute("aria-selected", String(isActive));
+//     btn.classList.toggle("border-slate-700", isActive);
+//     btn.classList.toggle("bg-slate-800", isActive);
+//     btn.classList.toggle("bg-slate-800/60", !isActive);
+//     btn.classList.toggle("border-transparent", !isActive);
+//   });
+//   activeSection = name;
+//   if (name === "devices") applyFilters();
+//   if (name === "news") renderNews(news);
+// }
 
 async function loadDevices() {
   try {
@@ -212,88 +212,88 @@ function hydrateGrid() {
   renderDevices(devices);
 }
 
-function renderNews(items) {
-  const wrap = qs("#newsWrap");
-  if (!wrap) return;
-  wrap.innerHTML = "";
-  const filtered = items.filter((item) => {
-    const title = item.title?.toLowerCase() || "";
-    const excerpt = item.excerpt?.toLowerCase() || "";
-    const content = item.content?.toLowerCase() || "";
-    const matchesSearch =
-      !newsSearch ||
-      title.includes(newsSearch) ||
-      excerpt.includes(newsSearch) ||
-      content.includes(newsSearch);
-    const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-    const matchesTags =
-      !newsSelectedTags.size ||
-      itemTags.some((tag) => newsSelectedTags.has(tag));
-    return matchesSearch && matchesTags;
-  });
-  if (!filtered.length) {
-    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
-      "news_empty",
-      "No news available yet."
-    )}</div>`;
-    return;
-  }
-  const publishedLabel = t("news_published", "Published");
-  const updatedLabel = t("news_updated", "Updated");
-  filtered.forEach((item) => {
-    const title = item.title;
-    const excerpt = item.excerpt;
-    const tags = item.tags || [];
-    const content = item.content || item.excerpt || "";
+// function renderNews(items) {
+//   const wrap = qs("#newsWrap");
+//   if (!wrap) return;
+//   wrap.innerHTML = "";
+//   const filtered = items.filter((item) => {
+//     const title = item.title?.toLowerCase() || "";
+//     const excerpt = item.excerpt?.toLowerCase() || "";
+//     const content = item.content?.toLowerCase() || "";
+//     const matchesSearch =
+//       !newsSearch ||
+//       title.includes(newsSearch) ||
+//       excerpt.includes(newsSearch) ||
+//       content.includes(newsSearch);
+//     const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+//     const matchesTags =
+//       !newsSelectedTags.size ||
+//       itemTags.some((tag) => newsSelectedTags.has(tag));
+//     return matchesSearch && matchesTags;
+//   });
+//   if (!filtered.length) {
+//     wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+//       "news_empty",
+//       "No news available yet."
+//     )}</div>`;
+//     return;
+//   }
+//   const publishedLabel = t("news_published", "Published");
+//   const updatedLabel = t("news_updated", "Updated");
+//   filtered.forEach((item) => {
+//     const title = item.title;
+//     const excerpt = item.excerpt;
+//     const tags = item.tags || [];
+//     const content = item.content || item.excerpt || "";
 
-    const pub = item.publishedAt
-      ? dateFormatter.format(new Date(item.publishedAt))
-      : dash();
-    const upd =
-      item.updatedAt && item.updatedAt !== item.publishedAt
-        ? dateFormatter.format(new Date(item.updatedAt))
-        : null;
+//     const pub = item.publishedAt
+//       ? dateFormatter.format(new Date(item.publishedAt))
+//       : dash();
+//     const upd =
+//       item.updatedAt && item.updatedAt !== item.publishedAt
+//         ? dateFormatter.format(new Date(item.updatedAt))
+//         : null;
 
-    const article = document.createElement("article");
-    article.className =
-      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
-    article.tabIndex = 0;
-    article.setAttribute("role", "button");
-    article.innerHTML = `
-      <h3 class="text-xl font-semibold">${esc(title)}</h3>
-      <div class="text-xs text-slate-400 mt-2 space-x-3">
-        <span>${publishedLabel}: ${esc(pub)}</span>
-        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
-      </div>
-      ${
-        excerpt
-          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
-          : ""
-      }
-      ${
-        tags.length
-          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
-              .map(
-                (tag) =>
-                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
-                    tag
-                  )}</span>`
-              )
-              .join("")}</div>`
-          : ""
-      }
-    `;
-    const open = () => openNewsModal(item, { content });
-    article.addEventListener("click", open);
-    article.addEventListener("keydown", (evt) => {
-      if (evt.key === "Enter" || evt.key === " ") {
-        evt.preventDefault();
-        open();
-      }
-    });
-    wrap.appendChild(article);
-  });
-}
+//     const article = document.createElement("article");
+//     article.className =
+//       "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
+//     article.tabIndex = 0;
+//     article.setAttribute("role", "button");
+//     article.innerHTML = `
+//       <h3 class="text-xl font-semibold">${esc(title)}</h3>
+//       <div class="text-xs text-slate-400 mt-2 space-x-3">
+//         <span>${publishedLabel}: ${esc(pub)}</span>
+//         ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+//       </div>
+//       ${
+//         excerpt
+//           ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
+//           : ""
+//       }
+//       ${
+//         tags.length
+//           ? `<div class="flex flex-wrap gap-2 mt-3">${tags
+//               .map(
+//                 (tag) =>
+//                   `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+//                     tag
+//                   )}</span>`
+//               )
+//               .join("")}</div>`
+//           : ""
+//       }
+//     `;
+//     const open = () => openNewsModal(item, { content });
+//     article.addEventListener("click", open);
+//     article.addEventListener("keydown", (evt) => {
+//       if (evt.key === "Enter" || evt.key === " ") {
+//         evt.preventDefault();
+//         open();
+//       }
+//     });
+//     wrap.appendChild(article);
+//   });
+// }
 
 function openModal(d) {
   qs("#modalBackdrop").classList.remove("hidden");
@@ -574,194 +574,73 @@ function flattenCoords(raw) {
 async function loadCoords() {
   console.log("📡 Lade /data/coords.json ...");
   try {
-    const response = await fetch("/data/coords.json", { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const json = await response.json();
+    const res = await fetch("/data/coords.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
     console.debug("[coords] json empfangen:", json);
-    console.debug(
-      "[coords] Typ:",
-      typeof json,
-      "Keys:",
-      Object.keys(json || {})
-    );
+
+    // 💡 Flache Liste aus allen Kategorien erzeugen
     let list = [];
     if (Array.isArray(json)) {
       list = json;
     } else if (json && typeof json === "object") {
-      for (const [key, value] of Object.entries(json)) {
-        if (Array.isArray(value)) {
-          list.push(...value);
+      Object.entries(json).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length) {
+          list = list.concat(value);
         }
-      }
+      });
     }
+
     console.log(`[coords] Anzahl geladen: ${list.length}`);
+
     if (!list.length) {
       console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
       console.debug("coords.json Inhalt:", json);
       return;
     }
-    renderCoords(list);
+
+    // Render-Funktion sicher aufrufen
+    if (typeof renderCoords === "function") {
+      renderCoords(list);
+    } else {
+      console.error("❌ renderCoords() nicht definiert!");
+    }
   } catch (err) {
     console.error("[coords] Fehler beim Laden:", err);
   }
 }
 
 function renderCoords(list) {
-  const wrap = document.getElementById("coords-list");
-  if (!wrap) {
+  const container = document.getElementById("coords-list");
+  if (!container) {
     console.warn("⚠️ Kein #coords-list Element gefunden");
     return;
   }
-
-  wrap.innerHTML = list
+  container.innerHTML = list
     .map(
-      (c, i) => `
+      (c) => `
       <div class="py-2 border-b border-slate-700">
-        <div class="text-slate-200 font-medium">${c.name || "(Unbenannt)"}</div>
+        <div class="text-slate-200 font-semibold">${
+          c.name || "(Unbenannt)"
+        }</div>
         <div class="text-slate-400 text-sm">${c.lat}, ${c.lng}</div>
         ${
-          c.note
-            ? `<div class="text-xs text-slate-500 italic">${c.note}</div>`
+          c.tags?.length
+            ? `<div class="text-xs text-sky-400 mt-1">${c.tags.join(
+                ", "
+              )}</div>`
             : ""
         }
         ${
-          c.tags && c.tags.length
-            ? `<div class="mt-1 text-xs text-sky-400">${c.tags.join(
-                ", "
-              )}</div>`
+          c.note
+            ? `<div class="text-xs text-slate-500 italic">${c.note}</div>`
             : ""
         }
       </div>
     `
     )
     .join("");
-}
-
-document.addEventListener("DOMContentLoaded", loadCoords);
-
-function renderCoords(list) {
-  const wrap = qs("#coords-list");
-  if (!wrap) {
-    cerr("renderCoords: #coords-list fehlt");
-    return;
-  }
-  let filtered = list;
-  if (coordsFilterTag) {
-    filtered = list.filter((c) =>
-      (c.tags || [])
-        .map((t) => t.toLowerCase())
-        .includes(coordsFilterTag.toLowerCase())
-    );
-  }
-  clog("renderCoords -> rendering count:", filtered.length);
-
-  if (!filtered.length) {
-    wrap.innerHTML = `<div class="text-slate-400">No coordinates found.</div>`;
-    return;
-  }
-
-  wrap.innerHTML = filtered
-    .map((c) => {
-      const latLng =
-        typeof c.lat !== "undefined" && typeof c.lng !== "undefined"
-          ? `${Number(c.lat).toFixed(4)}, ${Number(c.lng).toFixed(4)}`
-          : "—";
-      return `
-        <div class="py-2 border-b border-slate-800 last:border-b-0">
-          <button type="button" class="w-full text-left coords-item" data-id="${esc(
-            c.id
-          )}" data-lat="${esc(c.lat)}" data-lng="${esc(c.lng)}">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-medium text-slate-100">${esc(c.name)}</div>
-                <div class="text-xs text-slate-400">${esc(c.note || "")}</div>
-              </div>
-              <div class="text-xs text-slate-400">${esc(latLng)}</div>
-            </div>
-          </button>
-          ${
-            c.tags && c.tags.length
-              ? `<div class="mt-2 flex gap-2 flex-wrap">${c.tags
-                  .map(
-                    (t) =>
-                      `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-                        t
-                      )}</span>`
-                  )
-                  .join("")}</div>`
-              : ""
-          }
-        </div>`;
-    })
-    .join("");
-
-  const items = wrap.querySelectorAll(".coords-item");
-  items.forEach((btn) => {
-    // remove previous handler if present
-    try {
-      btn.removeEventListener("click", btn.__coordsClickHandler);
-    } catch (e) {}
-    const handler = () => {
-      const id = btn.dataset.id;
-      const item = coordsData.find((c) => c.id === id);
-      if (!item) {
-        cerr("Clicked coords item not found:", id);
-        return;
-      }
-      openCoordsModal(item);
-    };
-    btn.__coordsClickHandler = handler;
-    btn.addEventListener("click", handler);
-  });
-}
-
-function renderCoordsTags(all) {
-  const wrap = qs("#coords-tags");
-  if (!wrap) return;
-  const tags = new Set();
-  all.forEach((c) =>
-    (c.tags || []).forEach((t) => {
-      if (t && t.toString().trim()) tags.add(t.toString().trim());
-    })
-  );
-  const arr = Array.from(tags).sort((a, b) => a.localeCompare(b));
-  if (!arr.length) {
-    wrap.innerHTML = "";
-    return;
-  }
-
-  wrap.innerHTML = [
-    `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="">All</button>`,
-    ...arr.map(
-      (t) =>
-        `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="${esc(
-          t
-        )}">${esc(t)}</button>`
-    ),
-  ].join(" ");
-
-  wrap.querySelectorAll(".coords-tag").forEach((b) => {
-    try {
-      b.removeEventListener("click", b.__coordsTagHandler);
-    } catch (e) {}
-    const handler = () => {
-      const tag = b.dataset.tag || null;
-      coordsFilterTag = tag && tag !== "" ? tag : null;
-      wrap
-        .querySelectorAll(".coords-tag")
-        .forEach((bb) =>
-          bb.classList.remove(
-            "bg-emerald-600",
-            "border-emerald-400",
-            "text-slate-900"
-          )
-        );
-      b.classList.add("bg-emerald-600", "border-emerald-400", "text-slate-900");
-      renderCoords(coordsData);
-    };
-    b.__coordsTagHandler = handler;
-    b.addEventListener("click", handler);
-  });
 }
 
 function openCoordsModal(item) {
@@ -828,32 +707,30 @@ function updateCoordsTime() {
 // expose function for manual testing in console
 window.loadCoords = loadCoords;
 
-// ------------------------
-// Ende Coords
-// ------------------------
 document.addEventListener("DOMContentLoaded", () => {
   hydrateTranslations();
   hydrateGrid();
-  hydrateNewsInternal();
-  hydrateUptimeStatus();
   bindNavigation();
+  setupPgSharpTabs();
+  updateCoordsTime();
+  loadCoords(); // ← hier laden wir die coords direkt
 
-  // PGSharp Tabs
-  const pgsharpTabs = document.querySelectorAll("#pgsharp-tabs .tab-btn");
-  const pgsharpContents = document.querySelectorAll(
-    ".tab-content[id^='pgsharp-']"
-  );
+  // // PGSharp Tabs
+  // const pgsharpTabs = document.querySelectorAll("#pgsharp-tabs .tab-btn");
+  // const pgsharpContents = document.querySelectorAll(
+  //   ".tab-content[id^='pgsharp-']"
+  // );
 
-  pgsharpTabs.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      pgsharpTabs.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      pgsharpContents.forEach((c) => {
-        c.style.display =
-          c.id === "pgsharp-" + btn.dataset.tab ? "block" : "none";
-      });
-    });
-  });
+  // pgsharpTabs.forEach((btn) => {
+  //   btn.addEventListener("click", () => {
+  //     pgsharpTabs.forEach((b) => b.classList.remove("active"));
+  //     btn.classList.add("active");
+  //     pgsharpContents.forEach((c) => {
+  //       c.style.display =
+  //         c.id === "pgsharp-" + btn.dataset.tab ? "block" : "none";
+  //     });
+  //   });
+  // });
 
   fetch("/api/uptime")
     .then((res) => res.json())
@@ -869,11 +746,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 setupDeviceBuilder();
-showSection(activeSection);
+showSectionByName(activeSection);
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
-  loadCoords();
+  // loadCoords();
   init();
 });
 
@@ -1092,39 +969,39 @@ window.addEventListener("load", () => {
 });
 
 // News filter init
-async function initNewsFilters() {
-  const container =
-    document.getElementById("newsTagFilter") ||
-    document.getElementById("newsFilters") ||
-    document.querySelector(".news-filters");
-  if (!container) return;
-  try {
-    const res = await fetch("/data/news.json", { cache: "no-store" });
-    if (!res.ok) return;
-    const news = await res.json();
-    const tags = Array.from(new Set((news || []).flatMap((n) => n.tags || [])));
-    if (container.tagName === "SELECT") {
-      container.innerHTML =
-        `<option value="all">All</option>` +
-        tags
-          .map(
-            (t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`
-          )
-          .join("");
-    } else {
-      container.innerHTML = tags
-        .map(
-          (t) =>
-            `<button class="tag" data-filter="${escapeHtml(t)}">${escapeHtml(
-              t
-            )}</button>`
-        )
-        .join(" ");
-    }
-  } catch (e) {
-    console.warn("initNewsFilters failed", e);
-  }
-}
+// async function initNewsFilters() {
+//   const container =
+//     document.getElementById("newsTagFilter") ||
+//     document.getElementById("newsFilters") ||
+//     document.querySelector(".news-filters");
+//   if (!container) return;
+//   try {
+//     const res = await fetch("/data/news.json", { cache: "no-store" });
+//     if (!res.ok) return;
+//     const news = await res.json();
+//     const tags = Array.from(new Set((news || []).flatMap((n) => n.tags || [])));
+//     if (container.tagName === "SELECT") {
+//       container.innerHTML =
+//         `<option value="all">All</option>` +
+//         tags
+//           .map(
+//             (t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`
+//           )
+//           .join("");
+//     } else {
+//       container.innerHTML = tags
+//         .map(
+//           (t) =>
+//             `<button class="tag" data-filter="${escapeHtml(t)}">${escapeHtml(
+//               t
+//             )}</button>`
+//         )
+//         .join(" ");
+//     }
+//   } catch (e) {
+//     console.warn("initNewsFilters failed", e);
+//   }
+// }
 
 function escapeHtml(s) {
   return String(s)
@@ -1134,238 +1011,3 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
-// --- Coords: Lade, render, filter, modal, Uhrzeit (mit ausführlichem Logging) ---
-
-function flattenCoords(raw) {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  const arrays = [];
-  for (const k of Object.keys(raw)) {
-    const v = raw[k];
-    if (Array.isArray(v)) arrays.push(...v);
-  }
-  return arrays;
-}
-
-function renderCoords(list) {
-  const wrap = qs("#coords-list");
-  if (!wrap) {
-    cerr("renderCoords: #coords-list fehlt");
-    return;
-  }
-  cdebug("renderCoords called; incoming list length:", list?.length);
-
-  let filtered = list;
-  if (coordsFilterTag) {
-    cdebug("Applying filter tag:", coordsFilterTag);
-    filtered = list.filter((c) =>
-      (c.tags || [])
-        .map((t) => t.toLowerCase())
-        .includes(coordsFilterTag.toLowerCase())
-    );
-  }
-  clog("renderCoords -> rendering count:", filtered.length);
-
-  if (!filtered.length) {
-    wrap.innerHTML = `<div class="text-slate-400">No coordinates found.</div>`;
-    return;
-  }
-
-  try {
-    wrap.innerHTML = filtered
-      .map((c) => {
-        const latLng =
-          typeof c.lat !== "undefined" && typeof c.lng !== "undefined"
-            ? `${Number(c.lat).toFixed(4)}, ${Number(c.lng).toFixed(4)}`
-            : "—";
-        return `
-          <div class="py-2 border-b border-slate-800 last:border-b-0">
-            <button type="button" class="w-full text-left coords-item" data-id="${esc(
-              c.id
-            )}" data-lat="${esc(c.lat)}" data-lng="${esc(c.lng)}">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="font-medium text-slate-100">${esc(c.name)}</div>
-                  <div class="text-xs text-slate-400">${esc(c.note || "")}</div>
-                </div>
-                <div class="text-xs text-slate-400">${esc(latLng)}</div>
-              </div>
-            </button>
-            ${
-              c.tags && c.tags.length
-                ? `<div class="mt-2 flex gap-2 flex-wrap">${c.tags
-                    .map(
-                      (t) =>
-                        `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-                          t
-                        )}</span>`
-                    )
-                    .join("")}</div>`
-                : ""
-            }
-          </div>`;
-      })
-      .join("");
-  } catch (err) {
-    cerr("renderCoords: Error building HTML:", err);
-    wrap.innerHTML = `<div class="text-red-400">Rendering error.</div>`;
-    return;
-  }
-
-  // attach click handlers
-  const items = wrap.querySelectorAll(".coords-item");
-  cdebug("renderCoords: attaching click handlers to items:", items.length);
-  items.forEach((btn) => {
-    btn.removeEventListener("click", btn.__coordsClickHandler);
-    const handler = () => {
-      const id = btn.dataset.id;
-      const item = coordsData.find((c) => c.id === id);
-      if (!item) {
-        cerr("Clicked coords item not found:", id);
-        return;
-      }
-      clog("coords item clicked:", id, item.name);
-      openCoordsModal(item);
-    };
-    btn.__coordsClickHandler = handler;
-    btn.addEventListener("click", handler);
-  });
-}
-
-function renderCoordsTags(all) {
-  const wrap = qs("#coords-tags");
-  if (!wrap) {
-    cdebug("renderCoordsTags: #coords-tags fehlt — überspringe Tags");
-    return;
-  }
-  const tags = new Set();
-  all.forEach((c) =>
-    (c.tags || []).forEach((t) => {
-      if (t && t.toString().trim()) tags.add(t.toString().trim());
-    })
-  );
-  const arr = Array.from(tags).sort((a, b) => a.localeCompare(b));
-  cdebug("renderCoordsTags -> tags found:", arr);
-
-  if (!arr.length) {
-    wrap.innerHTML = "";
-    return;
-  }
-
-  wrap.innerHTML = [
-    `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="">All</button>`,
-    ...arr.map(
-      (t) =>
-        `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="${esc(
-          t
-        )}">${esc(t)}</button>`
-    ),
-  ].join(" ");
-
-  wrap.querySelectorAll(".coords-tag").forEach((b) => {
-    b.removeEventListener("click", b.__coordsTagHandler);
-    const handler = () => {
-      const tag = b.dataset.tag || null;
-      clog("coords tag clicked:", tag);
-      coordsFilterTag = tag && tag !== "" ? tag : null;
-      wrap
-        .querySelectorAll(".coords-tag")
-        .forEach((bb) =>
-          bb.classList.remove(
-            "bg-emerald-600",
-            "border-emerald-400",
-            "text-slate-900"
-          )
-        );
-      b.classList.add("bg-emerald-600", "border-emerald-400", "text-slate-900");
-      renderCoords(coordsData);
-    };
-    b.__coordsTagHandler = handler;
-    b.addEventListener("click", handler);
-  });
-}
-
-function openCoordsModal(item) {
-  clog("openCoordsModal:", item.id, item.name);
-  const backdrop = qs("#coordsModalBackdrop");
-  if (!backdrop) {
-    cerr("openCoordsModal: modal backdrop not found");
-    return;
-  }
-  qs("#coordsModalTitle").textContent = item.name || "—";
-  qs("#coordsModalMeta").textContent = `Lat: ${item.lat ?? "—"} • Lng: ${
-    item.lng ?? "—"
-  }`;
-  qs("#coordsModalNote").textContent = item.note || "";
-  const tagsWrap = qs("#coordsModalTags");
-  if (tagsWrap)
-    tagsWrap.innerHTML = (item.tags || [])
-      .map(
-        (t) =>
-          `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-            t
-          )}</span>`
-      )
-      .join("");
-  const mapsLink = qs("#coordsModalMaps");
-  if (mapsLink) {
-    if (typeof item.lat !== "undefined" && typeof item.lng !== "undefined") {
-      mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        item.lat + "," + item.lng
-      )}`;
-    } else {
-      mapsLink.removeAttribute("href");
-    }
-  }
-  backdrop.classList.remove("hidden");
-  backdrop.classList.add("flex");
-  document.body.style.overflow = "hidden";
-}
-
-function closeCoordsModal() {
-  const backdrop = qs("#coordsModalBackdrop");
-  if (!backdrop) return;
-  backdrop.classList.add("hidden");
-  backdrop.classList.remove("flex");
-  document.body.style.overflow = "";
-}
-qs("#coordsModalClose")?.addEventListener("click", closeCoordsModal);
-qs("#coordsModalBackdrop")?.addEventListener("click", (e) => {
-  if (e.target === qs("#coordsModalBackdrop")) closeCoordsModal();
-});
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeCoordsModal();
-});
-
-function updateCoordsTime() {
-  const el = qs("#coords-time");
-  if (!el) {
-    cdebug("updateCoordsTime: #coords-time nicht gefunden");
-    return;
-  }
-  function tick() {
-    const now = new Date();
-    el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()}`;
-  }
-  tick();
-  if (!updateCoordsTime._interval)
-    updateCoordsTime._interval = setInterval(tick, 1000);
-}
-
-// global error hook for easier debugging
-window.addEventListener("error", (ev) => {
-  cerr(
-    "Uncaught error:",
-    ev.message,
-    ev.filename,
-    ev.lineno,
-    ev.colno,
-    ev.error
-  );
-});
-window.addEventListener("unhandledrejection", (ev) => {
-  cerr("UnhandledRejection:", ev.reason);
-});
-
-// --- Ende Coords (mit Logging) ---
