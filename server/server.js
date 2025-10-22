@@ -369,6 +369,19 @@ export async function createServer() {
     });
   }
 
+  app.use((req, res, next) => {
+    if (req.path === "/data/coords.json") {
+      logger.info(
+        `[coords-request] ${req.ip} ${req.method} ${
+          req.path
+        } headers=${JSON.stringify(
+          req.headers && { accept: req.get("accept") }
+        )}`
+      );
+    }
+    next();
+  });
+
   // return created server objects and close createServer scope
   return { app, port, logger };
 }

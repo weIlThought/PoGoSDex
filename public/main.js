@@ -982,7 +982,19 @@ function escapeHtml(s) {
     .replace(/'/g, "&#039;");
 }
 
-// --- Coords: Lade, render, filter, modal, Uhrzeit ---
+// --- Coords: Lade, render, filter, modal, Uhrzeit (mit ausführlichem Logging) ---
+
+const COORDS_DEBUG = true;
+function clog(...args) {
+  if (COORDS_DEBUG) console.log("[coords]", ...args);
+}
+function cdebug(...args) {
+  if (COORDS_DEBUG) console.debug("[coords]", ...args);
+}
+function cerr(...args) {
+  console.error("[coords]", ...args);
+}
+
 let coordsData = [];
 let coordsFilterTag = null;
 
@@ -999,13 +1011,34 @@ function flattenCoords(raw) {
 
 async function loadCoords() {
   const el = qs("#coords-list");
-  if (!el) return;
+  if (!el) {
+    cerr("Element #coords-list nicht gefunden im DOM. Abbruch loadCoords.");
+    return;
+  }
+
+  clog("Starting loadCoords()...");
   el.textContent = "Loading...";
+
   try {
-    const res = await fetch("/data/coords.json", { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+    const url = "/data/coords.json";
+    clog("fetch >", url);
+    const res = await fetch(url, { cache: "no-store" });
+    cdebug("fetch response:", res);
+    if (!res.ok) {
+      cerr("Fetch failed:", res.status, res.statusText);
+      el.textContent = `Failed to load coords: HTTP ${res.status}`;
+      return;
+    }
+
+    const json = await res.json().catch((e) => {
+      cerr("Failed to parse coords JSON:", e);
+      throw e;
+    });
+
+    cdebug("raw coords json keys:", Object.keys(json || {}));
     const list = flattenCoords(json);
+    cdebug("flattened coords length:", list.length);
+
     coordsData = list.map((it, idx) => ({
       id: it.id || `coord-${idx}`,
       name: it.name || it.label || it.title || `Spot ${idx + 1}`,
@@ -1018,77 +1051,108 @@ async function loadCoords() {
         ? [String(it.tags)]
         : [],
     }));
+
+    cdebug("coordsData sample (first 3):", coordsData.slice(0, 3));
     renderCoords(coordsData);
     renderCoordsTags(coordsData);
     updateCoordsTime();
   } catch (err) {
-    console.error("Failed to load coords:", err);
+    cerr("loadCoords error:", err);
     el.textContent = "Failed to load coords.";
   }
 }
 
 function renderCoords(list) {
   const wrap = qs("#coords-list");
-  if (!wrap) return;
+  if (!wrap) {
+    cerr("renderCoords: #coords-list fehlt");
+    return;
+  }
+  cdebug("renderCoords called; incoming list length:", list?.length);
+
   let filtered = list;
   if (coordsFilterTag) {
+    cdebug("Applying filter tag:", coordsFilterTag);
     filtered = list.filter((c) =>
       (c.tags || [])
         .map((t) => t.toLowerCase())
         .includes(coordsFilterTag.toLowerCase())
     );
   }
+  clog("renderCoords -> rendering count:", filtered.length);
+
   if (!filtered.length) {
     wrap.innerHTML = `<div class="text-slate-400">No coordinates found.</div>`;
     return;
   }
-  wrap.innerHTML = filtered
-    .map(
-      (c) => `
-    <div class="py-2 border-b border-slate-800 last:border-b-0">
-      <button type="button" class="w-full text-left coords-item" data-id="${esc(
-        c.id
-      )}">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="font-medium text-slate-100">${esc(c.name)}</div>
-            <div class="text-xs text-slate-400">${esc(c.note || "")}</div>
-          </div>
-          <div class="text-xs text-slate-400">${
-            typeof c.lat !== "undefined"
-              ? `${Number(c.lat).toFixed(4)}, ${Number(c.lng).toFixed(4)}`
-              : "—"
-          }</div>
-        </div>
-      </button>
-      ${
-        c.tags && c.tags.length
-          ? `<div class="mt-2 flex gap-2 flex-wrap">${c.tags
-              .map(
-                (t) =>
-                  `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-                    t
-                  )}</span>`
-              )
-              .join("")}</div>`
-          : ""
-      }
-    </div>`
-    )
-    .join("");
 
-  wrap.querySelectorAll(".coords-item").forEach((btn) => {
-    btn.addEventListener("click", () => {
+  try {
+    wrap.innerHTML = filtered
+      .map((c) => {
+        const latLng =
+          typeof c.lat !== "undefined" && typeof c.lng !== "undefined"
+            ? `${Number(c.lat).toFixed(4)}, ${Number(c.lng).toFixed(4)}`
+            : "—";
+        return `
+          <div class="py-2 border-b border-slate-800 last:border-b-0">
+            <button type="button" class="w-full text-left coords-item" data-id="${esc(
+              c.id
+            )}" data-lat="${esc(c.lat)}" data-lng="${esc(c.lng)}">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-100">${esc(c.name)}</div>
+                  <div class="text-xs text-slate-400">${esc(c.note || "")}</div>
+                </div>
+                <div class="text-xs text-slate-400">${esc(latLng)}</div>
+              </div>
+            </button>
+            ${
+              c.tags && c.tags.length
+                ? `<div class="mt-2 flex gap-2 flex-wrap">${c.tags
+                    .map(
+                      (t) =>
+                        `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+                          t
+                        )}</span>`
+                    )
+                    .join("")}</div>`
+                : ""
+            }
+          </div>`;
+      })
+      .join("");
+  } catch (err) {
+    cerr("renderCoords: Error building HTML:", err);
+    wrap.innerHTML = `<div class="text-red-400">Rendering error.</div>`;
+    return;
+  }
+
+  // attach click handlers
+  const items = wrap.querySelectorAll(".coords-item");
+  cdebug("renderCoords: attaching click handlers to items:", items.length);
+  items.forEach((btn) => {
+    btn.removeEventListener("click", btn.__coordsClickHandler);
+    const handler = () => {
       const id = btn.dataset.id;
       const item = coordsData.find((c) => c.id === id);
-      if (item) openCoordsModal(item);
-    });
+      if (!item) {
+        cerr("Clicked coords item not found:", id);
+        return;
+      }
+      clog("coords item clicked:", id, item.name);
+      openCoordsModal(item);
+    };
+    btn.__coordsClickHandler = handler;
+    btn.addEventListener("click", handler);
   });
 }
 
 function renderCoordsTags(all) {
   const wrap = qs("#coords-tags");
-  if (!wrap) return;
+  if (!wrap) {
+    cdebug("renderCoordsTags: #coords-tags fehlt — überspringe Tags");
+    return;
+  }
   const tags = new Set();
   all.forEach((c) =>
     (c.tags || []).forEach((t) => {
@@ -1096,10 +1160,13 @@ function renderCoordsTags(all) {
     })
   );
   const arr = Array.from(tags).sort((a, b) => a.localeCompare(b));
+  cdebug("renderCoordsTags -> tags found:", arr);
+
   if (!arr.length) {
     wrap.innerHTML = "";
     return;
   }
+
   wrap.innerHTML = [
     `<button type="button" class="coords-tag px-3 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60" data-tag="">All</button>`,
     ...arr.map(
@@ -1109,9 +1176,12 @@ function renderCoordsTags(all) {
         )}">${esc(t)}</button>`
     ),
   ].join(" ");
+
   wrap.querySelectorAll(".coords-tag").forEach((b) => {
-    b.addEventListener("click", () => {
+    b.removeEventListener("click", b.__coordsTagHandler);
+    const handler = () => {
       const tag = b.dataset.tag || null;
+      clog("coords tag clicked:", tag);
       coordsFilterTag = tag && tag !== "" ? tag : null;
       wrap
         .querySelectorAll(".coords-tag")
@@ -1124,14 +1194,20 @@ function renderCoordsTags(all) {
         );
       b.classList.add("bg-emerald-600", "border-emerald-400", "text-slate-900");
       renderCoords(coordsData);
-    });
+    };
+    b.__coordsTagHandler = handler;
+    b.addEventListener("click", handler);
   });
 }
 
 function openCoordsModal(item) {
+  clog("openCoordsModal:", item.id, item.name);
   const backdrop = qs("#coordsModalBackdrop");
-  if (!backdrop) return;
-  qs("#coordsModalTitle").textContent = item.name;
+  if (!backdrop) {
+    cerr("openCoordsModal: modal backdrop not found");
+    return;
+  }
+  qs("#coordsModalTitle").textContent = item.name || "—";
   qs("#coordsModalMeta").textContent = `Lat: ${item.lat ?? "—"} • Lng: ${
     item.lng ?? "—"
   }`;
@@ -1160,6 +1236,7 @@ function openCoordsModal(item) {
   backdrop.classList.add("flex");
   document.body.style.overflow = "hidden";
 }
+
 function closeCoordsModal() {
   const backdrop = qs("#coordsModalBackdrop");
   if (!backdrop) return;
@@ -1177,7 +1254,10 @@ window.addEventListener("keydown", (e) => {
 
 function updateCoordsTime() {
   const el = qs("#coords-time");
-  if (!el) return;
+  if (!el) {
+    cdebug("updateCoordsTime: #coords-time nicht gefunden");
+    return;
+  }
   function tick() {
     const now = new Date();
     el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()}`;
@@ -1187,4 +1267,19 @@ function updateCoordsTime() {
     updateCoordsTime._interval = setInterval(tick, 1000);
 }
 
-// --- Ende Coords ---
+// global error hook for easier debugging
+window.addEventListener("error", (ev) => {
+  cerr(
+    "Uncaught error:",
+    ev.message,
+    ev.filename,
+    ev.lineno,
+    ev.colno,
+    ev.error
+  );
+});
+window.addEventListener("unhandledrejection", (ev) => {
+  cerr("UnhandledRejection:", ev.reason);
+});
+
+// --- Ende Coords (mit Logging) ---
