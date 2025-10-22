@@ -300,8 +300,28 @@ export async function createServer() {
   );
 
   app.get("/data/coords.json", (req, res) => {
+    const coordsPath = path.join(__dirname, "..", "data", "coords.json");
     res.type("application/json");
-    res.sendFile(path.join(__dirname, "data", "coords.json"));
+    res.sendFile(coordsPath, (err) => {
+      if (err) {
+        logger && logger.error
+          ? logger.error(
+              `❌ Fehler beim Senden der coords.json: ${String(err)}`
+            )
+          : console.error("❌ Fehler beim Senden der coords.json:", err);
+        if (!res.headersSent) {
+          res.status(404).json({ error: "coords.json not found" });
+        } else {
+          try {
+            res.end();
+          } catch (_) {}
+        }
+      } else {
+        logger && logger.info
+          ? logger.info(`📡 Coords-Datei ausgeliefert: ${coordsPath}`)
+          : console.log("📡 Coords-Datei ausgeliefert:", coordsPath);
+      }
+    });
   });
 
   app.use(
