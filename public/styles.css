@@ -215,15 +215,6 @@
 #coords-list strong { color: #fff; font-weight: 600; }
 #coords-list .note { color: #94a3b8; font-size: 0.85rem; }
 
-/* Turnstile container alignment */
-#turnstile-container {
-  margin-top: 0.75rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: flex-start;
-}
-
 /* Small utilities used by the new panel */
 .text-emerald-300 { color: #34d399 !important; }
 .bg-slate-800 { background-color: #0f1724 !important; }

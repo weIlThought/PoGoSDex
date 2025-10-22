@@ -1,18 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-console.log("TURNSTILE_SITEKEY present:", !!process.env.TURNSTILE_SITEKEY);
-
-// Unterstütze mehrere env-Namen und erzeuge turnstileSecret
-const SITEKEY =
-  process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
-const turnstileSecret =
-  process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET || "";
-
-// Turnstile Validator initialisieren (server/turnstile.js)
-import TurnstileValidator from "./turnstile.js";
-const turnstile = new TurnstileValidator(turnstileSecret);
-// optional exportieren, falls andere Module Zugriff brauchen
-export { SITEKEY, turnstileSecret, turnstile };
 
 import fs from "fs";
 import path from "path";
@@ -95,13 +82,9 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
-      // ✅ Use backticks here so ${nonce} expands
-      `script-src 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
-      `script-src-elem 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https:`,
-      "connect-src 'self' data: https://api.uptimerobot.com https://challenges.cloudflare.com",
+      "connect-src 'self' data: https://api.uptimerobot.com",
       "img-src 'self' data:",
       "style-src 'self' 'unsafe-inline' https:",
-      "frame-src 'self' https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "report-to csp-endpoint",
@@ -292,52 +275,6 @@ export async function createServer() {
     }
   });
 
-  app.post(
-    "/api/turnstile-verify",
-    express.urlencoded({ extended: false }),
-    async (req, res) => {
-      const token = req.body["cf-turnstile-response"];
-      const remoteip =
-        req.headers["cf-connecting-ip"] ||
-        req.headers["x-forwarded-for"] ||
-        req.ip;
-
-      // Hole Secret NUR aus Railway-Umgebungsvariablen!
-      const secret = process.env.TURNSTILE_SECRET;
-      if (!secret) {
-        return res
-          .status(500)
-          .json({ success: false, error: "Missing secret" });
-      }
-      if (!token) {
-        return res.status(400).json({ success: false, error: "Missing token" });
-      }
-
-      try {
-        const params = new URLSearchParams();
-        params.append("secret", secret);
-        params.append("response", token);
-        params.append("remoteip", remoteip);
-
-        const response = await fetch(
-          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-          {
-            method: "POST",
-            body: params,
-          }
-        );
-        const result = await response.json();
-
-        // Optional: weitere Checks (Hostname, Action etc.)
-        // if (result.success && result.hostname !== "pogosdex.com") { ... }
-
-        res.json(result);
-      } catch (err) {
-        res.status(500).json({ success: false, error: "Internal error" });
-      }
-    }
-  );
-
   const staticRoot = path.resolve(__dirname, "..", "public");
   const htmlCache = new Map();
   // Verwende die Promise-API von fs für await/async
@@ -378,57 +315,6 @@ export async function createServer() {
     })
   );
 
-  htmlRoutes.forEach(({ route, file }) => {
-    app.get(route, (_req, res) => {
-      const nonce = res.locals.cspNonce;
-      const template = htmlCache.get(file);
-      // Ersetze {{CSP_NONCE}} und {{TURNSTILE_SITEKEY}} im HTML
-      const html = template
-        .replace(/{{CSP_NONCE}}/g, nonce)
-        .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
-      res.type("html").send(html);
-    });
-  });
-
-  app.get("/privacy", (req, res) => {
-    const nonce = res.locals.cspNonce; // falls du CSP Nonce nutzt
-    const template = fs.readFileSync("public/privacy.html", "utf8");
-    const html = template
-      .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
-    res.type("html").send(html);
-  });
-
-  app.get("/tos", (req, res) => {
-    const nonce = res.locals.cspNonce;
-    const template = fs.readFileSync("public/tos.html", "utf8");
-    const html = template
-      .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
-    res.type("html").send(html);
-  });
-
-  // Middleware: HTML-Dateien zur Laufzeit ersetzen (muss VOR express.static registriert werden)
-  app.use((req, res, next) => {
-    // Nur HTML-Dateien und Root behandeln
-    if (!req.path.endsWith(".html") && req.path !== "/") return next();
-
-    const rel = req.path === "/" ? "/index.html" : req.path;
-    const p = path.join(process.cwd(), "public", rel);
-
-    if (!fs.existsSync(p)) return next();
-
-    try {
-      let html = fs.readFileSync(p, "utf8");
-      const reqNonce = res.locals.cspNonce || "";
-      html = html.replace(/__TURNSTILE_SITEKEY__/g, SITEKEY || "");
-      html = html.replace(/__CSP_NONCE__/g, reqNonce);
-      res.type("html").send(html);
-    } catch (err) {
-      next(err);
-    }
-  });
-
   // Wichtig: express.static(...) muss NACH dieser Middleware kommen
   app.use(
     express.static(staticRoot, {
@@ -458,68 +344,7 @@ export async function createServer() {
     })
   );
 
-  // TURNSTILE SITEKEY aus Env (öffentlich, safe für Client)
-  const SITEKEY =
-    process.env.TURNSTILE_SITEKEY || process.env.TURNSTILE_SITE_KEY || "";
-  console.log("TURNSTILE_SITEKEY present (env):", !!SITEKEY ? "YES" : "NO");
-
-  // --- Middleware: Ersetze __TURNSTILE_SITEKEY__ in HTML BEFORE static serving ---
-  app.use((req, res, next) => {
-    try {
-      if (!req.path.endsWith(".html") && req.path !== "/") return next();
-      const rel = req.path === "/" ? "/index.html" : req.path;
-      const p = path.join(process.cwd(), "public", rel);
-      if (!fs.existsSync(p)) return next();
-      let html = fs.readFileSync(p, "utf8");
-      const hadPlaceholder = html.includes("__TURNSTILE_SITEKEY__");
-      html = html.replace(
-        /(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g,
-        SITEKEY
-      );
-      // Prevent aggressive CDN caching of HTML so replacements appear immediately
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      if (hadPlaceholder) console.log(`[SITEKEY-replace] replaced in ${rel}`);
-      return res.type("html").send(html);
-    } catch (err) {
-      console.error("SITEKEY-replace error:", err);
-      return next(err);
-    }
-  });
-
-  app.get("/config", (req, res) => {
-    res.json({
-      sitekey: SITEKEY,
-    });
-  });
-
-  app.get("/", (req, res) => {
-    const p = path.join(process.cwd(), "public", "index.html");
-    if (!fs.existsSync(p)) return res.status(404).end();
-    let html = fs.readFileSync(p, "utf8");
-    html = html
-      .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce)
-      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
-    res.type("html").send(html);
-  });
-
-  app.use((req, res) => {
-    if (req.method !== "GET") {
-      return res.status(404).end();
-    }
-
-    const nonce = res.locals.cspNonce;
-    const template = htmlCache.get("index.html");
-    const html = template
-      .replace(/{{CSP_NONCE}}/g, nonce)
-      .replace(/(__TURNSTILE_SITEKEY__|{{TURNSTILE_SITEKEY}})/g, SITEKEY);
-    res.type("html").send(html);
-  });
-
-  app.use((err, _req, res, _next) => {
-    logger.error(`Unhandled error: ${err.stack || err.message}`);
-    res.status(500).json({ error: "Internal Server Error" });
-  });
-
+  // return created server objects and close createServer scope
   return { app, port, logger };
 }
 
