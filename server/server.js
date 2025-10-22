@@ -364,8 +364,6 @@ export async function createServer() {
       }
       // Replace per-request placeholders
       let out = content.replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || "");
-      // Replace any other placeholders if present, e.g. __TURNSTILE_SITEKEY__
-      // out = out.replace(/__TURNSTILE_SITEKEY__/g, process.env.TURNSTILE_SITEKEY || "");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(out);
     });

@@ -40,7 +40,6 @@
   "cookie_question": "Wir verwenden Cookies für Analyse und Werbung. Akzeptierst du das?",
   "cookie_accept": "Akzeptieren",
   "cookie_decline": "Ablehnen",
-  "ad_placeholder": "Werbung",
   "device_builder_title": "Neuen Geräteeintrag vorbereiten",
   "device_builder_intro": "Fülle die Felder aus, um einen JSON-Ausschnitt für data/devices.json zu erzeugen.",
   "device_builder_submit": "JSON erzeugen",
