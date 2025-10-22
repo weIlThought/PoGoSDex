@@ -326,9 +326,12 @@ export async function createServer() {
 
   app.use(
     "/data",
-    express.static(path.join(__dirname, "data"), {
+    express.static(path.resolve(__dirname, "..", "data"), {
       index: false,
-      maxAge: "1h",
+      maxAge: 0,
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "no-store");
+      },
     })
   );
 
