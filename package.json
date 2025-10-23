@@ -15,8 +15,10 @@
     "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
   "devDependencies": {
+    "fast-glob": "^3.3.3",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "strip-comments": "^2.0.1",
     "supertest": "^6.3.4",
     "tailwindcss": "^3.4.18"
   },

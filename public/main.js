@@ -54,7 +54,6 @@ async function loadLang(lang) {
   }
 }
 
-// add pgsharp section to sections map
 const sections = {
   overview: qs("#overviewSection"),
   devices: qs("#devicesSection"),
@@ -74,28 +73,28 @@ function bindNavigation() {
   });
 }
 
-// function showSection(name = "overview") {
-//   if (!sections[name]) return;
-//   Object.entries(sections).forEach(([key, node]) => {
-//     if (!node) return;
-//     if (key === name) {
-//       node.classList.remove("hidden");
-//     } else {
-//       node.classList.add("hidden");
-//     }
-//   });
-//   navButtons.forEach((btn) => {
-//     const isActive = btn.dataset.section === name;
-//     btn.setAttribute("aria-selected", String(isActive));
-//     btn.classList.toggle("border-slate-700", isActive);
-//     btn.classList.toggle("bg-slate-800", isActive);
-//     btn.classList.toggle("bg-slate-800/60", !isActive);
-//     btn.classList.toggle("border-transparent", !isActive);
-//   });
-//   activeSection = name;
-//   if (name === "devices") applyFilters();
-//   if (name === "news") renderNews(news);
-// }
+function showSection(name = "overview") {
+  if (!sections[name]) return;
+  Object.entries(sections).forEach(([key, node]) => {
+    if (!node) return;
+    if (key === name) {
+      node.classList.remove("hidden");
+    } else {
+      node.classList.add("hidden");
+    }
+  });
+  navButtons.forEach((btn) => {
+    const isActive = btn.dataset.section === name;
+    btn.setAttribute("aria-selected", String(isActive));
+    btn.classList.toggle("border-slate-700", isActive);
+    btn.classList.toggle("bg-slate-800", isActive);
+    btn.classList.toggle("bg-slate-800/60", !isActive);
+    btn.classList.toggle("border-transparent", !isActive);
+  });
+  activeSection = name;
+  if (name === "devices") applyFilters();
+  if (name === "news") renderNews(news);
+}
 
 async function loadDevices() {
   try {
@@ -212,88 +211,88 @@ function hydrateGrid() {
   renderDevices(devices);
 }
 
-// function renderNews(items) {
-//   const wrap = qs("#newsWrap");
-//   if (!wrap) return;
-//   wrap.innerHTML = "";
-//   const filtered = items.filter((item) => {
-//     const title = item.title?.toLowerCase() || "";
-//     const excerpt = item.excerpt?.toLowerCase() || "";
-//     const content = item.content?.toLowerCase() || "";
-//     const matchesSearch =
-//       !newsSearch ||
-//       title.includes(newsSearch) ||
-//       excerpt.includes(newsSearch) ||
-//       content.includes(newsSearch);
-//     const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-//     const matchesTags =
-//       !newsSelectedTags.size ||
-//       itemTags.some((tag) => newsSelectedTags.has(tag));
-//     return matchesSearch && matchesTags;
-//   });
-//   if (!filtered.length) {
-//     wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
-//       "news_empty",
-//       "No news available yet."
-//     )}</div>`;
-//     return;
-//   }
-//   const publishedLabel = t("news_published", "Published");
-//   const updatedLabel = t("news_updated", "Updated");
-//   filtered.forEach((item) => {
-//     const title = item.title;
-//     const excerpt = item.excerpt;
-//     const tags = item.tags || [];
-//     const content = item.content || item.excerpt || "";
+function renderNews(items) {
+  const wrap = qs("#newsWrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const filtered = items.filter((item) => {
+    const title = item.title?.toLowerCase() || "";
+    const excerpt = item.excerpt?.toLowerCase() || "";
+    const content = item.content?.toLowerCase() || "";
+    const matchesSearch =
+      !newsSearch ||
+      title.includes(newsSearch) ||
+      excerpt.includes(newsSearch) ||
+      content.includes(newsSearch);
+    const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+    const matchesTags =
+      !newsSelectedTags.size ||
+      itemTags.some((tag) => newsSelectedTags.has(tag));
+    return matchesSearch && matchesTags;
+  });
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+      "news_empty",
+      "No news available yet."
+    )}</div>`;
+    return;
+  }
+  const publishedLabel = t("news_published", "Published");
+  const updatedLabel = t("news_updated", "Updated");
+  filtered.forEach((item) => {
+    const title = item.title;
+    const excerpt = item.excerpt;
+    const tags = item.tags || [];
+    const content = item.content || item.excerpt || "";
 
-//     const pub = item.publishedAt
-//       ? dateFormatter.format(new Date(item.publishedAt))
-//       : dash();
-//     const upd =
-//       item.updatedAt && item.updatedAt !== item.publishedAt
-//         ? dateFormatter.format(new Date(item.updatedAt))
-//         : null;
+    const pub = item.publishedAt
+      ? dateFormatter.format(new Date(item.publishedAt))
+      : dash();
+    const upd =
+      item.updatedAt && item.updatedAt !== item.publishedAt
+        ? dateFormatter.format(new Date(item.updatedAt))
+        : null;
 
-//     const article = document.createElement("article");
-//     article.className =
-//       "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
-//     article.tabIndex = 0;
-//     article.setAttribute("role", "button");
-//     article.innerHTML = `
-//       <h3 class="text-xl font-semibold">${esc(title)}</h3>
-//       <div class="text-xs text-slate-400 mt-2 space-x-3">
-//         <span>${publishedLabel}: ${esc(pub)}</span>
-//         ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
-//       </div>
-//       ${
-//         excerpt
-//           ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
-//           : ""
-//       }
-//       ${
-//         tags.length
-//           ? `<div class="flex flex-wrap gap-2 mt-3">${tags
-//               .map(
-//                 (tag) =>
-//                   `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
-//                     tag
-//                   )}</span>`
-//               )
-//               .join("")}</div>`
-//           : ""
-//       }
-//     `;
-//     const open = () => openNewsModal(item, { content });
-//     article.addEventListener("click", open);
-//     article.addEventListener("keydown", (evt) => {
-//       if (evt.key === "Enter" || evt.key === " ") {
-//         evt.preventDefault();
-//         open();
-//       }
-//     });
-//     wrap.appendChild(article);
-//   });
-// }
+    const article = document.createElement("article");
+    article.className =
+      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
+    article.tabIndex = 0;
+    article.setAttribute("role", "button");
+    article.innerHTML = `
+      <h3 class="text-xl font-semibold">${esc(title)}</h3>
+      <div class="text-xs text-slate-400 mt-2 space-x-3">
+        <span>${publishedLabel}: ${esc(pub)}</span>
+        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+      </div>
+      ${
+        excerpt
+          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
+          : ""
+      }
+      ${
+        tags.length
+          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
+              .map(
+                (tag) =>
+                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+                    tag
+                  )}</span>`
+              )
+              .join("")}</div>`
+          : ""
+      }
+    `;
+    const open = () => openNewsModal(item, { content });
+    article.addEventListener("click", open);
+    article.addEventListener("keydown", (evt) => {
+      if (evt.key === "Enter" || evt.key === " ") {
+        evt.preventDefault();
+        open();
+      }
+    });
+    wrap.appendChild(article);
+  });
+}
 
 function openModal(d) {
   qs("#modalBackdrop").classList.remove("hidden");
@@ -544,11 +543,6 @@ function init() {
   });
 }
 
-// ------------------------
-// Coords: Lade / Render / Tags / Modal / Uhrzeit
-// (Füge das an einer Stelle in public/main.js ein, z.B. vor `loadLang(currentLang).then(...)`)
-// ------------------------
-
 const COORDS_DEBUG = true;
 function clog(...args) {
   if (COORDS_DEBUG) console.log("[coords]", ...args);
@@ -572,32 +566,99 @@ function flattenCoords(raw) {
 }
 
 async function loadCoords() {
+  console.log("📡 Lade /data/coords.json ...");
   try {
-    const res = await fetch(`/data/coords.json?force=${crypto.randomUUID()}`, {
+    const res = await fetch(`/data/coords.json?ts=${Date.now()}`, {
       cache: "no-store",
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
 
-    const text = await res.text();
-    if (!text.trim()) throw new Error("Leere Antwort (304-Problem)");
-    const json = JSON.parse(text);
+    clog("json empfangen:", json);
 
     let coords = [];
-    if (Array.isArray(json)) coords = json;
-    else if (json && typeof json === "object")
-      coords = Object.values(json).filter(Array.isArray).flat();
+    if (Array.isArray(json)) {
+      coords = json;
+    } else if (json && typeof json === "object") {
+      coords = Object.values(json).flat();
+    }
 
     if (!coords.length) {
       console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
-      console.debug("coords.json Inhalt:", json);
       return;
     }
 
+    coordsData = coords;
     console.log(`[coords] ${coords.length} Einträge geladen.`);
-    renderCoords(coords);
+
+    renderCoords(coordsData);
+    renderCoordsTags(coordsData);
   } catch (err) {
     console.error("[coords] Fehler beim Laden:", err);
   }
+}
+
+function formatLocalTimeAtLng(lng) {
+  if (typeof lng !== "number" || Number.isNaN(lng)) return "—";
+  const hoursOffset = Math.round(lng / 15);
+  const now = new Date();
+  const local = new Date(now.getTime() + hoursOffset * 60 * 60 * 1000);
+  try {
+    return local.toLocaleTimeString(currentLang, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch (e) {
+    return local.toTimeString().split(" ")[0];
+  }
+}
+
+function renderCoordsTags(list) {
+  const wrap = qs("#coords-tags");
+  if (!wrap) return;
+  const tags = Array.from(
+    new Set((list || []).flatMap((c) => (c.tags || []).map((t) => t.trim())))
+  ).sort((a, b) => a.localeCompare(b));
+  const allBtn = document.createElement("button");
+  allBtn.type = "button";
+  allBtn.dataset.tag = "";
+  allBtn.textContent = t("coords_filter_all", "Alle");
+  allBtn.className =
+    "px-3 py-1 text-xs rounded-full border mr-2 " +
+    (!coordsFilterTag
+      ? "bg-emerald-600 border-emerald-400"
+      : "bg-slate-800 border-slate-700");
+  wrap.innerHTML = "";
+  wrap.appendChild(allBtn);
+
+  tags.forEach((tag) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.tag = tag;
+    btn.textContent = tag;
+    btn.className =
+      "px-3 py-1 text-xs rounded-full border mr-2 " +
+      (coordsFilterTag === tag
+        ? "bg-emerald-600 border-emerald-400"
+        : "bg-slate-800 border-slate-700");
+    wrap.appendChild(btn);
+  });
+
+  wrap.onclick = (evt) => {
+    const btn = evt.target.closest("button[data-tag]");
+    if (!btn) return;
+    const tag = btn.dataset.tag || null;
+    coordsFilterTag = tag || null;
+    Array.from(wrap.querySelectorAll("button[data-tag]")).forEach((b) => {
+      const isActive = (b.dataset.tag || "") === (coordsFilterTag || "");
+      b.classList.toggle("bg-emerald-600", isActive);
+      b.classList.toggle("border-emerald-400", isActive);
+      b.classList.toggle("bg-slate-800", !isActive);
+      b.classList.toggle("border-slate-700", !isActive);
+    });
+    renderCoords(coordsData);
+  };
 }
 
 function renderCoords(list) {
@@ -606,30 +667,64 @@ function renderCoords(list) {
     console.warn("⚠️ Kein #coords-list Element gefunden");
     return;
   }
-  container.innerHTML = list
-    .map(
-      (c) => `
-      <div class="py-2 border-b border-slate-700">
-        <div class="text-slate-200 font-semibold">${
-          c.name || "(Unbenannt)"
-        }</div>
-        <div class="text-slate-400 text-sm">${c.lat}, ${c.lng}</div>
+  const filtered =
+    coordsFilterTag && coordsFilterTag.length
+      ? (list || []).filter(
+          (c) =>
+            Array.isArray(c.tags) && c.tags.some((t) => t === coordsFilterTag)
+        )
+      : list || [];
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="text-slate-400 py-4">${t(
+      "no_coords_found",
+      "Keine Koordinaten gefunden."
+    )}</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered
+    .map((c, idx) => {
+      const localTime =
+        typeof c.lng === "number" ? formatLocalTimeAtLng(c.lng) : "—";
+      const tagsHtml = (c.tags || [])
+        .map(
+          (tag) =>
+            `<span class="px-2 py-0.5 mr-1 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+              tag
+            )}</span>`
+        )
+        .join("");
+      return `
+      <div class="coords-item py-3 border-b border-slate-700 cursor-pointer" data-idx="${idx}">
+        <div class="flex items-baseline justify-between">
+          <div class="font-semibold text-slate-200">${esc(
+            c.name || "(Unbenannt)"
+          )}</div>
+          <div class="text-xs text-slate-400 ml-4">${esc(localTime)}</div>
+        </div>
+        <div class="text-slate-400 text-sm mt-1">${esc(
+          String(c.lat ?? "—")
+        )}, ${esc(String(c.lng ?? "—"))}</div>
+        <div class="mt-2">${tagsHtml}</div>
         ${
-          c.tags?.length
-            ? `<div class="text-xs text-sky-400 mt-1">${c.tags.join(
-                ", "
+          c.note
+            ? `<div class="text-xs text-slate-500 italic mt-2">${esc(
+                c.note
               )}</div>`
             : ""
         }
-        ${
-          c.note
-            ? `<div class="text-xs text-slate-500 italic">${c.note}</div>`
-            : ""
-        }
       </div>
-    `
-    )
+    `;
+    })
     .join("");
+
+  Array.from(container.querySelectorAll(".coords-item")).forEach((el, i) => {
+    el.addEventListener("click", () => {
+      const item = filtered[i];
+      if (item) openCoordsModal(item);
+    });
+  });
 }
 
 function openCoordsModal(item) {
@@ -686,14 +781,13 @@ function updateCoordsTime() {
   if (!el) return;
   function tick() {
     const now = new Date();
-    el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()}`;
+    el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()} (Lokale Zeit des Users)`;
   }
   tick();
   if (!updateCoordsTime._interval)
     updateCoordsTime._interval = setInterval(tick, 1000);
 }
 
-// expose function for manual testing in console
 window.loadCoords = loadCoords;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -702,24 +796,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindNavigation();
   setupPgSharpTabs();
   updateCoordsTime();
-  loadCoords(); // ← hier laden wir die coords direkt
-
-  // // PGSharp Tabs
-  // const pgsharpTabs = document.querySelectorAll("#pgsharp-tabs .tab-btn");
-  // const pgsharpContents = document.querySelectorAll(
-  //   ".tab-content[id^='pgsharp-']"
-  // );
-
-  // pgsharpTabs.forEach((btn) => {
-  //   btn.addEventListener("click", () => {
-  //     pgsharpTabs.forEach((b) => b.classList.remove("active"));
-  //     btn.classList.add("active");
-  //     pgsharpContents.forEach((c) => {
-  //       c.style.display =
-  //         c.id === "pgsharp-" + btn.dataset.tab ? "block" : "none";
-  //     });
-  //   });
-  // });
+  loadCoords();
 
   fetch("/api/uptime")
     .then((res) => res.json())
@@ -729,9 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
         el.textContent = `Uptime: ${data.uptime.toFixed(2)} %`;
       }
     })
-    .catch(() => {
-      // Fehler ignorieren, Anzeige bleibt auf — %
-    });
+    .catch(() => {});
 });
 
 setupDeviceBuilder();
@@ -739,7 +814,6 @@ showSectionByName(activeSection);
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
-  // loadCoords();
   init();
 });
 
@@ -827,7 +901,6 @@ window.addEventListener("keydown", (evt) => {
   }
 });
 
-// --- PGSharp tab setup (was in public/pgsharp.js) ---
 function setupPgSharpTabs() {
   const root = qs("#pgsharpSection");
   if (!root) return;
@@ -862,31 +935,24 @@ function setupPgSharpTabs() {
     btn.addEventListener("click", () => activate(btn.dataset.pgsharpTab));
   });
 
-  // initial
   activate(active);
 }
 
-// call setup in DOMContentLoaded (or init)
 document.addEventListener("DOMContentLoaded", () => {
-  // existing DOMContentLoaded logic remains...
-  // ensure PGSharp tabs and any PGSharp-specific hydration run
   setupPgSharpTabs();
 
-  // handle PGSharp report form (simple client-side submit behavior)
   const reportForm = qs("#pgsharp-report-form");
   if (reportForm) {
     reportForm.addEventListener("submit", (evt) => {
       evt.preventDefault();
       const email = qs("#pgsharp-report-email")?.value || "";
       const message = qs("#pgsharp-report-message")?.value || "";
-      // For privacy, just show a local confirmation — server endpoint not configured here.
       reportForm.innerHTML = `<div class="text-green-400">Danke — deine Nachricht wurde lokal verarbeitet.</div>`;
       console.log("PGSharp report (local):", { email, message });
     });
   }
 });
 
-// --- Section navigation, Devices loader, News filters, PGSharp init ---
 function showSectionByName(name) {
   const id =
     name && name.endsWith && name.endsWith("Section") ? name : `${name}Section`;
@@ -915,12 +981,10 @@ function showSectionByName(name) {
     history.replaceState(null, "", `#${plain}`);
   } catch (e) {}
 
-  // section-specific hooks
   if (plain === "devices" && typeof loadDevices === "function") {
     loadDevices().catch((e) => console.error("loadDevices:", e));
   }
   if (plain === "pgsharp") {
-    // ensure section visible even if no setup function
     const pg = document.getElementById("pgsharpSection");
     if (pg) {
       pg.classList.remove("hidden");
@@ -956,41 +1020,6 @@ window.addEventListener("load", () => {
   if (h) showSectionByName(h);
   else showSectionByName("overview");
 });
-
-// News filter init
-// async function initNewsFilters() {
-//   const container =
-//     document.getElementById("newsTagFilter") ||
-//     document.getElementById("newsFilters") ||
-//     document.querySelector(".news-filters");
-//   if (!container) return;
-//   try {
-//     const res = await fetch("/data/news.json", { cache: "no-store" });
-//     if (!res.ok) return;
-//     const news = await res.json();
-//     const tags = Array.from(new Set((news || []).flatMap((n) => n.tags || [])));
-//     if (container.tagName === "SELECT") {
-//       container.innerHTML =
-//         `<option value="all">All</option>` +
-//         tags
-//           .map(
-//             (t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`
-//           )
-//           .join("");
-//     } else {
-//       container.innerHTML = tags
-//         .map(
-//           (t) =>
-//             `<button class="tag" data-filter="${escapeHtml(t)}">${escapeHtml(
-//               t
-//             )}</button>`
-//         )
-//         .join(" ");
-//     }
-//   } catch (e) {
-//     console.warn("initNewsFilters failed", e);
-//   }
-// }
 
 function escapeHtml(s) {
   return String(s)

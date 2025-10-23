@@ -16,7 +16,6 @@ import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
 import { validateData } from "./validate-data.js";
 import fetch from "node-fetch";
-// Scraper imports (neu)
 import { getPgsharpVersion } from "./scrapers/pgsharp.js";
 import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
 
@@ -26,7 +25,6 @@ const __dirname = path.dirname(__filename);
 const htmlRoutes = [
   { route: "/", file: "index.html" },
   { route: "/privacy.html", file: "privacy.html" },
-  // { route: "/impressum.html", file: "impressum.html" },
   { route: "/tos.html", file: "tos.html" },
 ];
 
@@ -69,7 +67,6 @@ export async function createServer() {
 
   const app = express();
 
-  // Set trust proxy for correct client IP detection (important for rate limiting behind proxies)
   app.set("trust proxy", 1);
 
   app.disable("x-powered-by");
@@ -253,7 +250,6 @@ export async function createServer() {
   app.get("/api/uptime", async (req, res) => {
     try {
       const apiKey = process.env.UPTIMEROBOT_API_KEY;
-      // Monitor-ID ggf. aus .env oder fest eintragen
       const monitorID = "801563784";
       const response = await fetch(
         `https://api.uptimerobot.com/v2/getMonitors`,
@@ -277,7 +273,6 @@ export async function createServer() {
 
   const staticRoot = path.resolve(__dirname, "..", "public");
   const htmlCache = new Map();
-  // Verwende die Promise-API von fs für await/async
   const fsp = fs.promises;
   await Promise.all(
     htmlRoutes.map(async ({ file }) => {
@@ -342,7 +337,6 @@ export async function createServer() {
     })
   );
 
-  // Wichtig: express.static(...) muss NACH dieser Middleware kommen
   app.use(
     express.static(staticRoot, {
       index: false,
@@ -371,7 +365,6 @@ export async function createServer() {
     })
   );
 
-  // -- Debug/startup check: confirm static root and index.html exist --
   logger.info(`[startup] staticRoot=${staticRoot}`);
   try {
     await fsp.access(path.join(staticRoot, "index.html"), fs.constants.R_OK);
@@ -382,14 +375,13 @@ export async function createServer() {
     );
   }
 
-  // Serve the preloaded HTML files (replace runtime placeholders like CSP nonce)
   for (const { route, file } of htmlRoutes) {
     app.get(route, (req, res) => {
       const content = htmlCache.get(file);
       if (!content) {
         return res.status(404).send("Not found");
       }
-      // Replace per-request placeholders
+
       let out = content.replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || "");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(out);
@@ -408,8 +400,6 @@ export async function createServer() {
     }
     next();
   });
-
-  // return created server objects and close createServer scope
   return { app, port, logger };
 }
 
