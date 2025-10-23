@@ -798,36 +798,6 @@ function updateCoordsTime() {
   if (!updateCoordsTime._interval)
     updateCoordsTime._interval = setInterval(tick, 1000);
 }
-
-window.loadCoords = loadCoords;
-
-document.addEventListener("DOMContentLoaded", () => {
-  hydrateTranslations();
-  hydrateGrid();
-  bindNavigation();
-  setupPgSharpTabs();
-  updateCoordsTime();
-  loadCoords();
-
-  fetch("/api/uptime")
-    .then((res) => res.json())
-    .then((data) => {
-      const el = document.getElementById("uptime");
-      if (el && data && typeof data.uptime === "number") {
-        el.textContent = `Uptime: ${data.uptime.toFixed(2)} %`;
-      }
-    })
-    .catch(() => {});
-});
-
-setupDeviceBuilder();
-showSectionByName(activeSection);
-loadLang(currentLang).then(() => {
-  loadDevices();
-  loadNews();
-  init();
-});
-
 const newsModalBackdrop = qs("#newsModalBackdrop");
 const closeNewsModalBtn = qs("#closeNewsModal");
 const newsModalTitle = qs("#newsModalTitle");
@@ -948,21 +918,6 @@ function setupPgSharpTabs() {
 
   activate(active);
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  setupPgSharpTabs();
-
-  const reportForm = qs("#pgsharp-report-form");
-  if (reportForm) {
-    reportForm.addEventListener("submit", (evt) => {
-      evt.preventDefault();
-      const email = qs("#pgsharp-report-email")?.value || "";
-      const message = qs("#pgsharp-report-message")?.value || "";
-      reportForm.innerHTML = `<div class="text-green-400">Danke — deine Nachricht wurde lokal verarbeitet.</div>`;
-      console.log("PGSharp report (local):", { email, message });
-    });
-  }
-});
 
 function showSectionByName(name) {
   const id =
@@ -1114,7 +1069,44 @@ async function loadPgsharpVersion() {
   }
 }
 
+window.loadCoords = loadCoords;
+
+setupDeviceBuilder();
+showSectionByName(activeSection);
+loadLang(currentLang).then(() => {
+  loadDevices();
+  loadNews();
+  init();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
+  hydrateTranslations();
+  hydrateGrid();
+  bindNavigation();
+  setupPgSharpTabs();
+  updateCoordsTime();
+  loadCoords();
+  fetch("/api/uptime")
+    .then((res) => res.json())
+    .then((data) => {
+      const el = document.getElementById("uptime");
+      if (el && data && typeof data.uptime === "number") {
+        el.textContent = `Uptime: ${data.uptime.toFixed(2)} %`;
+      }
+    })
+    .catch(() => {});
+
+  const reportForm = qs("#pgsharp-report-form");
+  if (reportForm) {
+    reportForm.addEventListener("submit", (evt) => {
+      evt.preventDefault();
+      const email = qs("#pgsharp-report-email")?.value || "";
+      const message = qs("#pgsharp-report-message")?.value || "";
+      reportForm.innerHTML = `<div class="text-green-400">Danke — deine Nachricht wurde lokal verarbeitet.</div>`;
+      console.log("PGSharp report (local):", { email, message });
+    });
+  }
+
   loadPgsharpVersion();
   loadPokeminersVersion();
   setInterval(loadPgsharpVersion, 30 * 60 * 1000);
