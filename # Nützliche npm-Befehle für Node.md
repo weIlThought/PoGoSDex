@@ -56,6 +56,9 @@ npm outdated
 
 npm update
 # Aktualisiert alle Pakete auf die neueste erlaubte Version
+
+npx -y  @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify
+# styles.css to output.css
 ```
 
 ---
