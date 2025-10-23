@@ -36,6 +36,89 @@ function t(key, fallback) {
   return (i18n && i18n[key]) || fallback || key;
 }
 
+function renderNews(items) {
+  const wrap = qs("#newsWrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const filtered = items.filter((item) => {
+    const title = item.title?.toLowerCase() || "";
+    const excerpt = item.excerpt?.toLowerCase() || "";
+    const content = item.content?.toLowerCase() || "";
+    const matchesSearch =
+      !newsSearch ||
+      title.includes(newsSearch) ||
+      excerpt.includes(newsSearch) ||
+      content.includes(newsSearch);
+    const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+    const matchesTags =
+      !newsSelectedTags.size ||
+      itemTags.some((tag) => newsSelectedTags.has(tag));
+    return matchesSearch && matchesTags;
+  });
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+      "news_empty",
+      "No news available yet."
+    )}</div>`;
+    return;
+  }
+  const publishedLabel = t("news_published", "Published");
+  const updatedLabel = t("news_updated", "Updated");
+  filtered.forEach((item) => {
+    const title = item.title;
+    const excerpt = item.excerpt;
+    const tags = item.tags || [];
+    const content = item.content || item.excerpt || "";
+
+    const pub = item.publishedAt
+      ? dateFormatter.format(new Date(item.publishedAt))
+      : dash();
+    const upd =
+      item.updatedAt && item.updatedAt !== item.publishedAt
+        ? dateFormatter.format(new Date(item.updatedAt))
+        : null;
+
+    const article = document.createElement("article");
+    article.className =
+      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
+    article.tabIndex = 0;
+    article.setAttribute("role", "button");
+    article.innerHTML = `
+      <h3 class="text-xl font-semibold">${esc(title)}</h3>
+      <div class="text-xs text-slate-400 mt-2 space-x-3">
+        <span>${publishedLabel}: ${esc(pub)}</span>
+        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+      </div>
+      ${
+        excerpt
+          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
+          : ""
+      }
+      ${
+        tags.length
+          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
+              .map(
+                (tag) =>
+                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+                    tag
+                  )}</span>`
+              )
+              .join("")}</div>`
+          : ""
+      }
+    `;
+    const open = () => openNewsModal(item, { content });
+    article.addEventListener("click", open);
+    article.addEventListener("keydown", (evt) => {
+      if (evt.key === "Enter" || evt.key === " ") {
+        evt.preventDefault();
+        open();
+      }
+    });
+    wrap.appendChild(article);
+  });
+}
+
 async function loadLang(lang) {
   try {
     const res = await fetch(`/lang/${lang}.json`);
@@ -64,15 +147,6 @@ let activeSection = "overview";
 
 let navButtons = [];
 
-function bindNavigation() {
-  navButtons = qsa("[data-section]");
-  navButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      showSection(btn.dataset.section);
-    });
-  });
-}
-
 function showSection(name = "overview") {
   if (!sections[name]) return;
   Object.entries(sections).forEach(([key, node]) => {
@@ -94,6 +168,26 @@ function showSection(name = "overview") {
   activeSection = name;
   if (name === "devices") applyFilters();
   if (name === "news") renderNews(news);
+}
+
+async function loadDevices() {
+  try {
+    const res = await fetch("/data/devices.json");
+    devices = await res.json();
+  } catch (e) {
+    devices = [];
+    console.error("Failed to load devices.json", e);
+  }
+  applyFilters();
+}
+
+function bindNavigation() {
+  navButtons = qsa("[data-section]");
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      showSection(btn.dataset.section);
+    });
+  });
 }
 
 async function loadDevices() {
@@ -209,89 +303,6 @@ function renderDevices(list) {
 
 function hydrateGrid() {
   renderDevices(devices);
-}
-
-function renderNews(items) {
-  const wrap = qs("#newsWrap");
-  if (!wrap) return;
-  wrap.innerHTML = "";
-  const filtered = items.filter((item) => {
-    const title = item.title?.toLowerCase() || "";
-    const excerpt = item.excerpt?.toLowerCase() || "";
-    const content = item.content?.toLowerCase() || "";
-    const matchesSearch =
-      !newsSearch ||
-      title.includes(newsSearch) ||
-      excerpt.includes(newsSearch) ||
-      content.includes(newsSearch);
-    const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-    const matchesTags =
-      !newsSelectedTags.size ||
-      itemTags.some((tag) => newsSelectedTags.has(tag));
-    return matchesSearch && matchesTags;
-  });
-  if (!filtered.length) {
-    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
-      "news_empty",
-      "No news available yet."
-    )}</div>`;
-    return;
-  }
-  const publishedLabel = t("news_published", "Published");
-  const updatedLabel = t("news_updated", "Updated");
-  filtered.forEach((item) => {
-    const title = item.title;
-    const excerpt = item.excerpt;
-    const tags = item.tags || [];
-    const content = item.content || item.excerpt || "";
-
-    const pub = item.publishedAt
-      ? dateFormatter.format(new Date(item.publishedAt))
-      : dash();
-    const upd =
-      item.updatedAt && item.updatedAt !== item.publishedAt
-        ? dateFormatter.format(new Date(item.updatedAt))
-        : null;
-
-    const article = document.createElement("article");
-    article.className =
-      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
-    article.tabIndex = 0;
-    article.setAttribute("role", "button");
-    article.innerHTML = `
-      <h3 class="text-xl font-semibold">${esc(title)}</h3>
-      <div class="text-xs text-slate-400 mt-2 space-x-3">
-        <span>${publishedLabel}: ${esc(pub)}</span>
-        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
-      </div>
-      ${
-        excerpt
-          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
-          : ""
-      }
-      ${
-        tags.length
-          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
-              .map(
-                (tag) =>
-                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
-                    tag
-                  )}</span>`
-              )
-              .join("")}</div>`
-          : ""
-      }
-    `;
-    const open = () => openNewsModal(item, { content });
-    article.addEventListener("click", open);
-    article.addEventListener("keydown", (evt) => {
-      if (evt.key === "Enter" || evt.key === " ") {
-        evt.preventDefault();
-        open();
-      }
-    });
-    wrap.appendChild(article);
-  });
 }
 
 function openModal(d) {
