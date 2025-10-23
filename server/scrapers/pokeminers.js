@@ -8,7 +8,7 @@ async function getPokeminersApkVersion() {
   const res = await fetch("https://pokeminers.com");
   const html = await res.text();
 
-  // suche das h6.status-highlight Element und extrahiere Versionsnummer
+  
   const h6 = html.match(
     /<h6[^>]*class=["'][^"']*status-highlight[^"']*["'][^>]*>([\s\S]*?)<\/h6>/i
   );

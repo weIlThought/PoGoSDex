@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* General shared styles for modals, buttons, etc. */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -117,7 +117,7 @@
   }
 }
 
-/* Tab-Animation */
+
 .fade {
   opacity: 0;
   transition: opacity 0.18s;
@@ -133,7 +133,7 @@
   transition: opacity 0.18s;
 }
 
-/* Optional: Einheitliches Padding für Tab-Inhalte */
+
 .tab-content {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -143,9 +143,9 @@
   transform: translateY(-6px);
 }
 
-/* PGSharp panel / Version Ticker */
+
 #pgsharp-version-ticker {
-  background: #0f1724; /* dunkel (entspricht slate-800) */
+  background: #0f1724; 
   border: 1px solid rgba(148,163,184,0.08);
   padding: 1rem;
   border-radius: 0.5rem;
@@ -178,7 +178,7 @@
   text-decoration: underline;
 }
 
-/* Ad placeholder */
+
 .ad-placeholder {
   background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
   border-radius: 0.375rem;
@@ -192,7 +192,7 @@
   font-size: 0.9rem;
 }
 
-/* Coordinates box */
+
 #pgsharp-coords {
   background: #0b1220;
   border: 1px solid rgba(148,163,184,0.06);
@@ -215,13 +215,13 @@
 #coords-list strong { color: #fff; font-weight: 600; }
 #coords-list .note { color: #94a3b8; font-size: 0.85rem; }
 
-/* Small utilities used by the new panel */
+
 .text-emerald-300 { color: #34d399 !important; }
 .bg-slate-800 { background-color: #0f1724 !important; }
 .border-slate-700 { border-color: #0b1220 !important; }
 .text-slate-400 { color: #94a3b8 !important; }
 
-/* Accessibility: focus states for links/buttons inside panel */
+
 #pgsharp-version-ticker a:focus,
 #pgsharp-coords a:focus,
 .ad-placeholder:focus {
@@ -229,4 +229,3 @@
   outline-offset: 2px;
 }
 
-/* end of additions */

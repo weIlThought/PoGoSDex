@@ -1,4 +1,4 @@
-// tests/uptime.test.js
+
 import request from "supertest";
 import { createServer } from "../server/server.js";
 import { jest } from "@jest/globals";
@@ -29,7 +29,7 @@ describe("GET /status/uptime", () => {
   });
 
   it("returns sanitized payload when API is reachable (real API call)", async () => {
-    process.env.UPTIMEROBOT_API_KEY = originalKey; // Falls gesetzt
+    process.env.UPTIMEROBOT_API_KEY = originalKey; 
 
     const { app } = await createServer();
     const res = await request(app)

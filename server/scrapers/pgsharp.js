@@ -8,7 +8,7 @@ async function getPgsharpVersion() {
   const res = await fetch("https://www.pgsharp.com");
   const html = await res.text();
 
-  // Beispiel-Match: Latest Version: 1.224.0 (0.383.2-G)
+  
   const m = html.match(/Latest Version:\s*([\d.]+)\s*\(([^)]+)\)/i);
   if (!m) return { ok: false, raw: html.slice(0, 500) };
 
