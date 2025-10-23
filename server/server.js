@@ -26,24 +26,6 @@ import {
   schedulePgsharpAutoRefresh,
 } from "./scrapers/pgsharp.js";
 
-app.get("/api/pgsharp/version", async (req, res) => {
-  try {
-    const result = await getPgsharpVersionCached();
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e) });
-  }
-});
-
-app.get("/api/pokeminers/version", async (_req, res) => {
-  try {
-    const result = await getPokeminersVersionCached();
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e) });
-  }
-});
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -124,6 +106,24 @@ export async function createServer() {
     );
 
     next();
+  });
+
+  app.get("/api/pgsharp/version", async (req, res) => {
+    try {
+      const result = await getPgsharpVersionCached();
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ ok: false, error: String(e) });
+    }
+  });
+
+  app.get("/api/pokeminers/version", async (_req, res) => {
+    try {
+      const result = await getPokeminersVersionCached();
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ ok: false, error: String(e) });
+    }
   });
 
   app.use(
