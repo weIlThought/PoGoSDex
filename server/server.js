@@ -16,8 +16,33 @@ import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
 import { validateData } from "./validate-data.js";
 import fetch from "node-fetch";
-import { getPgsharpVersion } from "./scrapers/pgsharp.js";
-import { getPokeminersApkVersion } from "./scrapers/pokeminers.js";
+
+import {
+  getPokeminersVersionCached,
+  schedulePokeminersAutoRefresh,
+} from "./scrapers/pokeminers.js";
+import {
+  getPgsharpVersionCached,
+  schedulePgsharpAutoRefresh,
+} from "./scrapers/pgsharp.js";
+
+app.get("/api/pgsharp/version", async (req, res) => {
+  try {
+    const result = await getPgsharpVersionCached();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+app.get("/api/pokeminers/version", async (_req, res) => {
+  try {
+    const result = await getPokeminersVersionCached();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) });
+  }
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -400,6 +425,8 @@ export async function createServer() {
     }
     next();
   });
+  schedulePgsharpAutoRefresh(logger);
+  schedulePokeminersAutoRefresh(logger);
   return { app, port, logger };
 }
 

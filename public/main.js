@@ -1029,3 +1029,83 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+async function loadPokeminersVersion() {
+  const pkApkEl = document.getElementById("pk-apk");
+
+  try {
+    const res = await fetch("/api/pokeminers/version", { cache: "no-store" });
+    const data = await res.json();
+
+    if (data.ok) {
+      pkApkEl.textContent = data.apkVersion || "–";
+    } else {
+      pkApkEl.textContent = "–";
+      console.warn("Pokeminers fetch error:", data.error);
+    }
+  } catch (err) {
+    pkApkEl.textContent = "–";
+    console.error("Failed to load Pokeminers version:", err);
+  }
+}
+
+async function loadPgsharpVersion() {
+  const pgPageEl = document.getElementById("pg-page");
+  const pgApkEl = document.getElementById("pg-apk");
+  const pgStatusEl = document.getElementById("pg-status");
+  const pkApkEl = document.getElementById("pk-apk");
+
+  try {
+    const [pgRes, pkRes] = await Promise.all([
+      fetch("/api/pgsharp/version", { cache: "no-store" }),
+      fetch("/api/pokeminers/version", { cache: "no-store" }),
+    ]);
+    const [pgData, pkData] = await Promise.all([pgRes.json(), pkRes.json()]);
+
+    if (pgData.ok) {
+      pgPageEl.textContent = pgData.pageVersion || "–";
+      pgApkEl.textContent = pgData.pogoVersion || "–";
+    }
+
+    if (pkData.ok) {
+      pkApkEl.textContent = pkData.apkVersion || "–";
+    }
+
+    if (pgData.ok && pkData.ok) {
+      const pgVer = parseFloat(
+        (pgData.pogoVersion || "0").replace(/[^\d.]/g, "")
+      );
+      const pkVer = parseFloat(
+        (pkData.apkVersion || "0").replace(/[^\d.]/g, "")
+      );
+
+      if (pgVer >= pkVer) {
+        pgStatusEl.textContent =
+          pgVer === pkVer
+            ? t("pgsharp_status_compatible", "Kompatibel")
+            : t("pgsharp_status_pgsharp_newer", "PGSharp neuer als Pokeminers");
+        pgStatusEl.className = "font-semibold text-emerald-400";
+      } else {
+        pgStatusEl.textContent = t(
+          "pgsharp_status_not_compatible",
+          "Nicht kompatibel / Warte auf PGSharp-Update"
+        );
+        pgStatusEl.className = "font-semibold text-red-400";
+      }
+    } else {
+      pgStatusEl.textContent = "–";
+      pgStatusEl.className = "font-semibold text-yellow-400";
+    }
+  } catch (err) {
+    console.error("Failed to load PGSharp or Pokeminers version:", err);
+    pgStatusEl.textContent = "Fehler";
+    pgStatusEl.className = "font-semibold text-red-400";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadPgsharpVersion();
+  loadPokeminersVersion();
+  setInterval(loadPgsharpVersion, 30 * 60 * 1000);
+  setInterval(loadPokeminersVersion, 30 * 60 * 1000);
+});

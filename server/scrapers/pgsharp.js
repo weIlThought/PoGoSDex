@@ -1,23 +1,49 @@
-import fs from "fs";
-import path from "path";
-import axios from "axios";
-import { load } from "cheerio";
-import db from "../db.js";
-
 async function getPgsharpVersion() {
-  const res = await fetch("https://www.pgsharp.com");
-  const html = await res.text();
+  const fetchedAt = new Date().toISOString();
 
-  
-  const m = html.match(/Latest Version:\s*([\d.]+)\s*\(([^)]+)\)/i);
-  if (!m) return { ok: false, raw: html.slice(0, 500) };
+  try {
+    const res = await axios.get(PGSHARP_URL, {
+      timeout: 10_000,
+      headers: { "User-Agent": DEFAULT_USER_AGENT },
+      responseType: "text",
+      maxRedirects: 5,
+    });
 
-  const pageVersion = m[1];
-  const inner = m[2];
-  const apkMatch = inner.match(/([\d.]+)/);
-  const apkVersion = apkMatch ? apkMatch[1] : null;
+    if (res.status !== 200) {
+      return { ok: false, error: `HTTP ${res.status}`, fetchedAt };
+    }
 
-  return { ok: true, pageVersion, apkVersion, rawInner: inner };
+    const html = String(res.data || "");
+    const $ = load(html);
+
+    let pageVersion = null;
+    let pogoVersion = null;
+
+    const allText = $("body").text();
+
+    const match = /Latest Version:\s*([\d.]+)\s*\(([\d.]+-?G?)\)/i.exec(
+      allText
+    );
+    if (match) {
+      pageVersion = match[1].trim();
+      pogoVersion = match[2].trim();
+    } else {
+      const simple = /Latest Version:\s*([\d.]+)/i.exec(allText);
+      if (simple) pageVersion = simple[1].trim();
+    }
+
+    if (!pageVersion) {
+      return { ok: false, error: "No version found", fetchedAt };
+    }
+
+    return {
+      ok: true,
+      pageVersion,
+      pogoVersion,
+      fetchedAt,
+      source: PGSHARP_URL,
+    };
+  } catch (err) {
+    return { ok: false, error: String(err?.message || err), fetchedAt };
+  }
 }
-
-export { getPgsharpVersion };
