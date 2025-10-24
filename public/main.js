@@ -215,11 +215,30 @@ async function loadNews() {
 
 function populateNewsTagFilter(items) {
   if (!newsTagFilterWrap) return;
+
   const tags = [
     ...new Set(
       items.flatMap((item) => (item.tags || []).map((tag) => tag.trim()))
     ),
   ].sort((a, b) => a.localeCompare(b));
+
+  if (newsTagFilterWrap.tagName === "SELECT") {
+    newsTagFilterWrap.innerHTML =
+      `<option value="all">${t("news_filter_all", "All")}</option>` +
+      (tags.length
+        ? tags
+            .map(
+              (tag) =>
+                `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`
+            )
+            .join("")
+        : `<option value="none" disabled>${t(
+            "news_filter_no_tags",
+            "No tags available."
+          )}</option>`);
+    return;
+  }
+
   newsTagFilterWrap.innerHTML = "";
   if (!tags.length) {
     newsTagFilterWrap.innerHTML = `<span class="text-xs text-slate-500" data-i18n="news_filter_no_tags">No tags available.</span>`;
@@ -537,21 +556,33 @@ function init() {
     newsSearch = evt.target.value.trim().toLowerCase();
     renderNews(news);
   });
-  newsTagFilterWrap?.addEventListener("click", (evt) => {
-    const btn = evt.target.closest("[data-tag]");
-    if (!btn) return;
-    const tag = btn.getAttribute("data-tag");
-    if (newsSelectedTags.has(tag)) {
-      newsSelectedTags.delete(tag);
-      btn.classList.remove("bg-emerald-600", "border-emerald-400");
-      btn.classList.add("bg-slate-800", "border-slate-700");
+  if (newsTagFilterWrap) {
+    if (newsTagFilterWrap.tagName === "SELECT") {
+      newsTagFilterWrap.addEventListener("change", (evt) => {
+        const v = evt.target.value;
+        newsSelectedTags.clear();
+        if (v && v !== "all" && v !== "none")
+          newsSelectedTags.add(v.toLowerCase());
+        renderNews(news);
+      });
     } else {
-      newsSelectedTags.add(tag);
-      btn.classList.remove("bg-slate-800", "border-slate-700");
-      btn.classList.add("bg-emerald-600", "border-emerald-400");
+      newsTagFilterWrap.addEventListener("click", (evt) => {
+        const btn = evt.target.closest("[data-tag]");
+        if (!btn) return;
+        const tag = btn.getAttribute("data-tag");
+        if (newsSelectedTags.has(tag)) {
+          newsSelectedTags.delete(tag);
+          btn.classList.remove("bg-emerald-600", "border-emerald-400");
+          btn.classList.add("bg-slate-800", "border-slate-700");
+        } else {
+          newsSelectedTags.add(tag);
+          btn.classList.remove("bg-slate-800", "border-slate-700");
+          btn.classList.add("bg-emerald-600", "border-emerald-400");
+        }
+        renderNews(news);
+      });
     }
-    renderNews(news);
-  });
+  }
 }
 
 const COORDS_DEBUG = true;
