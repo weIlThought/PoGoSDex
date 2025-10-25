@@ -69,7 +69,6 @@ export async function createServer() {
 
   const app = express();
 
-  // Respect configured TRUST_PROXY value (fall back to default 1 for backward compat)
   app.set('trust proxy', trustProxy || 1);
 
   app.disable('x-powered-by');
@@ -82,6 +81,7 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
+      "script-src 'self' https://cdn.jsdelivr.net",
       "connect-src 'self' data: https://api.uptimerobot.com",
       "img-src 'self' data:",
       "style-src 'self' 'unsafe-inline' https:",
