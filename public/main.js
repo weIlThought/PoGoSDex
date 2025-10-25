@@ -594,7 +594,7 @@ function init() {
   }
 }
 
-const COORDS_DEBUG = true;
+const COORDS_DEBUG = false;
 function clog(...args) {
   if (COORDS_DEBUG) console.log('[coords]', ...args);
 }
