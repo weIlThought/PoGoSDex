@@ -28,8 +28,9 @@ jobs:
 
       - name: Lint
         run: |
-          echo "Running ESLint..."
-          npm run lint
+          echo "Running ESLint via npx..."
+          # Use npx so CI does not fail when eslint isn't installed as a devDependency in the lockfile.
+          npx eslint . --ext .js --ignore-path .gitignore
 
       - name: Run tests
         run: npm test
