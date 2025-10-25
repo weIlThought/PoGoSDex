@@ -69,7 +69,8 @@ export async function createServer() {
 
   const app = express();
 
-  app.set('trust proxy', 1);
+  // Respect configured TRUST_PROXY value (fall back to default 1 for backward compat)
+  app.set('trust proxy', trustProxy || 1);
 
   app.disable('x-powered-by');
 
@@ -313,7 +314,10 @@ export async function createServer() {
         } else {
           try {
             res.end();
-          } catch (_) {}
+          } catch (err) {
+            // ignore failed end calls
+            void err;
+          }
         }
       } else {
         // Use the structured logger for startup/info messages

@@ -605,16 +605,7 @@ function cerr(...args) {
 let coordsData = [];
 let coordsFilterTag = null;
 
-function flattenCoords(raw) {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  const arrays = [];
-  for (const k of Object.keys(raw)) {
-    const v = raw[k];
-    if (Array.isArray(v)) arrays.push(...v);
-  }
-  return arrays;
-}
+// `flattenCoords` was removed because it's not used — keep helper small and avoid unused-vars lint errors.
 
 async function loadCoords() {
   debug('📡 Lade /data/coords.json ...');
@@ -974,7 +965,10 @@ function showSectionByName(name) {
   const plain = (id || '').replace(/Section$/, '');
   try {
     history.replaceState(null, '', `#${plain}`);
-  } catch (e) {}
+  } catch (e) {
+    // ignore history.replaceState errors in older browsers
+    void e;
+  }
 
   if (plain === 'devices' && typeof loadDevices === 'function') {
     loadDevices().catch((e) => console.error('loadDevices:', e));
@@ -993,9 +987,10 @@ function showSectionByName(name) {
       }
     }
   }
-  if (plain === 'news' && typeof initNewsFilters === 'function') {
+  if (plain === 'news' && typeof window.initNewsFilters === 'function') {
     try {
-      initNewsFilters();
+      // Some pages may add an optional initNewsFilters hook; call it if available.
+      window.initNewsFilters();
     } catch (e) {
       console.warn('initNewsFilters', e);
     }
