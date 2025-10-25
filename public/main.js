@@ -23,10 +23,13 @@ const newsSearchInput = qs("#newsSearchInput");
 const newsTagFilterWrap = qs("#newsTagFilter");
 
 let i18n = {};
+// Supported languages - keep in sync with /lang/*.json
+const SUPPORTED_LANGS = ["en", "de", "es", "fr", "it", "pt", "ru", "hi"];
 let currentLang =
   new URLSearchParams(window.location.search).get("lang") ||
   localStorage.getItem("lang") ||
   (navigator.language || "en").slice(0, 2);
+if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = "en";
 
 let dateFormatter = new Intl.DateTimeFormat(currentLang, {
   dateStyle: "medium",
@@ -169,18 +172,6 @@ function showSection(name = "overview") {
   if (name === "devices") applyFilters();
   if (name === "news") renderNews(news);
 }
-
-async function loadDevices() {
-  try {
-    const res = await fetch("/data/devices.json");
-    devices = await res.json();
-  } catch (e) {
-    devices = [];
-    console.error("Failed to load devices.json", e);
-  }
-  applyFilters();
-}
-
 function bindNavigation() {
   navButtons = qsa("[data-section]");
   navButtons.forEach((btn) => {
@@ -626,7 +617,9 @@ async function loadCoords() {
     }
 
     if (!coords.length) {
-      console.warn("⚠️ Keine Koordinaten in coords.json gefunden.");
+      console.warn(
+        t("coords_load_none", "⚠️ No coordinates found in coords.json.")
+      );
       return;
     }
 
@@ -636,7 +629,7 @@ async function loadCoords() {
     renderCoords(coordsData);
     renderCoordsTags(coordsData);
   } catch (err) {
-    console.error("[coords] Fehler beim Laden:", err);
+    console.error("[coords] Failed to load:", err);
   }
 }
 
@@ -665,7 +658,7 @@ function renderCoordsTags(list) {
   const allBtn = document.createElement("button");
   allBtn.type = "button";
   allBtn.dataset.tag = "";
-  allBtn.textContent = t("coords_filter_all", "Alle");
+  allBtn.textContent = t("coords_filter_all", "All");
   allBtn.className =
     "px-3 py-1 text-xs rounded-full border mr-2 " +
     (!coordsFilterTag
@@ -823,7 +816,10 @@ function updateCoordsTime() {
   if (!el) return;
   function tick() {
     const now = new Date();
-    el.textContent = `Aktuelle Zeit: ${now.toLocaleTimeString()} (Lokale Zeit des Users)`;
+    // Use i18n keys for the coords time label so translations work
+    const label = t("coords_time_label", "Current time");
+    const suffix = t("coords_time_user_suffix", "Local time");
+    el.textContent = `${label}: ${now.toLocaleTimeString()} (${suffix})`;
   }
   tick();
   if (!updateCoordsTime._interval)
@@ -1079,13 +1075,16 @@ async function loadPgsharpVersion() {
       if (pgVer >= pkVer) {
         pgStatusEl.textContent =
           pgVer === pkVer
-            ? t("pgsharp_status_compatible", "Kompatibel")
-            : t("pgsharp_status_pgsharp_newer", "PGSharp neuer als Pokeminers");
+            ? t("pgsharp_status_compatible", "Compatible")
+            : t(
+                "pgsharp_status_pgsharp_newer",
+                "PGSharp newer than Pokeminers"
+              );
         pgStatusEl.className = "font-semibold text-emerald-400";
       } else {
         pgStatusEl.textContent = t(
           "pgsharp_status_not_compatible",
-          "Nicht kompatibel / Warte auf PGSharp-Update"
+          "Not compatible / Waiting for PGSharp update"
         );
         pgStatusEl.className = "font-semibold text-red-400";
       }
@@ -1095,7 +1094,7 @@ async function loadPgsharpVersion() {
     }
   } catch (err) {
     console.error("Failed to load PGSharp or Pokeminers version:", err);
-    pgStatusEl.textContent = "Fehler";
+    pgStatusEl.textContent = t("pgsharp_status_error", "Error");
     pgStatusEl.className = "font-semibold text-red-400";
   }
 }
@@ -1122,7 +1121,10 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       const el = document.getElementById("uptime");
       if (el && data && typeof data.uptime === "number") {
-        el.textContent = `Uptime: ${data.uptime.toFixed(2)} %`;
+        el.textContent = `${t(
+          "uptime_label",
+          "Uptime"
+        )} : ${data.uptime.toFixed(2)} %`;
       }
     })
     .catch(() => {});
@@ -1133,7 +1135,10 @@ document.addEventListener("DOMContentLoaded", () => {
       evt.preventDefault();
       const email = qs("#pgsharp-report-email")?.value || "";
       const message = qs("#pgsharp-report-message")?.value || "";
-      reportForm.innerHTML = `<div class="text-green-400">Danke — deine Nachricht wurde lokal verarbeitet.</div>`;
+      reportForm.innerHTML = `<div class="text-green-400">${t(
+        "pgsharp_report_local_success",
+        "Thanks — your message was processed locally."
+      )}</div>`;
       console.log("PGSharp report (local):", { email, message });
     });
   }
