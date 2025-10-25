@@ -15,7 +15,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          # Use Node 20 to satisfy engine requirements from some dependencies (cheerio/undici)
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
