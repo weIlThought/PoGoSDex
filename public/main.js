@@ -5,34 +5,80 @@ function qsa(s) {
   return Array.from(document.querySelectorAll(s));
 }
 function esc(t) {
-  const d = document.createElement("div");
+  const d = document.createElement('div');
   d.textContent = t;
   return d.innerHTML;
 }
 
+// Debug wrapper - gate console output behind a flag
+const DEBUG = false;
+function debug(...args) {
+  if (DEBUG) console.log(...args);
+}
+
+// Lightweight HTML sanitizer (fallback) — removes script/style and on* attributes
+function sanitizeHtml(html) {
+  // Prefer DOMPurify when available (loaded from CDN in index.html). Falls back to a lightweight sanitizer.
+  try {
+    if (
+      typeof window !== 'undefined' &&
+      window.DOMPurify &&
+      typeof window.DOMPurify.sanitize === 'function'
+    ) {
+      try {
+        return window.DOMPurify.sanitize(html);
+      } catch (e) {
+        // fallthrough to internal sanitizer
+      }
+    }
+
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const walk = (node) => {
+      if (node.nodeType === 1) {
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'script' || tag === 'style' || tag === 'noscript') {
+          node.remove();
+          return;
+        }
+        Array.from(node.attributes).forEach((attr) => {
+          if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
+          if (attr.name === 'src' && /^javascript:/i.test(attr.value))
+            node.removeAttribute(attr.name);
+        });
+      }
+      node.childNodes && Array.from(node.childNodes).forEach(walk);
+    };
+    Array.from(template.content.childNodes).forEach(walk);
+    return template.innerHTML;
+  } catch (e) {
+    return '';
+  }
+}
+
 function dash() {
-  return t("placeholder_dash", "—");
+  return t('placeholder_dash', '—');
 }
 
 let devices = [];
 let news = [];
-let newsSearch = "";
+let newsSearch = '';
 let newsSelectedTags = new Set();
 
-const newsSearchInput = qs("#newsSearchInput");
-const newsTagFilterWrap = qs("#newsTagFilter");
+const newsSearchInput = qs('#newsSearchInput');
+const newsTagFilterWrap = qs('#newsTagFilter');
 
 let i18n = {};
 // Supported languages - keep in sync with /lang/*.json
-const SUPPORTED_LANGS = ["en", "de", "es", "fr", "it", "pt", "ru", "hi"];
+const SUPPORTED_LANGS = ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru', 'hi'];
 let currentLang =
-  new URLSearchParams(window.location.search).get("lang") ||
-  localStorage.getItem("lang") ||
-  (navigator.language || "en").slice(0, 2);
-if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = "en";
+  new URLSearchParams(window.location.search).get('lang') ||
+  localStorage.getItem('lang') ||
+  (navigator.language || 'en').slice(0, 2);
+if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = 'en';
 
 let dateFormatter = new Intl.DateTimeFormat(currentLang, {
-  dateStyle: "medium",
+  dateStyle: 'medium',
 });
 
 function t(key, fallback) {
@@ -40,63 +86,57 @@ function t(key, fallback) {
 }
 
 function renderNews(items) {
-  const wrap = qs("#newsWrap");
+  const wrap = qs('#newsWrap');
   if (!wrap) return;
-  wrap.innerHTML = "";
+  wrap.innerHTML = '';
   const filtered = items.filter((item) => {
-    const title = item.title?.toLowerCase() || "";
-    const excerpt = item.excerpt?.toLowerCase() || "";
-    const content = item.content?.toLowerCase() || "";
+    const title = item.title?.toLowerCase() || '';
+    const excerpt = item.excerpt?.toLowerCase() || '';
+    const content = item.content?.toLowerCase() || '';
     const matchesSearch =
       !newsSearch ||
       title.includes(newsSearch) ||
       excerpt.includes(newsSearch) ||
       content.includes(newsSearch);
     const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-    const matchesTags =
-      !newsSelectedTags.size ||
-      itemTags.some((tag) => newsSelectedTags.has(tag));
+    const matchesTags = !newsSelectedTags.size || itemTags.some((tag) => newsSelectedTags.has(tag));
     return matchesSearch && matchesTags;
   });
   if (!filtered.length) {
-    wrap.innerHTML = `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
-      "news_empty",
-      "No news available yet."
-    )}</div>`;
+    wrap.innerHTML = sanitizeHtml(
+      `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+        'news_empty',
+        'No news available yet.'
+      )}</div>`
+    );
     return;
   }
-  const publishedLabel = t("news_published", "Published");
-  const updatedLabel = t("news_updated", "Updated");
+  const publishedLabel = t('news_published', 'Published');
+  const updatedLabel = t('news_updated', 'Updated');
   filtered.forEach((item) => {
     const title = item.title;
     const excerpt = item.excerpt;
     const tags = item.tags || [];
-    const content = item.content || item.excerpt || "";
+    const content = item.content || item.excerpt || '';
 
-    const pub = item.publishedAt
-      ? dateFormatter.format(new Date(item.publishedAt))
-      : dash();
+    const pub = item.publishedAt ? dateFormatter.format(new Date(item.publishedAt)) : dash();
     const upd =
       item.updatedAt && item.updatedAt !== item.publishedAt
         ? dateFormatter.format(new Date(item.updatedAt))
         : null;
 
-    const article = document.createElement("article");
+    const article = document.createElement('article');
     article.className =
-      "bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition";
+      'bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition';
     article.tabIndex = 0;
-    article.setAttribute("role", "button");
-    article.innerHTML = `
+    article.setAttribute('role', 'button');
+    article.innerHTML = sanitizeHtml(`
       <h3 class="text-xl font-semibold">${esc(title)}</h3>
       <div class="text-xs text-slate-400 mt-2 space-x-3">
         <span>${publishedLabel}: ${esc(pub)}</span>
-        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ""}
+        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ''}
       </div>
-      ${
-        excerpt
-          ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>`
-          : ""
-      }
+      ${excerpt ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>` : ''}
       ${
         tags.length
           ? `<div class="flex flex-wrap gap-2 mt-3">${tags
@@ -106,14 +146,14 @@ function renderNews(items) {
                     tag
                   )}</span>`
               )
-              .join("")}</div>`
-          : ""
+              .join('')}</div>`
+          : ''
       }
-    `;
+    `);
     const open = () => openNewsModal(item, { content });
-    article.addEventListener("click", open);
-    article.addEventListener("keydown", (evt) => {
-      if (evt.key === "Enter" || evt.key === " ") {
+    article.addEventListener('click', open);
+    article.addEventListener('keydown', (evt) => {
+      if (evt.key === 'Enter' || evt.key === ' ') {
         evt.preventDefault();
         open();
       }
@@ -125,57 +165,57 @@ function renderNews(items) {
 async function loadLang(lang) {
   try {
     const res = await fetch(`/lang/${lang}.json`);
-    if (!res.ok) throw new Error("lang not found");
+    if (!res.ok) throw new Error('lang not found');
     i18n = await res.json();
     currentLang = lang;
-    localStorage.setItem("lang", lang);
+    localStorage.setItem('lang', lang);
     dateFormatter = new Intl.DateTimeFormat(currentLang, {
-      dateStyle: "medium",
+      dateStyle: 'medium',
     });
     applyTranslations();
     renderNews(news);
     applyFilters();
   } catch (e) {
-    console.warn("Failed to load lang:", lang, e);
+    console.warn('Failed to load lang:', lang, e);
   }
 }
 
 const sections = {
-  overview: qs("#overviewSection"),
-  devices: qs("#devicesSection"),
-  news: qs("#newsSection"),
-  pgsharp: qs("#pgsharpSection"),
+  overview: qs('#overviewSection'),
+  devices: qs('#devicesSection'),
+  news: qs('#newsSection'),
+  pgsharp: qs('#pgsharpSection'),
 };
-let activeSection = "overview";
+let activeSection = 'overview';
 
 let navButtons = [];
 
-function showSection(name = "overview") {
+function showSection(name = 'overview') {
   if (!sections[name]) return;
   Object.entries(sections).forEach(([key, node]) => {
     if (!node) return;
     if (key === name) {
-      node.classList.remove("hidden");
+      node.classList.remove('hidden');
     } else {
-      node.classList.add("hidden");
+      node.classList.add('hidden');
     }
   });
   navButtons.forEach((btn) => {
     const isActive = btn.dataset.section === name;
-    btn.setAttribute("aria-selected", String(isActive));
-    btn.classList.toggle("border-slate-700", isActive);
-    btn.classList.toggle("bg-slate-800", isActive);
-    btn.classList.toggle("bg-slate-800/60", !isActive);
-    btn.classList.toggle("border-transparent", !isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    btn.classList.toggle('border-slate-700', isActive);
+    btn.classList.toggle('bg-slate-800', isActive);
+    btn.classList.toggle('bg-slate-800/60', !isActive);
+    btn.classList.toggle('border-transparent', !isActive);
   });
   activeSection = name;
-  if (name === "devices") applyFilters();
-  if (name === "news") renderNews(news);
+  if (name === 'devices') applyFilters();
+  if (name === 'news') renderNews(news);
 }
 function bindNavigation() {
-  navButtons = qsa("[data-section]");
+  navButtons = qsa('[data-section]');
   navButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener('click', () => {
       showSection(btn.dataset.section);
     });
   });
@@ -183,69 +223,67 @@ function bindNavigation() {
 
 async function loadDevices() {
   try {
-    const res = await fetch("/data/devices.json");
+    const res = await fetch('/data/devices.json');
     devices = await res.json();
   } catch (e) {
     devices = [];
-    console.error("Failed to load devices.json", e);
+    console.error('Failed to load devices.json', e);
   }
   applyFilters();
 }
 
 async function loadNews() {
   try {
-    const res = await fetch("/data/news.json");
+    const res = await fetch('/data/news.json');
     news = await res.json();
   } catch (e) {
     news = [];
-    console.error("Failed to load news.json", e);
+    console.error('Failed to load news.json', e);
   }
   populateNewsTagFilter(news);
-  if (activeSection === "news") renderNews(news);
+  if (activeSection === 'news') renderNews(news);
 }
 
 function populateNewsTagFilter(items) {
   if (!newsTagFilterWrap) return;
 
   const tags = [
-    ...new Set(
-      items.flatMap((item) => (item.tags || []).map((tag) => tag.trim()))
-    ),
+    ...new Set(items.flatMap((item) => (item.tags || []).map((tag) => tag.trim()))),
   ].sort((a, b) => a.localeCompare(b));
 
-  if (newsTagFilterWrap.tagName === "SELECT") {
-    newsTagFilterWrap.innerHTML =
-      `<option value="all">${t("news_filter_all", "All")}</option>` +
-      (tags.length
-        ? tags
-            .map(
-              (tag) =>
-                `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`
-            )
-            .join("")
-        : `<option value="none" disabled>${t(
-            "news_filter_no_tags",
-            "No tags available."
-          )}</option>`);
+  if (newsTagFilterWrap.tagName === 'SELECT') {
+    newsTagFilterWrap.innerHTML = sanitizeHtml(
+      `<option value="all">${t('news_filter_all', 'All')}</option>` +
+        (tags.length
+          ? tags
+              .map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`)
+              .join('')
+          : `<option value="none" disabled>${t(
+              'news_filter_no_tags',
+              'No tags available.'
+            )}</option>`)
+    );
     return;
   }
 
-  newsTagFilterWrap.innerHTML = "";
+  newsTagFilterWrap.innerHTML = '';
   if (!tags.length) {
-    newsTagFilterWrap.innerHTML = `<span class="text-xs text-slate-500" data-i18n="news_filter_no_tags">No tags available.</span>`;
+    newsTagFilterWrap.innerHTML = sanitizeHtml(
+      `<span class="text-xs text-slate-500" data-i18n="news_filter_no_tags">No tags available.</span>`
+    );
     return;
   }
   tags.forEach((tag) => {
     const tagKey = tag.toLowerCase();
-    const btn = document.createElement("button");
-    btn.type = "button";
+    const btn = document.createElement('button');
+    btn.type = 'button';
     btn.textContent = tag;
     btn.dataset.tag = tagKey;
     btn.className =
-      "px-3 py-1 text-xs rounded-full border transition-colors " +
+      'px-3 py-1 text-xs rounded-full border transition-colors ' +
       (newsSelectedTags.has(tagKey)
-        ? "bg-emerald-600 border-emerald-400"
-        : "bg-slate-800 border-slate-700");
+        ? 'bg-emerald-600 border-emerald-400'
+        : 'bg-slate-800 border-slate-700');
     newsTagFilterWrap.appendChild(btn);
   });
 }
@@ -253,12 +291,12 @@ function populateNewsTagFilter(items) {
 function cardHtml(d) {
   const compat = d.compatible
     ? `<span class="inline-block bg-emerald-600/20 text-emerald-300 px-2 py-1 rounded text-xs">${t(
-        "modal_compatibility_confirmed",
-        "Compatibility: confirmed"
+        'modal_compatibility_confirmed',
+        'Compatibility: confirmed'
       )}</span>`
     : `<span class="inline-block bg-amber-600/20 text-amber-300 px-2 py-1 rounded text-xs">${t(
-        "modal_compatibility_unknown",
-        "Compatibility: unknown or not verified"
+        'modal_compatibility_unknown',
+        'Compatibility: unknown or not verified'
       )}</span>`;
   return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
     d.id
@@ -274,39 +312,38 @@ function cardHtml(d) {
   </article>`;
 }
 
-const deviceLimitSelect = qs("[data-device-limit]");
+const deviceLimitSelect = qs('[data-device-limit]');
 let deviceRenderLimit = 50;
 
 if (deviceLimitSelect) {
-  deviceLimitSelect.addEventListener("change", () => {
+  deviceLimitSelect.addEventListener('change', () => {
     const value = deviceLimitSelect.value;
     deviceRenderLimit =
-      value === "all"
-        ? Infinity
-        : Number.parseInt(value, 10) || deviceRenderLimit;
+      value === 'all' ? Infinity : Number.parseInt(value, 10) || deviceRenderLimit;
     renderDevices(devices);
   });
 }
 
 function renderDevices(list) {
-  const container = qs("[data-devices-grid]");
+  const container = qs('[data-devices-grid]');
   if (!container) return;
 
-  const limited =
-    deviceRenderLimit === Infinity ? list : list.slice(0, deviceRenderLimit);
-  container.innerHTML = "";
+  const limited = deviceRenderLimit === Infinity ? list : list.slice(0, deviceRenderLimit);
+  container.innerHTML = '';
   if (!limited.length) {
-    container.innerHTML = `<div class="col-span-full text-center text-slate-400">${t(
-      "no_devices_found",
-      "No devices found"
-    )}</div>`;
+    container.innerHTML = sanitizeHtml(
+      `<div class="col-span-full text-center text-slate-400">${t(
+        'no_devices_found',
+        'No devices found'
+      )}</div>`
+    );
     return;
   }
   limited.forEach((d) => {
-    const tmp = document.createElement("div");
-    tmp.innerHTML = cardHtml(d);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = sanitizeHtml(cardHtml(d));
     const card = tmp.firstElementChild;
-    card.addEventListener("click", () => openModal(d));
+    card.addEventListener('click', () => openModal(d));
     container.appendChild(card);
   });
 }
@@ -316,19 +353,16 @@ function hydrateGrid() {
 }
 
 function openModal(d) {
-  qs("#modalBackdrop").classList.remove("hidden");
-  qs("#modalBackdrop").classList.add("flex");
-  qs("#modalTitle").textContent = d.model;
-  qs("#modalMeta").textContent = `${d.brand} • ${d.type} • ${d.os}`;
-  qs("#modalDesc").textContent = d.compatible
-    ? t("modal_compatibility_confirmed", "Compatibility: confirmed")
-    : t(
-        "modal_compatibility_unknown",
-        "Compatibility: unknown or not verified"
-      );
-  qs("#modalNotesList").innerHTML = (d.notes || [])
-    .map((n) => `<div class="text-sm">• ${esc(n)}</div>`)
-    .join("");
+  qs('#modalBackdrop').classList.remove('hidden');
+  qs('#modalBackdrop').classList.add('flex');
+  qs('#modalTitle').textContent = d.model;
+  qs('#modalMeta').textContent = `${d.brand} • ${d.type} • ${d.os}`;
+  qs('#modalDesc').textContent = d.compatible
+    ? t('modal_compatibility_confirmed', 'Compatibility: confirmed')
+    : t('modal_compatibility_unknown', 'Compatibility: unknown or not verified');
+  qs('#modalNotesList').innerHTML = sanitizeHtml(
+    (d.notes || []).map((n) => `<div class="text-sm">• ${esc(n)}</div>`).join('')
+  );
   const links = (d.rootLinks || [])
     .map(
       (u) =>
@@ -336,108 +370,93 @@ function openModal(d) {
           u
         )}</a></div>`
     )
-    .join("");
-  qs("#modalRootLinks").innerHTML = links
-    ? `<h4 class="text-sm font-semibold mt-3">${t(
-        "modal_root_links",
-        "Root Links"
-      )}</h4>${links}`
-    : "";
-  qs("#modalPriceRange").textContent = d.priceRange || dash();
-  const pogoDetails = [d.pogo, d.pgsharp].filter(Boolean).join(" • ");
-  qs("#modalPoGoComp").textContent = pogoDetails || dash();
-  document.body.style.overflow = "hidden";
+    .join('');
+  qs('#modalRootLinks').innerHTML = links
+    ? sanitizeHtml(
+        `<h4 class="text-sm font-semibold mt-3">${t('modal_root_links', 'Root Links')}</h4>${links}`
+      )
+    : '';
+  qs('#modalPriceRange').textContent = d.priceRange || dash();
+  const pogoDetails = [d.pogo, d.pgsharp].filter(Boolean).join(' • ');
+  qs('#modalPoGoComp').textContent = pogoDetails || dash();
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  qs("#modalBackdrop").classList.add("hidden");
-  qs("#modalBackdrop").classList.remove("flex");
-  document.body.style.overflow = "";
+  qs('#modalBackdrop').classList.add('hidden');
+  qs('#modalBackdrop').classList.remove('flex');
+  document.body.style.overflow = '';
 }
 
-qs("#closeModal")?.addEventListener("click", closeModal);
-qs("#modalBackdrop")?.addEventListener("click", (e) => {
-  if (e.target === qs("#modalBackdrop")) closeModal();
+qs('#closeModal')?.addEventListener('click', closeModal);
+qs('#modalBackdrop')?.addEventListener('click', (e) => {
+  if (e.target === qs('#modalBackdrop')) closeModal();
 });
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
 });
 
-const searchInput = qs("#searchInput");
-const typeFilter = qs("#typeFilter");
-const sortSelect = qs("#sortSelect");
+const searchInput = qs('#searchInput');
+const typeFilter = qs('#typeFilter');
+const sortSelect = qs('#sortSelect');
 
-searchInput?.addEventListener("input", applyFilters);
-typeFilter?.addEventListener("change", applyFilters);
-sortSelect?.addEventListener("change", applyFilters);
+searchInput?.addEventListener('input', applyFilters);
+typeFilter?.addEventListener('change', applyFilters);
+sortSelect?.addEventListener('change', applyFilters);
 
 function applyFilters() {
-  const wrap = qs("#gridWrap");
+  const wrap = qs('#gridWrap');
   if (!wrap) return;
-  const q = (searchInput?.value || "").trim().toLowerCase();
-  const type = typeFilter?.value || "all";
-  const sort = sortSelect?.value || "default";
+  const q = (searchInput?.value || '').trim().toLowerCase();
+  const type = typeFilter?.value || 'all';
+  const sort = sortSelect?.value || 'default';
   let filtered = devices.filter((d) => {
-    const hay = [d.model, d.brand, d.os, (d.notes || []).join(" ")]
-      .join(" ")
-      .toLowerCase();
+    const hay = [d.model, d.brand, d.os, (d.notes || []).join(' ')].join(' ').toLowerCase();
     const matchesSearch = q ? hay.includes(q) : true;
-    const matchesType = type === "all" ? true : d.type === type;
+    const matchesType = type === 'all' ? true : d.type === type;
     return matchesSearch && matchesType;
   });
-  if (sort !== "default") {
+  if (sort !== 'default') {
     filtered.sort((a, b) => {
-      if (sort === "brand") return a.brand.localeCompare(b.brand);
-      if (sort === "model") return a.model.localeCompare(b.model);
-      if (sort === "os") return a.os.localeCompare(b.os);
+      if (sort === 'brand') return a.brand.localeCompare(b.brand);
+      if (sort === 'model') return a.model.localeCompare(b.model);
+      if (sort === 'os') return a.os.localeCompare(b.os);
       return 0;
     });
   }
   renderDevices(filtered);
 }
 
-const langSelect = qs("#langSelect");
-langSelect?.addEventListener("change", (e) => {
+const langSelect = qs('#langSelect');
+langSelect?.addEventListener('change', (e) => {
   const lang = e.target.value;
   const params = new URLSearchParams(window.location.search);
-  params.set("lang", lang);
-  history.replaceState(null, "", `${location.pathname}?${params.toString()}`);
+  params.set('lang', lang);
+  history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
   loadLang(lang);
 });
 
 function applyTranslations() {
-  document.title = t(
-    "title",
-    "Pokémon GO Compatible Devices & PGSharp Updates"
-  );
+  document.title = t('title', 'Pokémon GO Compatible Devices & PGSharp Updates');
 
-  qs("#siteTitle") &&
-    (qs("#siteTitle").textContent = t(
-      "site_name",
-      qs("#siteTitle").textContent
-    ));
-  qs("#siteSubtitle") &&
-    (qs("#siteSubtitle").textContent = t(
-      "site_subtitle",
-      qs("#siteSubtitle").textContent
-    ));
+  qs('#siteTitle') && (qs('#siteTitle').textContent = t('site_name', qs('#siteTitle').textContent));
+  qs('#siteSubtitle') &&
+    (qs('#siteSubtitle').textContent = t('site_subtitle', qs('#siteSubtitle').textContent));
 
-  qsa("[data-i18n]").forEach((el) => {
-    const key = el.getAttribute("data-i18n");
-    const target = el.getAttribute("data-i18n-target") || "text";
+  qsa('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    const target = el.getAttribute('data-i18n-target') || 'text';
     const fallback =
-      target === "placeholder"
-        ? el.getAttribute("placeholder") || ""
-        : el.textContent || "";
+      target === 'placeholder' ? el.getAttribute('placeholder') || '' : el.textContent || '';
     const value = t(key, fallback);
-    if (target === "text") el.textContent = value;
-    if (target === "html") el.innerHTML = value;
-    if (target === "placeholder") el.setAttribute("placeholder", value);
-    if (target === "title") el.setAttribute("title", value);
-    if (target === "value") el.setAttribute("value", value);
+    if (target === 'text') el.textContent = value;
+    if (target === 'html') el.innerHTML = sanitizeHtml(value);
+    if (target === 'placeholder') el.setAttribute('placeholder', value);
+    if (target === 'title') el.setAttribute('title', value);
+    if (target === 'value') el.setAttribute('value', value);
   });
 
-  const statusEl = qs("#deviceBuilderStatus");
+  const statusEl = qs('#deviceBuilderStatus');
   if (statusEl?.dataset.i18nKey) {
     statusEl.textContent = t(statusEl.dataset.i18nKey, statusEl.textContent);
   }
@@ -449,14 +468,14 @@ function hydrateTranslations() {
   applyTranslations();
 }
 
-const deviceBuilderForm = qs("#deviceBuilderForm");
-const deviceJsonOutput = qs("#deviceJsonOutput");
-const copyDeviceJsonBtn = qs("#copyDeviceJson");
-const deviceBuilderStatus = qs("#deviceBuilderStatus");
-const deviceModal = qs("#deviceModal");
-const deviceModalOpenBtn = qs("#deviceModalOpen");
-const deviceModalCloseBtn = qs("#deviceModalClose");
-const deviceFormClearBtn = qs("#deviceFormClear");
+const deviceBuilderForm = qs('#deviceBuilderForm');
+const deviceJsonOutput = qs('#deviceJsonOutput');
+const copyDeviceJsonBtn = qs('#copyDeviceJson');
+const deviceBuilderStatus = qs('#deviceBuilderStatus');
+const deviceModal = qs('#deviceModal');
+const deviceModalOpenBtn = qs('#deviceModalOpen');
+const deviceModalCloseBtn = qs('#deviceModalClose');
+const deviceFormClearBtn = qs('#deviceFormClear');
 
 function setBuilderStatus(key) {
   if (!deviceBuilderStatus) return;
@@ -467,108 +486,107 @@ function setBuilderStatus(key) {
 function setupDeviceBuilder() {
   if (!deviceBuilderForm) return;
   copyDeviceJsonBtn.disabled = true;
-  setBuilderStatus("device_builder_empty");
-  deviceJsonOutput.textContent = "";
+  setBuilderStatus('device_builder_empty');
+  deviceJsonOutput.textContent = '';
 
-  deviceBuilderForm.addEventListener("submit", (e) => {
+  deviceBuilderForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const entry = {
-      id: `${qs("#builderBrand").value}-${qs("#builderModel").value}`
+      id: `${qs('#builderBrand').value}-${qs('#builderModel').value}`
         .toLowerCase()
-        .replace(/\s+/g, "-"),
-      brand: qs("#builderBrand").value.trim(),
-      model: qs("#builderModel").value.trim(),
-      os: qs("#builderOs").value.trim(),
-      type: qs("#builderType").value.trim() || "Phone",
-      compatible: qs("#builderCompatible").checked,
-      priceRange: qs("#builderPrice")?.value.trim() || undefined,
-      notes: qs("#builderNotes")
-        .value.split(",")
+        .replace(/\s+/g, '-'),
+      brand: qs('#builderBrand').value.trim(),
+      model: qs('#builderModel').value.trim(),
+      os: qs('#builderOs').value.trim(),
+      type: qs('#builderType').value.trim() || 'Phone',
+      compatible: qs('#builderCompatible').checked,
+      priceRange: qs('#builderPrice')?.value.trim() || undefined,
+      notes: qs('#builderNotes')
+        .value.split(',')
         .map((n) => n.trim())
         .filter(Boolean),
-      rootLinks: qs("#builderRootLinks")
-        .value.split(",")
+      rootLinks: qs('#builderRootLinks')
+        .value.split(',')
         .map((n) => n.trim())
         .filter(Boolean),
     };
     if (!entry.brand || !entry.model) {
-      setBuilderStatus("device_builder_empty");
+      setBuilderStatus('device_builder_empty');
       copyDeviceJsonBtn.disabled = true;
-      deviceJsonOutput.textContent = "";
+      deviceJsonOutput.textContent = '';
       return;
     }
     if (!entry.priceRange) delete entry.priceRange;
     const jsonString = JSON.stringify(entry, null, 2);
     deviceJsonOutput.textContent = jsonString;
     copyDeviceJsonBtn.disabled = false;
-    setBuilderStatus("device_builder_result_hint");
+    setBuilderStatus('device_builder_result_hint');
   });
 
-  copyDeviceJsonBtn?.addEventListener("click", async () => {
+  copyDeviceJsonBtn?.addEventListener('click', async () => {
     if (!deviceJsonOutput.textContent) return;
     try {
       await navigator.clipboard.writeText(deviceJsonOutput.textContent);
-      setBuilderStatus("device_builder_copied");
+      setBuilderStatus('device_builder_copied');
     } catch (err) {
-      console.error("Clipboard copy failed", err);
+      console.error('Clipboard copy failed', err);
     }
   });
 
-  deviceModalOpenBtn?.addEventListener("click", () => {
-    deviceModal?.classList.remove("hidden");
-    deviceModal?.classList.add("flex");
+  deviceModalOpenBtn?.addEventListener('click', () => {
+    deviceModal?.classList.remove('hidden');
+    deviceModal?.classList.add('flex');
   });
 
-  deviceModalCloseBtn?.addEventListener("click", () => {
-    deviceModal?.classList.add("hidden");
-    deviceModal?.classList.remove("flex");
+  deviceModalCloseBtn?.addEventListener('click', () => {
+    deviceModal?.classList.add('hidden');
+    deviceModal?.classList.remove('flex');
   });
 
-  deviceModal?.addEventListener("click", (evt) => {
+  deviceModal?.addEventListener('click', (evt) => {
     if (evt.target === deviceModal) {
-      deviceModal.classList.add("hidden");
-      deviceModal.classList.remove("flex");
+      deviceModal.classList.add('hidden');
+      deviceModal.classList.remove('flex');
     }
   });
 
-  deviceFormClearBtn?.addEventListener("click", () => {
+  deviceFormClearBtn?.addEventListener('click', () => {
     deviceBuilderForm?.reset();
-    if (deviceJsonOutput) deviceJsonOutput.textContent = "";
+    if (deviceJsonOutput) deviceJsonOutput.textContent = '';
     if (deviceBuilderStatus)
       deviceBuilderStatus.textContent = t(
-        "device_builder_empty",
-        "Fill in the form to generate JSON."
+        'device_builder_empty',
+        'Fill in the form to generate JSON.'
       );
   });
 }
 
 function init() {
-  newsSearchInput?.addEventListener("input", (evt) => {
+  newsSearchInput?.addEventListener('input', (evt) => {
     newsSearch = evt.target.value.trim().toLowerCase();
     renderNews(news);
   });
   if (newsTagFilterWrap) {
-    if (newsTagFilterWrap.tagName === "SELECT") {
-      newsTagFilterWrap.addEventListener("change", (evt) => {
+    if (newsTagFilterWrap.tagName === 'SELECT') {
+      newsTagFilterWrap.addEventListener('change', (evt) => {
         const v = evt.target.value;
         newsSelectedTags.clear();
-        if (v && v !== "all" && v !== "none")
-          newsSelectedTags.add(v.toLowerCase());
+        if (v && v !== 'all' && v !== 'none') newsSelectedTags.add(v.toLowerCase());
         renderNews(news);
       });
     } else {
-      newsTagFilterWrap.addEventListener("click", (evt) => {
-        const btn = evt.target.closest("[data-tag]");
+      newsTagFilterWrap.addEventListener('click', (evt) => {
+        const btn = evt.target.closest('[data-tag]');
         if (!btn) return;
-        const tag = btn.getAttribute("data-tag");
+        const tag = btn.getAttribute('data-tag');
         if (newsSelectedTags.has(tag)) {
           newsSelectedTags.delete(tag);
-          btn.classList.remove("bg-emerald-600", "border-emerald-400");
-          btn.classList.add("bg-slate-800", "border-slate-700");
+          btn.classList.remove('bg-emerald-600', 'border-emerald-400');
+          btn.classList.add('bg-slate-800', 'border-slate-700');
         } else {
           newsSelectedTags.add(tag);
-          btn.classList.remove("bg-slate-800", "border-slate-700");
-          btn.classList.add("bg-emerald-600", "border-emerald-400");
+          btn.classList.remove('bg-slate-800', 'border-slate-700');
+          btn.classList.add('bg-emerald-600', 'border-emerald-400');
         }
         renderNews(news);
       });
@@ -578,10 +596,10 @@ function init() {
 
 const COORDS_DEBUG = true;
 function clog(...args) {
-  if (COORDS_DEBUG) console.log("[coords]", ...args);
+  if (COORDS_DEBUG) console.log('[coords]', ...args);
 }
 function cerr(...args) {
-  console.error("[coords]", ...args);
+  console.error('[coords]', ...args);
 }
 
 let coordsData = [];
@@ -599,163 +617,153 @@ function flattenCoords(raw) {
 }
 
 async function loadCoords() {
-  console.log("📡 Lade /data/coords.json ...");
+  debug('📡 Lade /data/coords.json ...');
   try {
     const res = await fetch(`/data/coords.json?ts=${Date.now()}`, {
-      cache: "no-store",
+      cache: 'no-store',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
 
-    clog("json empfangen:", json);
+    clog('json empfangen:', json);
 
     let coords = [];
     if (Array.isArray(json)) {
       coords = json;
-    } else if (json && typeof json === "object") {
+    } else if (json && typeof json === 'object') {
       coords = Object.values(json).flat();
     }
 
     if (!coords.length) {
-      console.warn(
-        t("coords_load_none", "⚠️ No coordinates found in coords.json.")
-      );
+      console.warn(t('coords_load_none', '⚠️ No coordinates found in coords.json.'));
       return;
     }
 
     coordsData = coords;
-    console.log(`[coords] ${coords.length} Einträge geladen.`);
+    debug(`[coords] ${coords.length} Einträge geladen.`);
 
     renderCoords(coordsData);
     renderCoordsTags(coordsData);
   } catch (err) {
-    console.error("[coords] Failed to load:", err);
+    console.error('[coords] Failed to load:', err);
   }
 }
 
 function formatLocalTimeAtLng(lng) {
-  if (typeof lng !== "number" || Number.isNaN(lng)) return "—";
+  if (typeof lng !== 'number' || Number.isNaN(lng)) return '—';
   const hoursOffset = Math.round(lng / 15);
   const now = new Date();
   const local = new Date(now.getTime() + hoursOffset * 60 * 60 * 1000);
   try {
     return local.toLocaleTimeString(currentLang, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
     });
   } catch (e) {
-    return local.toTimeString().split(" ")[0];
+    return local.toTimeString().split(' ')[0];
   }
 }
 
 function renderCoordsTags(list) {
-  const wrap = qs("#coords-tags");
+  const wrap = qs('#coords-tags');
   if (!wrap) return;
   const tags = Array.from(
     new Set((list || []).flatMap((c) => (c.tags || []).map((t) => t.trim())))
   ).sort((a, b) => a.localeCompare(b));
-  const allBtn = document.createElement("button");
-  allBtn.type = "button";
-  allBtn.dataset.tag = "";
-  allBtn.textContent = t("coords_filter_all", "All");
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.dataset.tag = '';
+  allBtn.textContent = t('coords_filter_all', 'All');
   allBtn.className =
-    "px-3 py-1 text-xs rounded-full border mr-2 " +
-    (!coordsFilterTag
-      ? "bg-emerald-600 border-emerald-400"
-      : "bg-slate-800 border-slate-700");
-  wrap.innerHTML = "";
+    'px-3 py-1 text-xs rounded-full border mr-2 ' +
+    (!coordsFilterTag ? 'bg-emerald-600 border-emerald-400' : 'bg-slate-800 border-slate-700');
+  wrap.innerHTML = '';
   wrap.appendChild(allBtn);
 
   tags.forEach((tag) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
+    const btn = document.createElement('button');
+    btn.type = 'button';
     btn.dataset.tag = tag;
     btn.textContent = tag;
     btn.className =
-      "px-3 py-1 text-xs rounded-full border mr-2 " +
+      'px-3 py-1 text-xs rounded-full border mr-2 ' +
       (coordsFilterTag === tag
-        ? "bg-emerald-600 border-emerald-400"
-        : "bg-slate-800 border-slate-700");
+        ? 'bg-emerald-600 border-emerald-400'
+        : 'bg-slate-800 border-slate-700');
     wrap.appendChild(btn);
   });
 
   wrap.onclick = (evt) => {
-    const btn = evt.target.closest("button[data-tag]");
+    const btn = evt.target.closest('button[data-tag]');
     if (!btn) return;
     const tag = btn.dataset.tag || null;
     coordsFilterTag = tag || null;
-    Array.from(wrap.querySelectorAll("button[data-tag]")).forEach((b) => {
-      const isActive = (b.dataset.tag || "") === (coordsFilterTag || "");
-      b.classList.toggle("bg-emerald-600", isActive);
-      b.classList.toggle("border-emerald-400", isActive);
-      b.classList.toggle("bg-slate-800", !isActive);
-      b.classList.toggle("border-slate-700", !isActive);
+    Array.from(wrap.querySelectorAll('button[data-tag]')).forEach((b) => {
+      const isActive = (b.dataset.tag || '') === (coordsFilterTag || '');
+      b.classList.toggle('bg-emerald-600', isActive);
+      b.classList.toggle('border-emerald-400', isActive);
+      b.classList.toggle('bg-slate-800', !isActive);
+      b.classList.toggle('border-slate-700', !isActive);
     });
     renderCoords(coordsData);
   };
 }
 
 function renderCoords(list) {
-  const container = document.getElementById("coords-list");
+  const container = document.getElementById('coords-list');
   if (!container) {
-    console.warn("⚠️ Kein #coords-list Element gefunden");
+    console.warn('⚠️ Kein #coords-list Element gefunden');
     return;
   }
   const filtered =
     coordsFilterTag && coordsFilterTag.length
       ? (list || []).filter(
-          (c) =>
-            Array.isArray(c.tags) && c.tags.some((t) => t === coordsFilterTag)
+          (c) => Array.isArray(c.tags) && c.tags.some((t) => t === coordsFilterTag)
         )
       : list || [];
 
   if (!filtered.length) {
-    container.innerHTML = `<div class="text-slate-400 py-4">${t(
-      "no_coords_found",
-      "Keine Koordinaten gefunden."
-    )}</div>`;
+    container.innerHTML = sanitizeHtml(
+      `<div class="text-slate-400 py-4">${t(
+        'no_coords_found',
+        'Keine Koordinaten gefunden.'
+      )}</div>`
+    );
     return;
   }
 
-  container.innerHTML = filtered
-    .map((c, idx) => {
-      const localTime =
-        typeof c.lng === "number" ? formatLocalTimeAtLng(c.lng) : "—";
-      const tagsHtml = (c.tags || [])
-        .map(
-          (tag) =>
-            `<span class="px-2 py-0.5 mr-1 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-              tag
-            )}</span>`
-        )
-        .join("");
-      return `
+  container.innerHTML = sanitizeHtml(
+    filtered
+      .map((c, idx) => {
+        const localTime = typeof c.lng === 'number' ? formatLocalTimeAtLng(c.lng) : '—';
+        const tagsHtml = (c.tags || [])
+          .map(
+            (tag) =>
+              `<span class="px-2 py-0.5 mr-1 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+                tag
+              )}</span>`
+          )
+          .join('');
+        return `
       <div class="coords-item py-3 border-b border-slate-700 cursor-pointer" data-idx="${idx}">
         <div class="flex items-baseline justify-between">
-          <div class="font-semibold text-slate-200">${esc(
-            c.name || "(Unbenannt)"
-          )}</div>
+          <div class="font-semibold text-slate-200">${esc(c.name || '(Unbenannt)')}</div>
           <div class="text-xs text-slate-400 ml-4">${esc(localTime)}</div>
         </div>
-        <div class="text-slate-400 text-sm mt-1">${esc(
-          String(c.lat ?? "—")
-        )}, ${esc(String(c.lng ?? "—"))}</div>
+        <div class="text-slate-400 text-sm mt-1">${esc(String(c.lat ?? '—'))}, ${esc(
+          String(c.lng ?? '—')
+        )}</div>
         <div class="mt-2">${tagsHtml}</div>
-        ${
-          c.note
-            ? `<div class="text-xs text-slate-500 italic mt-2">${esc(
-                c.note
-              )}</div>`
-            : ""
-        }
+        ${c.note ? `<div class="text-xs text-slate-500 italic mt-2">${esc(c.note)}</div>` : ''}
       </div>
     `;
-    })
-    .join("");
+      })
+      .join('')
+  );
 
-  Array.from(container.querySelectorAll(".coords-item")).forEach((el, i) => {
-    el.addEventListener("click", () => {
+  Array.from(container.querySelectorAll('.coords-item')).forEach((el, i) => {
+    el.addEventListener('click', () => {
       const item = filtered[i];
       if (item) openCoordsModal(item);
     });
@@ -763,75 +771,74 @@ function renderCoords(list) {
 }
 
 function openCoordsModal(item) {
-  const backdrop = qs("#coordsModalBackdrop");
+  const backdrop = qs('#coordsModalBackdrop');
   if (!backdrop) {
-    cerr("openCoordsModal: modal backdrop not found");
+    cerr('openCoordsModal: modal backdrop not found');
     return;
   }
-  qs("#coordsModalTitle").textContent = item.name || "—";
-  qs("#coordsModalMeta").textContent = `Lat: ${item.lat ?? "—"} • Lng: ${
-    item.lng ?? "—"
-  }`;
-  qs("#coordsModalNote").textContent = item.note || "";
-  const tagsWrap = qs("#coordsModalTags");
+  qs('#coordsModalTitle').textContent = item.name || '—';
+  qs('#coordsModalMeta').textContent = `Lat: ${item.lat ?? '—'} • Lng: ${item.lng ?? '—'}`;
+  qs('#coordsModalNote').textContent = item.note || '';
+  const tagsWrap = qs('#coordsModalTags');
   if (tagsWrap)
-    tagsWrap.innerHTML = (item.tags || [])
-      .map(
-        (t) =>
-          `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-            t
-          )}</span>`
-      )
-      .join(" ");
-  const mapsLink = qs("#coordsModalMaps");
+    tagsWrap.innerHTML = sanitizeHtml(
+      (item.tags || [])
+        .map(
+          (t) =>
+            `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
+              t
+            )}</span>`
+        )
+        .join(' ')
+    );
+  const mapsLink = qs('#coordsModalMaps');
   if (mapsLink) {
-    if (typeof item.lat !== "undefined" && typeof item.lng !== "undefined") {
+    if (typeof item.lat !== 'undefined' && typeof item.lng !== 'undefined') {
       mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        item.lat + "," + item.lng
+        item.lat + ',' + item.lng
       )}`;
     } else {
-      mapsLink.removeAttribute("href");
+      mapsLink.removeAttribute('href');
     }
   }
-  backdrop.classList.remove("hidden");
-  backdrop.classList.add("flex");
-  document.body.style.overflow = "hidden";
+  backdrop.classList.remove('hidden');
+  backdrop.classList.add('flex');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeCoordsModal() {
-  const backdrop = qs("#coordsModalBackdrop");
+  const backdrop = qs('#coordsModalBackdrop');
   if (!backdrop) return;
-  backdrop.classList.add("hidden");
-  backdrop.classList.remove("flex");
-  document.body.style.overflow = "";
+  backdrop.classList.add('hidden');
+  backdrop.classList.remove('flex');
+  document.body.style.overflow = '';
 }
 
-qs("#coordsModalClose")?.addEventListener("click", closeCoordsModal);
-qs("#coordsModalBackdrop")?.addEventListener("click", (e) => {
-  if (e.target === qs("#coordsModalBackdrop")) closeCoordsModal();
+qs('#coordsModalClose')?.addEventListener('click', closeCoordsModal);
+qs('#coordsModalBackdrop')?.addEventListener('click', (e) => {
+  if (e.target === qs('#coordsModalBackdrop')) closeCoordsModal();
 });
 
 function updateCoordsTime() {
-  const el = qs("#coords-time");
+  const el = qs('#coords-time');
   if (!el) return;
   function tick() {
     const now = new Date();
     // Use i18n keys for the coords time label so translations work
-    const label = t("coords_time_label", "Current time");
-    const suffix = t("coords_time_user_suffix", "Local time");
+    const label = t('coords_time_label', 'Current time');
+    const suffix = t('coords_time_user_suffix', 'Local time');
     el.textContent = `${label}: ${now.toLocaleTimeString()} (${suffix})`;
   }
   tick();
-  if (!updateCoordsTime._interval)
-    updateCoordsTime._interval = setInterval(tick, 1000);
+  if (!updateCoordsTime._interval) updateCoordsTime._interval = setInterval(tick, 1000);
 }
-const newsModalBackdrop = qs("#newsModalBackdrop");
-const closeNewsModalBtn = qs("#closeNewsModal");
-const newsModalTitle = qs("#newsModalTitle");
-const newsModalMeta = qs("#newsModalMeta");
-const newsModalBody = qs("#newsModalBody");
-const newsModalTagsWrap = qs("#newsModalTagsWrap");
-const newsModalTags = qs("#newsModalTags");
+const newsModalBackdrop = qs('#newsModalBackdrop');
+const closeNewsModalBtn = qs('#closeNewsModal');
+const newsModalTitle = qs('#newsModalTitle');
+const newsModalMeta = qs('#newsModalMeta');
+const newsModalBody = qs('#newsModalBody');
+const newsModalTagsWrap = qs('#newsModalTagsWrap');
+const newsModalTags = qs('#newsModalTags');
 
 function openNewsModal(original, translated = {}) {
   const merged = {
@@ -840,262 +847,250 @@ function openNewsModal(original, translated = {}) {
     tags: original.tags || [],
   };
   newsModalTitle.textContent = merged.title;
-  const pub = merged.publishedAt
-    ? dateFormatter.format(new Date(merged.publishedAt))
-    : dash();
+  const pub = merged.publishedAt ? dateFormatter.format(new Date(merged.publishedAt)) : dash();
   const upd =
     merged.updatedAt && merged.updatedAt !== merged.publishedAt
       ? dateFormatter.format(new Date(merged.updatedAt))
       : null;
 
-  const publishedLabel = t("news_published", "Published");
-  const updatedLabel = t("news_updated", "Updated");
+  const publishedLabel = t('news_published', 'Published');
+  const updatedLabel = t('news_updated', 'Updated');
   newsModalMeta.innerHTML = `
     <span>${publishedLabel}: ${esc(pub)}</span>
-    ${upd ? `<span class="ml-3">${updatedLabel}: ${esc(upd)}</span>` : ""}
+    ${upd ? `<span class="ml-3">${updatedLabel}: ${esc(upd)}</span>` : ''}
   `;
+  newsModalMeta.innerHTML = sanitizeHtml(newsModalMeta.innerHTML);
 
-  const body = merged.content || merged.excerpt || "";
+  const body = merged.content || merged.excerpt || '';
   if (body) {
-    newsModalBody.innerHTML = body
-      .split(/\n{2,}/)
-      .map(
-        (block) =>
-          `<p>${esc(block)
-            .replace(/\n/g, "<br>")
-            .replace(/ {2}/g, "&nbsp;&nbsp;")}</p>`
-      )
-      .join("");
+    newsModalBody.innerHTML = sanitizeHtml(
+      body
+        .split(/\n{2,}/)
+        .map(
+          (block) => `<p>${esc(block).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;')}</p>`
+        )
+        .join('')
+    );
   } else {
-    newsModalBody.innerHTML = `<p>${esc(
-      t("news_modal_no_content", "No additional details provided.")
-    )}</p>`;
+    newsModalBody.innerHTML = sanitizeHtml(
+      `<p>${esc(t('news_modal_no_content', 'No additional details provided.'))}</p>`
+    );
   }
 
   if (merged.tags && merged.tags.length) {
-    newsModalTags.innerHTML = merged.tags
-      .map(
-        (tag) =>
-          `<span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs">${esc(
-            tag
-          )}</span>`
-      )
-      .join("");
-    newsModalTagsWrap.classList.remove("hidden");
+    newsModalTags.innerHTML = sanitizeHtml(
+      merged.tags
+        .map(
+          (tag) =>
+            `<span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs">${esc(
+              tag
+            )}</span>`
+        )
+        .join('')
+    );
+    newsModalTagsWrap.classList.remove('hidden');
   } else {
-    newsModalTagsWrap.classList.add("hidden");
-    newsModalTags.innerHTML = "";
+    newsModalTagsWrap.classList.add('hidden');
+    newsModalTags.innerHTML = '';
   }
 
-  newsModalBackdrop.classList.remove("hidden");
-  newsModalBackdrop.classList.add("flex");
-  document.body.style.overflow = "hidden";
+  newsModalBackdrop.classList.remove('hidden');
+  newsModalBackdrop.classList.add('flex');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeNewsModal() {
-  newsModalBackdrop.classList.add("hidden");
-  newsModalBackdrop.classList.remove("flex");
-  document.body.style.overflow = "";
+  newsModalBackdrop.classList.add('hidden');
+  newsModalBackdrop.classList.remove('flex');
+  document.body.style.overflow = '';
 }
 
-closeNewsModalBtn?.addEventListener("click", closeNewsModal);
-newsModalBackdrop?.addEventListener("click", (evt) => {
+closeNewsModalBtn?.addEventListener('click', closeNewsModal);
+newsModalBackdrop?.addEventListener('click', (evt) => {
   if (evt.target === newsModalBackdrop) closeNewsModal();
 });
-window.addEventListener("keydown", (evt) => {
-  if (evt.key === "Escape") {
+window.addEventListener('keydown', (evt) => {
+  if (evt.key === 'Escape') {
     closeModal();
     closeNewsModal();
   }
 });
 
 function setupPgSharpTabs() {
-  const root = qs("#pgsharpSection");
+  const root = qs('#pgsharpSection');
   if (!root) return;
-  const tabBtns = Array.from(root.querySelectorAll("[data-pgsharp-tab]"));
-  const tabContents = Array.from(
-    root.querySelectorAll("[data-pgsharp-content]")
-  );
-  let active = "faq";
+  const tabBtns = Array.from(root.querySelectorAll('[data-pgsharp-tab]'));
+  const tabContents = Array.from(root.querySelectorAll('[data-pgsharp-content]'));
+  let active = 'faq';
 
   function activate(tab) {
     tabBtns.forEach((btn) => {
       const isActive = btn.dataset.pgsharpTab === tab;
-      btn.classList.toggle("bg-emerald-400", isActive);
-      btn.classList.toggle("text-slate-900", isActive);
-      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      btn.classList.toggle('bg-emerald-400', isActive);
+      btn.classList.toggle('text-slate-900', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
     tabContents.forEach((content) => {
       if (content.dataset.pgsharpContent === tab) {
-        content.classList.remove("hidden");
-        content.classList.add("active");
-        content.classList.remove("fade");
+        content.classList.remove('hidden');
+        content.classList.add('active');
+        content.classList.remove('fade');
       } else {
-        content.classList.add("hidden");
-        content.classList.remove("active");
-        content.classList.add("fade");
+        content.classList.add('hidden');
+        content.classList.remove('active');
+        content.classList.add('fade');
       }
     });
     active = tab;
   }
 
   tabBtns.forEach((btn) => {
-    btn.addEventListener("click", () => activate(btn.dataset.pgsharpTab));
+    btn.addEventListener('click', () => activate(btn.dataset.pgsharpTab));
   });
 
   activate(active);
 }
 
 function showSectionByName(name) {
-  const id =
-    name && name.endsWith && name.endsWith("Section") ? name : `${name}Section`;
+  const id = name && name.endsWith && name.endsWith('Section') ? name : `${name}Section`;
   const target = document.getElementById(id) || document.getElementById(name);
   if (!target) {
-    console.warn("showSectionByName: no target for", name, id);
+    console.warn('showSectionByName: no target for', name, id);
     return;
   }
 
-  document
-    .querySelectorAll('main section[id$="Section"], main .page, .page')
-    .forEach((s) => {
-      if (s === target) {
-        s.classList.remove("hidden");
-        s.style.display = "";
-        s.setAttribute("aria-hidden", "false");
-      } else {
-        s.classList.add("hidden");
-        s.style.display = "none";
-        s.setAttribute("aria-hidden", "true");
-      }
-    });
+  document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach((s) => {
+    if (s === target) {
+      s.classList.remove('hidden');
+      s.style.display = '';
+      s.setAttribute('aria-hidden', 'false');
+    } else {
+      s.classList.add('hidden');
+      s.style.display = 'none';
+      s.setAttribute('aria-hidden', 'true');
+    }
+  });
 
-  const plain = (id || "").replace(/Section$/, "");
+  const plain = (id || '').replace(/Section$/, '');
   try {
-    history.replaceState(null, "", `#${plain}`);
+    history.replaceState(null, '', `#${plain}`);
   } catch (e) {}
 
-  if (plain === "devices" && typeof loadDevices === "function") {
-    loadDevices().catch((e) => console.error("loadDevices:", e));
+  if (plain === 'devices' && typeof loadDevices === 'function') {
+    loadDevices().catch((e) => console.error('loadDevices:', e));
   }
-  if (plain === "pgsharp") {
-    const pg = document.getElementById("pgsharpSection");
+  if (plain === 'pgsharp') {
+    const pg = document.getElementById('pgsharpSection');
     if (pg) {
-      pg.classList.remove("hidden");
-      pg.style.display = "";
+      pg.classList.remove('hidden');
+      pg.style.display = '';
     }
-    if (typeof setupPgSharpTabs === "function") {
+    if (typeof setupPgSharpTabs === 'function') {
       try {
         setupPgSharpTabs();
       } catch (e) {
-        console.error("setupPgSharpTabs", e);
+        console.error('setupPgSharpTabs', e);
       }
     }
   }
-  if (plain === "news" && typeof initNewsFilters === "function") {
+  if (plain === 'news' && typeof initNewsFilters === 'function') {
     try {
       initNewsFilters();
     } catch (e) {
-      console.warn("initNewsFilters", e);
+      console.warn('initNewsFilters', e);
     }
   }
 }
 
-document.addEventListener("click", (ev) => {
-  const btn = ev.target.closest && ev.target.closest("[data-section]");
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest && ev.target.closest('[data-section]');
   if (!btn) return;
   ev.preventDefault();
-  const name = btn.getAttribute("data-section");
+  const name = btn.getAttribute('data-section');
   if (name) showSectionByName(name);
 });
 
-window.addEventListener("load", () => {
-  const h = (location.hash || "").replace("#", "");
+window.addEventListener('load', () => {
+  const h = (location.hash || '').replace('#', '');
   if (h) showSectionByName(h);
-  else showSectionByName("overview");
+  else showSectionByName('overview');
 });
 
 function escapeHtml(s) {
   return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 async function loadPokeminersVersion() {
-  const pkApkEl = document.getElementById("pk-apk");
+  const pkApkEl = document.getElementById('pk-apk');
 
   try {
-    const res = await fetch("/api/pokeminers/version", { cache: "no-store" });
+    const res = await fetch('/api/pokeminers/version', { cache: 'no-store' });
     const data = await res.json();
 
     if (data.ok) {
-      pkApkEl.textContent = data.apkVersion || "–";
+      pkApkEl.textContent = data.apkVersion || '–';
     } else {
-      pkApkEl.textContent = "–";
-      console.warn("Pokeminers fetch error:", data.error);
+      pkApkEl.textContent = '–';
+      console.warn('Pokeminers fetch error:', data.error);
     }
   } catch (err) {
-    pkApkEl.textContent = "–";
-    console.error("Failed to load Pokeminers version:", err);
+    pkApkEl.textContent = '–';
+    console.error('Failed to load Pokeminers version:', err);
   }
 }
 
 async function loadPgsharpVersion() {
-  const pgPageEl = document.getElementById("pg-page");
-  const pgApkEl = document.getElementById("pg-apk");
-  const pgStatusEl = document.getElementById("pg-status");
-  const pkApkEl = document.getElementById("pk-apk");
+  const pgPageEl = document.getElementById('pg-page');
+  const pgApkEl = document.getElementById('pg-apk');
+  const pgStatusEl = document.getElementById('pg-status');
+  const pkApkEl = document.getElementById('pk-apk');
 
   try {
     const [pgRes, pkRes] = await Promise.all([
-      fetch("/api/pgsharp/version", { cache: "no-store" }),
-      fetch("/api/pokeminers/version", { cache: "no-store" }),
+      fetch('/api/pgsharp/version', { cache: 'no-store' }),
+      fetch('/api/pokeminers/version', { cache: 'no-store' }),
     ]);
     const [pgData, pkData] = await Promise.all([pgRes.json(), pkRes.json()]);
 
     if (pgData.ok) {
-      pgPageEl.textContent = pgData.pageVersion || "–";
-      pgApkEl.textContent = pgData.pogoVersion || "–";
+      pgPageEl.textContent = pgData.pageVersion || '–';
+      pgApkEl.textContent = pgData.pogoVersion || '–';
     }
 
     if (pkData.ok) {
-      pkApkEl.textContent = pkData.apkVersion || "–";
+      pkApkEl.textContent = pkData.apkVersion || '–';
     }
 
     if (pgData.ok && pkData.ok) {
-      const pgVer = parseFloat(
-        (pgData.pogoVersion || "0").replace(/[^\d.]/g, "")
-      );
-      const pkVer = parseFloat(
-        (pkData.apkVersion || "0").replace(/[^\d.]/g, "")
-      );
+      const pgVer = parseFloat((pgData.pogoVersion || '0').replace(/[^\d.]/g, ''));
+      const pkVer = parseFloat((pkData.apkVersion || '0').replace(/[^\d.]/g, ''));
 
       if (pgVer >= pkVer) {
         pgStatusEl.textContent =
           pgVer === pkVer
-            ? t("pgsharp_status_compatible", "Compatible")
-            : t(
-                "pgsharp_status_pgsharp_newer",
-                "PGSharp newer than Pokeminers"
-              );
-        pgStatusEl.className = "font-semibold text-emerald-400";
+            ? t('pgsharp_status_compatible', 'Compatible')
+            : t('pgsharp_status_pgsharp_newer', 'PGSharp newer than Pokeminers');
+        pgStatusEl.className = 'font-semibold text-emerald-400';
       } else {
         pgStatusEl.textContent = t(
-          "pgsharp_status_not_compatible",
-          "Not compatible / Waiting for PGSharp update"
+          'pgsharp_status_not_compatible',
+          'Not compatible / Waiting for PGSharp update'
         );
-        pgStatusEl.className = "font-semibold text-red-400";
+        pgStatusEl.className = 'font-semibold text-red-400';
       }
     } else {
-      pgStatusEl.textContent = "–";
-      pgStatusEl.className = "font-semibold text-yellow-400";
+      pgStatusEl.textContent = '–';
+      pgStatusEl.className = 'font-semibold text-yellow-400';
     }
   } catch (err) {
-    console.error("Failed to load PGSharp or Pokeminers version:", err);
-    pgStatusEl.textContent = t("pgsharp_status_error", "Error");
-    pgStatusEl.className = "font-semibold text-red-400";
+    console.error('Failed to load PGSharp or Pokeminers version:', err);
+    pgStatusEl.textContent = t('pgsharp_status_error', 'Error');
+    pgStatusEl.className = 'font-semibold text-red-400';
   }
 }
 
@@ -1109,37 +1104,36 @@ loadLang(currentLang).then(() => {
   init();
 });
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   hydrateTranslations();
   hydrateGrid();
   bindNavigation();
   setupPgSharpTabs();
   updateCoordsTime();
   loadCoords();
-  fetch("/api/uptime")
+  fetch('/api/uptime')
     .then((res) => res.json())
     .then((data) => {
-      const el = document.getElementById("uptime");
-      if (el && data && typeof data.uptime === "number") {
-        el.textContent = `${t(
-          "uptime_label",
-          "Uptime"
-        )} : ${data.uptime.toFixed(2)} %`;
+      const el = document.getElementById('uptime');
+      if (el && data && typeof data.uptime === 'number') {
+        el.textContent = `${t('uptime_label', 'Uptime')} : ${data.uptime.toFixed(2)} %`;
       }
     })
     .catch(() => {});
 
-  const reportForm = qs("#pgsharp-report-form");
+  const reportForm = qs('#pgsharp-report-form');
   if (reportForm) {
-    reportForm.addEventListener("submit", (evt) => {
+    reportForm.addEventListener('submit', (evt) => {
       evt.preventDefault();
-      const email = qs("#pgsharp-report-email")?.value || "";
-      const message = qs("#pgsharp-report-message")?.value || "";
-      reportForm.innerHTML = `<div class="text-green-400">${t(
-        "pgsharp_report_local_success",
-        "Thanks — your message was processed locally."
-      )}</div>`;
-      console.log("PGSharp report (local):", { email, message });
+      const email = qs('#pgsharp-report-email')?.value || '';
+      const message = qs('#pgsharp-report-message')?.value || '';
+      reportForm.innerHTML = sanitizeHtml(
+        `<div class="text-green-400">${t(
+          'pgsharp_report_local_success',
+          'Thanks — your message was processed locally.'
+        )}</div>`
+      );
+      debug('PGSharp report (local):', { email, message });
     });
   }
 

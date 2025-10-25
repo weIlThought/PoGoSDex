@@ -11,6 +11,8 @@
     "dev:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --watch",
     "build:css": "npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
+    "lint": "eslint . --ext .js --ignore-path .gitignore",
+    "lint:fix": "eslint . --ext .js --fix --ignore-path .gitignore",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
     "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
@@ -38,8 +40,34 @@
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "lowdb": "^7.0.1",
+    "strip-comments": "^2.0.1",
     "node-fetch": "^3.3.2",
-    "steno": "^4.0.2"
+    "steno": "^4.0.2",
+    "dompurify": "^2.4.0"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es2021": true,
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2021,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-console": [
+        "warn",
+        {
+          "allow": [
+            "warn",
+            "error"
+          ]
+        }
+      ]
+    }
   }
 }

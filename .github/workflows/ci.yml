@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check (main.js)
+        run: |
+          echo "Checking public/main.js syntax..."
+          node --check public/main.js
+
+      - name: Lint
+        run: |
+          echo "Running ESLint..."
+          npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate lang JSON files
+        run: |
+          node -e "const fs=require('fs');const p='lang';fs.readdirSync(p).filter(f=>f.endsWith('.json')).forEach(f=>{try{JSON.parse(fs.readFileSync(p+'/'+f,'utf8'))}catch(e){console.error('INVALID',f,e);process.exit(1)}});console.log('lang JSON OK')"
