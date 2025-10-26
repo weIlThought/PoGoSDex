@@ -229,3 +229,81 @@
   outline-offset: 2px;
 }
 
+/* Responsive improvements for tablets and phones */
+@media (max-width: 1024px) {
+  /* Slightly increase overall spacing on tablets */
+  .max-w-6xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .card-hover {
+    transition: transform 0.16s ease;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Stack nav for small screens and make buttons easier to tap */
+  header nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  header nav .flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  header nav .flex > button,
+  header nav .ml-auto > button {
+    width: 100%;
+    text-align: left;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Make device grid and cards more comfortable on narrow screens */
+  [data-devices-grid] {
+    gap: 1rem;
+    grid-template-columns: 1fr !important;
+  }
+  .card-hover {
+    transform: none;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
+
+  /* Inputs and controls should be easier to interact with */
+  .input {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  /* Modal/dialog responsiveness */
+  #modalBackdrop .max-w-3xl,
+  #newsModalBackdrop .max-w-3xl,
+  #deviceModal .max-w-2xl,
+  #coordsModalBackdrop .max-w-lg {
+    width: calc(100% - 2rem);
+    max-width: 720px;
+    margin: 0 1rem;
+  }
+
+  /* Reduce crowded lists spacing */
+  #coords-list .coords-item {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/* Small polish for medium screens */
+@media (min-width: 641px) and (max-width: 992px) {
+  [data-devices-grid] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .card-hover {
+    transform: translateY(-4px);
+  }
+}
+
