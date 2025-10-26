@@ -292,13 +292,14 @@ function cardHtml(d) {
   // build a short preview of notes (first note) if present
   const notePreview = d.notes && d.notes.length ? esc(String(d.notes[0]).slice(0, 130)) : '';
   const badgeClass = d.compatible ? 'badge-compat good' : 'badge-compat unknown';
-  return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
+  const titleId = `device-title-${esc(d.id)}`;
+  return `<article class="card-base card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
     d.id
-  )}">
+  )}" role="article" aria-labelledby="${titleId}">
     <div>
       <div class="flex items-start justify-between">
         <div>
-          <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
+          <h3 id="${titleId}" class="text-lg font-semibold">${esc(d.model)}</h3>
           <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
         </div>
   <div><span class="${badgeClass}">${d.compatible ? 'Compatible' : 'Unknown'}</span></div>

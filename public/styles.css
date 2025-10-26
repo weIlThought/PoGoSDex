@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Design tokens */
+  --bg-900: #0b1220;
+  --bg-950: #05060a;
+  --surface: rgba(20,30,52,0.92);
+  --muted: #94a3b8;
+  --text: #e4ebf7;
+  --accent: #06b6d4;
+  --accent-600: #0891b2;
+  --success: #34d399;
+  --warning: #f59e0b;
+  --card-border: rgba(164,210,255,0.18);
+  --card-shadow: 0 12px 30px rgba(8,16,32,0.36);
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --glass-bg: linear-gradient(160deg, rgba(20,30,52,0.76), rgba(30,42,68,0.76));
+}
 
 .modal-backdrop {
   position: fixed;
@@ -18,38 +35,40 @@
 }
 
 .input {
-  background-color: #1e293b;
-  color: #f8fafc;
-  border: 1px solid #334155;
+  background-color: var(--bg-900);
+  color: var(--text);
+  border: 1px solid rgba(148,163,184,0.06);
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   width: 100%;
 }
 
 .btn-primary {
-  background-color: #06b6d4; /* stronger teal/cyan */
-  color: #071025; /* near-black for contrast */
-  font-weight: 600;
-  padding: 0.45rem 0.9rem;
-  border-radius: 0.5rem;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  background: linear-gradient(90deg, var(--accent), var(--accent-600));
+  color: #071025;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s;
+  box-shadow: 0 8px 20px rgba(6,22,33,0.35);
 }
 
 .btn-primary:hover {
-  background-color: #0891b2;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(6,22,33,0.42);
 }
 
 .btn-secondary {
-  background-color: #263243; /* slightly darker */
-  color: #cbd5e1; /* increase contrast on muted buttons */
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.5rem;
+  background: rgba(36,44,62,0.6);
+  color: var(--muted);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
   transition: background-color 0.12s ease, transform 0.12s ease;
+  border: 1px solid rgba(148,163,184,0.04);
 }
 
 .btn-secondary:hover {
-  background-color: #324152;
+  background: rgba(36,44,62,0.75);
   transform: translateY(-1px);
 }
 
@@ -110,8 +129,19 @@
     border-radius: 9999px;
     font-weight: 600;
   }
-  .badge-compat.good { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.08); }
-  .badge-compat.unknown { background: rgba(245,158,11,0.06); color: #f59e0b; border: 1px solid rgba(245,158,11,0.06); }
+  .badge-compat.good { background: rgba(52,211,153,0.08); color: var(--success); border: 1px solid rgba(52,211,153,0.08); }
+  .badge-compat.unknown { background: rgba(245,158,11,0.06); color: var(--warning); border: 1px solid rgba(245,158,11,0.06); }
+
+  /* Modern card base utility */
+  .card-base {
+    background: var(--glass-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+  .card-base.card-hover:hover { transform: translateY(-6px); box-shadow: 0 26px 60px rgba(8,16,32,0.45); }
 
   /* Header compact variant */
   header.header--compact { padding-top: 0.25rem; padding-bottom: 0.25rem; }
@@ -183,7 +213,8 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-6px);
+  /* kept for compatibility: small lift on hover when not using .card-base */
+  transform: translateY(-4px);
 }
 
 
@@ -355,4 +386,3 @@
     transform: translateY(-4px);
   }
 }
-
