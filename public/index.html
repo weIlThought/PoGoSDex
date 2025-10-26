@@ -4,11 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-i18n="page_title">PoGoSDex – Devices & PGSharp Info</title>
+    <!-- Optional: load Inter for improved typography -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta name="description" content="A searchable collection of phones and tablets compatible with Pokémon GO." />
     <link rel="stylesheet" href="/output.css" />
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="min-h-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
+    <a class="sr-only focus:not-sr-only absolute left-2 top-2 z-50 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300" href="#overviewSection">Skip to content</a>
     <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
@@ -132,6 +136,7 @@
                 <option value="brand" data-i18n="sort_brand"> Brand (A–Z) </option>
                 <option value="model" data-i18n="sort_model"> Model (A–Z) </option>
                 <option value="os" data-i18n="sort_os">OS Version</option>
+                <option value="compatibility" data-i18n="sort_compatibility">Compatibility (compatible first)</option>
               </select>
             </div>
           </section>

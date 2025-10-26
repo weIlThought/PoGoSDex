@@ -57,6 +57,8 @@
   "modal_close": "Schließen",
   "modal_compatibility_confirmed": "Kompatibilität: bestätigt",
   "modal_compatibility_unknown": "Kompatibilität: unbekannt / nicht verifiziert",
+  "device_badge_compatible": "Kompatibel",
+  "device_badge_unknown": "Unbekannt",
   "modal_pogo_label": "PoGO-Kompatibilität:",
   "modal_price_range_label": "Preisspanne:",
   "modal_root_links": "Root-Links",

@@ -28,6 +28,8 @@
   "no_devices_found": "No devices found",
   "modal_compatibility_confirmed": "Compatibility: confirmed",
   "modal_compatibility_unknown": "Compatibility: unknown or not verified",
+  "device_badge_compatible": "Compatible",
+  "device_badge_unknown": "Unknown",
   "modal_root_links": "Root Links",
   "modal_price_range_label": "Price Range:",
   "modal_pogo_label": "PoGO Compatibility:",

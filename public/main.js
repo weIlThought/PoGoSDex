@@ -298,6 +298,9 @@ function cardHtml(d) {
         'modal_compatibility_unknown',
         'Compatibility: unknown or not verified'
       )}</span>`;
+  // build a short preview of notes (first note) if present
+  const notePreview = d.notes && d.notes.length ? esc(String(d.notes[0]).slice(0, 130)) : '';
+  const badgeClass = d.compatible ? 'badge-compat good' : 'badge-compat unknown';
   return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
     d.id
   )}">
@@ -307,9 +310,10 @@ function cardHtml(d) {
           <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
           <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
         </div>
-        <div>${compat}</div>
+        <div><span class="${badgeClass}">${d.compatible ? 'Compatible' : 'Unknown'}</span></div>
       </div>
       <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
+      <p class="card-note">${notePreview}</p>
     </div>
     <div class="mt-4 text-xs text-slate-400">&nbsp;</div>
   </article>`;
@@ -424,6 +428,15 @@ function applyFilters() {
       if (sort === 'brand') return a.brand.localeCompare(b.brand);
       if (sort === 'model') return a.model.localeCompare(b.model);
       if (sort === 'os') return a.os.localeCompare(b.os);
+      if (sort === 'compatibility') {
+        // Put compatible devices first. If equal, fall back to brand then model.
+        if ((a.compatible === true) === (b.compatible === true)) {
+          const byBrand = String(a.brand || '').localeCompare(String(b.brand || ''));
+          if (byBrand !== 0) return byBrand;
+          return String(a.model || '').localeCompare(String(b.model || ''));
+        }
+        return a.compatible ? -1 : 1;
+      }
       return 0;
     });
   }
@@ -1013,6 +1026,19 @@ window.addEventListener('load', () => {
   if (h) showSectionByName(h);
   else showSectionByName('overview');
 });
+
+// Header shrink on scroll for better focus (compact header)
+(function setupHeaderShrink() {
+  const header = document.querySelector('header');
+  if (!header) return;
+  function update() {
+    if (window.scrollY > 64) header.classList.add('header--compact');
+    else header.classList.remove('header--compact');
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  // initial
+  update();
+})();
 
 function escapeHtml(s) {
   return String(s)
