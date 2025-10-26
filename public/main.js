@@ -60,6 +60,20 @@ function dash() {
   return t('placeholder_dash', '—');
 }
 
+// Normalize different representations of "compatible" values to a boolean.
+// Handles booleans, numbers (1/0), and strings like "true", "yes", "1", "false".
+function isCompatible(val) {
+  if (val === true) return true;
+  if (val === false) return false;
+  if (val == null) return false;
+  if (typeof val === 'number') return val === 1;
+  if (typeof val === 'string') {
+    const v = val.trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y', 'compatible'].includes(v);
+  }
+  return Boolean(val);
+}
+
 let devices = [];
 let news = [];
 let newsSearch = '';
@@ -291,7 +305,7 @@ function populateNewsTagFilter(items) {
 function cardHtml(d) {
   // build a short preview of notes (first note) if present
   const notePreview = d.notes && d.notes.length ? esc(String(d.notes[0]).slice(0, 130)) : '';
-  const badgeClass = d.compatible ? 'badge-compat good' : 'badge-compat unknown';
+  const badgeClass = isCompatible(d.compatible) ? 'badge-compat good' : 'badge-compat unknown';
   return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
     d.id
   )}">
@@ -301,7 +315,9 @@ function cardHtml(d) {
           <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
           <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
         </div>
-        <div><span class="${badgeClass}">${d.compatible ? 'Compatible' : 'Unknown'}</span></div>
+  <div><span class="${badgeClass}">${
+    isCompatible(d.compatible) ? 'Compatible' : 'Unknown'
+  }</span></div>
       </div>
       <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
       <p class="card-note">${notePreview}</p>
@@ -355,7 +371,7 @@ function openModal(d) {
   qs('#modalBackdrop').classList.add('flex');
   qs('#modalTitle').textContent = d.model;
   qs('#modalMeta').textContent = `${d.brand} • ${d.type} • ${d.os}`;
-  qs('#modalDesc').textContent = d.compatible
+  qs('#modalDesc').textContent = isCompatible(d.compatible)
     ? t('modal_compatibility_confirmed', 'Compatibility: confirmed')
     : t('modal_compatibility_unknown', 'Compatibility: unknown or not verified');
   qs('#modalNotesList').innerHTML = sanitizeHtml(
@@ -420,8 +436,6 @@ function applyFilters() {
       if (sort === 'model') return a.model.localeCompare(b.model);
       if (sort === 'os') return a.os.localeCompare(b.os);
       if (sort === 'compatibility') {
-        // Put compatible devices first. Normalize truthy/falsey values to boolean so
-        // values like "true", "yes" or non-empty strings work the same as boolean true.
         const aComp = Boolean(a.compatible);
         const bComp = Boolean(b.compatible);
         if (aComp === bComp) {
