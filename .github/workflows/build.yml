@@ -92,7 +92,8 @@ jobs:
           else
             echo "⚙️ Installing tailwindcss locally (npm@10-safe fallback)..."
             npm install tailwindcss@4.1.15 --no-save
-            npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+            echo "Running Tailwind directly via node..."
+            node ./node_modules/tailwindcss/lib/cli.js -i ./public/styles.css -o ./public/output.css --minify
           fi
 
       - name: Run tests and lint
