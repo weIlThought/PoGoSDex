@@ -6,9 +6,9 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 🧩 Checkout Repository
       - name: Checkout repo + submodules
         uses: actions/checkout@v4
         with:
@@ -25,7 +24,6 @@ jobs:
           persist-credentials: true
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
 
-      # 🧠 Detect what changed
       - name: Detect changes
         id: changes
         uses: dorny/paths-filter@v3
@@ -45,23 +43,19 @@ jobs:
               - '**/*.cjs'
               - '**/*.json'
 
-      # ⚙️ Setup Node.js
       - name: Setup Node.js (latest LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: "npm"
+          node-version: 'lts/*'
+          cache: 'npm'
 
-      # 🚀 Cache npm modules
       - name: Cache npm modules
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            npm-cache-${{ runner.os }}-
+          restore-keys: npm-cache-${{ runner.os }}-
 
-      # 📦 Install dependencies (root + server)
       - name: Install deps (ci with fallback)
         env:
           HUSKY: 0
@@ -73,43 +67,34 @@ jobs:
               pushd "$d" >/dev/null
               if ! npm ci --include=dev; then
                 echo "⚠️ npm ci failed — using npm install fallback"
-                HUSKY=0 npm install --no-save tailwindcss@4.1.15
+                HUSKY=0 npm install
               fi
               popd >/dev/null
             fi
           done
-
-          # zusätzliche Sicherheit: installiere explizit mit --prefix server
-          echo "=== Also running 'npm install --prefix server' as safety ==="
+          echo "=== Safety check ==="
           HUSKY=0 npm install --prefix server
 
-      # 🎨 Build Tailwind (install dev deps only for asset build)
       - name: Build Tailwind
         env:
           HUSKY: 0
         run: |
           set -e
           echo "🎨 Building Tailwind assets..."
-          # ensure dev deps present (idempotent)
           npm ci --include=dev --no-audit || npm install --include=dev --no-audit
 
           echo "node_modules/.bin contents:"
           ls -la node_modules/.bin || true
 
-          # prefer installed binary
-          if command -v tailwindcss >/dev/null 2>&1; then
-            echo "Using installed tailwindcss"
-            tailwindcss -i ./public/styles.css -o ./public/output.css --minify
-          elif [ -x ./node_modules/.bin/tailwindcss ]; then
-            echo "Using local node_modules/.bin/tailwindcss"
+          if [ -x ./node_modules/.bin/tailwindcss ]; then
+            echo "✅ Using local tailwind binary"
             ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           else
-            echo "Local binary missing — using npx to fetch specific tailwind version"
+            echo "⚙️ Installing tailwindcss locally (npm@10-safe fallback)..."
             npm install tailwindcss@4.1.15 --no-save
             npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           fi
 
-      # 🧪 Run tests (nur bei Codeänderung)
       - name: Run tests and lint
         if: steps.changes.outputs.code == 'true'
         env:
@@ -123,9 +108,7 @@ jobs:
           echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
-          npm prune --production
 
-      # 🐳 Docker Build (nur bei Codeänderung)
       - name: Set up Docker Buildx
         if: steps.changes.outputs.code == 'true'
         uses: docker/setup-buildx-action@v2
