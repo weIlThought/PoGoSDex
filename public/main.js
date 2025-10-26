@@ -298,17 +298,20 @@ function cardHtml(d) {
         'modal_compatibility_unknown',
         'Compatibility: unknown or not verified'
       )}</span>`;
-  return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer" data-id="${esc(
+  return `<article class="card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
     d.id
   )}">
-    <div class="flex items-start justify-between">
-      <div>
-        <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
-        <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
+    <div>
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">${esc(d.model)}</h3>
+          <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
+        </div>
+        <div>${compat}</div>
       </div>
-      <div>${compat}</div>
+      <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
     </div>
-    <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
+    <div class="mt-4 text-xs text-slate-400">&nbsp;</div>
   </article>`;
 }
 
