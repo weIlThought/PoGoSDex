@@ -420,13 +420,16 @@ function applyFilters() {
       if (sort === 'model') return a.model.localeCompare(b.model);
       if (sort === 'os') return a.os.localeCompare(b.os);
       if (sort === 'compatibility') {
-        // Put compatible devices first. If equal, fall back to brand then model.
-        if ((a.compatible === true) === (b.compatible === true)) {
+        // Put compatible devices first. Normalize truthy/falsey values to boolean so
+        // values like "true", "yes" or non-empty strings work the same as boolean true.
+        const aComp = Boolean(a.compatible);
+        const bComp = Boolean(b.compatible);
+        if (aComp === bComp) {
           const byBrand = String(a.brand || '').localeCompare(String(b.brand || ''));
           if (byBrand !== 0) return byBrand;
           return String(a.model || '').localeCompare(String(b.model || ''));
         }
-        return a.compatible ? -1 : 1;
+        return aComp ? -1 : 1;
       }
       return 0;
     });
