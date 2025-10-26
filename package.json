@@ -41,7 +41,6 @@
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "strip-comments": "^2.0.1",
     "node-fetch": "^3.3.2",
     "steno": "^4.0.2"
   },

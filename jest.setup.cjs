@@ -1,2 +1,2 @@
-import { createRequire } from "module";
+const { createRequire } = require('module');
 global.require = createRequire(import.meta.url);

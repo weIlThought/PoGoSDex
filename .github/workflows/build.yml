@@ -73,7 +73,7 @@ jobs:
               pushd "$d" >/dev/null
               if ! npm ci --include=dev; then
                 echo "⚠️ npm ci failed — using npm install fallback"
-                HUSKY=0 npm install
+                HUSKY=0 npm install --no-save tailwindcss@4.1.15
               fi
               popd >/dev/null
             fi
@@ -105,10 +105,9 @@ jobs:
             ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           else
             echo "Local binary missing — using npx to fetch specific tailwind version"
-            npx -y tailwindcss@4.1.15 -i ./public/styles.css -o ./public/output.css --minify
+            npm install tailwindcss@4.1.15 --no-save
+            npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
           fi
-
-          npm prune --production
 
       # 🧪 Run tests (nur bei Codeänderung)
       - name: Run tests and lint
@@ -124,6 +123,7 @@ jobs:
           echo "🧹 Running lint and audit in root..."
           npm run lint || true
           npm audit --audit-level=moderate || true
+          npm prune --production
 
       # 🐳 Docker Build (nur bei Codeänderung)
       - name: Set up Docker Buildx
