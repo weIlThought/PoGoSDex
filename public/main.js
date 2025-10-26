@@ -289,15 +289,6 @@ function populateNewsTagFilter(items) {
 }
 
 function cardHtml(d) {
-  const compat = d.compatible
-    ? `<span class="inline-block bg-emerald-600/20 text-emerald-300 px-2 py-1 rounded text-xs">${t(
-        'modal_compatibility_confirmed',
-        'Compatibility: confirmed'
-      )}</span>`
-    : `<span class="inline-block bg-amber-600/20 text-amber-300 px-2 py-1 rounded text-xs">${t(
-        'modal_compatibility_unknown',
-        'Compatibility: unknown or not verified'
-      )}</span>`;
   // build a short preview of notes (first note) if present
   const notePreview = d.notes && d.notes.length ? esc(String(d.notes[0]).slice(0, 130)) : '';
   const badgeClass = d.compatible ? 'badge-compat good' : 'badge-compat unknown';
