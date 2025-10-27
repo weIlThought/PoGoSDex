@@ -17,13 +17,14 @@
     "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.16",
     "eslint": "^9.38.0",
     "fast-glob": "^3.3.3",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "strip-comments": "^2.0.1",
     "supertest": "^7.1.4",
-  "tailwindcss": "^4.1.16"
+    "tailwindcss": "^4.1.16"
   },
   "repository": {
     "type": "git",
