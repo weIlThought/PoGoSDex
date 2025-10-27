@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: 🧩 Checkout repo + submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
@@ -44,7 +44,7 @@ jobs:
               - '**/*.json'
 
       - name: 🧱 Setup Node.js (latest LTS)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: 'npm'
@@ -123,7 +123,7 @@ jobs:
 
       - name: 🐳 Docker Build (only if code changed)
         if: steps.changes.outputs.code == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
