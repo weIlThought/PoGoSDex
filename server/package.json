@@ -27,6 +27,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "tailwindcss": "^4.1.15"
+    "tailwindcss": "^4.1.16"
   }
 }
