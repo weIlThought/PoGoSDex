@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -76,28 +75,20 @@
 }
 
 @layer utilities {
-  .bg-slate-950 {
-    background-color: rgba(11, 18, 32, 0.95) !important;
-  }
-
+  .bg-slate-950 { background-color: rgba(11, 18, 32, 0.95) !important; }
   .bg-slate-900 {
     background: linear-gradient(140deg, rgba(22, 31, 52, 0.92), rgba(28, 38, 63, 0.9));
     backdrop-filter: blur(14px);
   }
-
   .bg-slate-900\/70 {
     background: linear-gradient(140deg, rgba(22, 31, 52, 0.7), rgba(28, 38, 63, 0.68));
     backdrop-filter: blur(18px);
   }
-
   .bg-slate-900\/60 {
     background: linear-gradient(140deg, rgba(22, 31, 52, 0.6), rgba(28, 38, 63, 0.58));
     backdrop-filter: blur(18px);
   }
-
-  .border-slate-800 {
-    border-color: rgba(148, 191, 255, 0.4) !important;
-  }
+  .border-slate-800 { border-color: rgba(148, 191, 255, 0.4) !important; }
 
   .card-gradient {
     background: linear-gradient(160deg, rgba(20, 30, 52, 0.92), rgba(30, 42, 68, 0.92));
@@ -117,7 +108,6 @@
   }
 }
 
-
 .fade {
   opacity: 0;
   transition: opacity 0.18s;
@@ -133,7 +123,6 @@
   transition: opacity 0.18s;
 }
 
-
 .tab-content {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -143,7 +132,6 @@
   transform: translateY(-6px);
 }
 
-
 #pgsharp-version-ticker {
   background: #0f1724; 
   border: 1px solid rgba(148,163,184,0.08);
@@ -152,32 +140,37 @@
   color: #e6eef8;
   box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
 }
+
 #pgsharp-version-ticker h3 {
   margin: 0 0 0.5rem 0;
   color: #f1f5f9;
   font-weight: 600;
 }
+
 #pgsharp-version-ticker .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
   gap: 0.5rem;
 }
+
 @media (max-width: 640px) {
   #pgsharp-version-ticker .grid {
     grid-template-columns: 1fr;
   }
 }
+
 #pgsharp-version-ticker strong {
   color: #fff;
 }
+
 #pgsharp-version-ticker #status {
   color: #f8fafc;
 }
+
 #pgsharp-version-ticker a {
   color: #60a5fa;
   text-decoration: underline;
 }
-
 
 .ad-placeholder {
   background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
@@ -192,7 +185,6 @@
   font-size: 0.9rem;
 }
 
-
 #pgsharp-coords {
   background: #0b1220;
   border: 1px solid rgba(148,163,184,0.06);
@@ -200,27 +192,28 @@
   border-radius: 0.5rem;
   color: #cbd5e1;
 }
+
 #coords-list ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 #coords-list li {
   padding: 0.45rem 0;
   border-bottom: 1px dashed rgba(148,163,184,0.04);
   display: flex;
   flex-direction: column;
 }
+
 #coords-list li:last-child { border-bottom: none; }
 #coords-list strong { color: #fff; font-weight: 600; }
 #coords-list .note { color: #94a3b8; font-size: 0.85rem; }
-
 
 .text-emerald-300 { color: #34d399 !important; }
 .bg-slate-800 { background-color: #0f1724 !important; }
 .border-slate-700 { border-color: #0b1220 !important; }
 .text-slate-400 { color: #94a3b8 !important; }
-
 
 #pgsharp-version-ticker a:focus,
 #pgsharp-coords a:focus,
@@ -242,7 +235,6 @@
 }
 
 @media (max-width: 640px) {
-  /* Stack nav for small screens and make buttons easier to tap */
   header nav {
     flex-direction: column;
     align-items: stretch;
@@ -261,7 +253,6 @@
     padding-right: 0.75rem;
   }
 
-  /* Make device grid and cards more comfortable on narrow screens */
   [data-devices-grid] {
     gap: 1rem;
     grid-template-columns: 1fr !important;
@@ -273,13 +264,11 @@
     transform: none;
   }
 
-  /* Inputs and controls should be easier to interact with */
   .input {
     padding: 0.65rem 0.9rem;
     font-size: 0.95rem;
   }
 
-  /* Modal/dialog responsiveness */
   #modalBackdrop .max-w-3xl,
   #newsModalBackdrop .max-w-3xl,
   #deviceModal .max-w-2xl,
@@ -289,14 +278,12 @@
     margin: 0 1rem;
   }
 
-  /* Reduce crowded lists spacing */
   #coords-list .coords-item {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
   }
 }
 
-/* Small polish for medium screens */
 @media (min-width: 641px) and (max-width: 992px) {
   [data-devices-grid] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
