@@ -291,15 +291,17 @@ function populateNewsTagFilter(items) {
 function cardHtml(d) {
   // build a short preview of notes (first note) if present
   const notePreview = d.notes && d.notes.length ? esc(String(d.notes[0]).slice(0, 130)) : '';
-  const badgeClass = d.compatible ? 'badge-compat good' : 'badge-compat unknown';
+  const badgeClass = d.compatible
+    ? 'inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200'
+    : 'inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200';
   const titleId = `device-title-${esc(d.id)}`;
-  return `<article class="card-base card-hover bg-slate-800 border border-slate-700 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer" data-id="${esc(
+  return `<article class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer transform transition hover:-translate-y-1 shadow-lg" data-id="${esc(
     d.id
   )}" role="article" aria-labelledby="${titleId}">
     <div>
       <div class="flex items-start justify-between">
         <div>
-          <h3 id="${titleId}" class="text-lg font-semibold">${esc(d.model)}</h3>
+          <h3 id="${titleId}" class="text-lg font-semibold text-slate-100">${esc(d.model)}</h3>
           <p class="text-sm text-slate-400">${esc(d.brand)} • ${esc(d.type)}</p>
         </div>
   <div><span class="${badgeClass}">${d.compatible ? 'Compatible' : 'Unknown'}</span></div>
