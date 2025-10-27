@@ -1,4 +1,4 @@
-name: Build (Stable Universal)
+name: Build
 
 permissions:
   contents: write
@@ -16,15 +16,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧩 Checkout repo + submodules
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
+          submodules: true
           persist-credentials: true
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
 
-      - name: Detect file changes
+      - name: ⚙️ Detect changes
         id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -33,79 +33,95 @@ jobs:
               - '**/package.json'
               - '**/package-lock.json'
             code:
-              - '**/*.{js,ts,jsx,tsx,css,html,mjs,cjs,json}'
+              - '**/*.js'
+              - '**/*.ts'
+              - '**/*.jsx'
+              - '**/*.tsx'
+              - '**/*.css'
+              - '**/*.html'
+              - '**/*.mjs'
+              - '**/*.cjs'
+              - '**/*.json'
 
-      - name: Setup Node.js (latest LTS)
+      - name: 🧱 Setup Node.js (latest LTS)
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           cache: 'npm'
 
-      - name: Cache npm modules
+      - name: ♻️ Cache npm modules
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-${{ runner.os }}-
+          key: npm-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-cache-${{ runner.os }}-
 
-      - name: Install dependencies safely
+      - name: 📦 Install dependencies (safe + fallback)
         env:
           HUSKY: 0
         run: |
           set -e
-          echo "🧩 Installing dependencies (with auto fallback)..."
           for d in . server; do
             if [ -f "$d/package.json" ]; then
-              echo "📦 Installing in $d"
+              echo "=== Installing in $d ==="
               pushd "$d" >/dev/null
-              npm ci --include=dev --no-audit || npm install --include=dev --no-audit
+              if ! npm ci --include=dev --no-audit; then
+                echo "⚠️ Lockfile mismatch or CI install failed, using npm install fallback..."
+                npm install --include=dev --no-audit
+              fi
               popd >/dev/null
             fi
           done
 
-      - name: Build Tailwind (auto-safe)
+      - name: 🎨 Build Tailwind (universal-safe)
         env:
           HUSKY: 0
         run: |
           set -e
           echo "🎨 Building Tailwind assets..."
-
-          # ensure dev deps present (handles lockfile drift)
-          npm ci --include=dev --no-audit || npm install --include=dev --no-audit
+          if ! npm ci --include=dev --no-audit; then
+            echo "⚠️ npm ci failed, retrying with npm install..."
+            npm install --include=dev --no-audit
+          fi
 
           echo "🧱 Checking tailwind binary..."
-          if [ -x ./node_modules/.bin/tailwindcss ]; then
-            echo "✅ Using local tailwind binary"
-            ./node_modules/.bin/tailwindcss -i ./public/styles.css -o ./public/output.css --minify
+          TAILWIND_CLI=""
+          if [ -f "./node_modules/tailwindcss/cli.js" ]; then
+            TAILWIND_CLI="./node_modules/tailwindcss/cli.js"
+          elif [ -f "./node_modules/tailwindcss/lib/cli.js" ]; then
+            TAILWIND_CLI="./node_modules/tailwindcss/lib/cli.js"
           else
             echo "⚙️ Installing tailwindcss locally (universal safe)"
             npm install tailwindcss@latest --no-save
-            echo "🚀 Running Tailwind directly via Node CLI"
-            node ./node_modules/tailwindcss/lib/cli.js -i ./public/styles.css -o ./public/output.css --minify
+            TAILWIND_CLI=$(node -p "require.resolve('tailwindcss/cli.js').replace(/\\\\/g, '/')")
           fi
 
-      - name: Run tests and lint
+          echo "🚀 Running Tailwind directly via Node CLI"
+          node "$TAILWIND_CLI" -i ./public/styles.css -o ./public/output.css --minify
+
+      - name: 🧪 Run tests and lint
         if: steps.changes.outputs.code == 'true'
         env:
           HUSKY: 0
         run: |
-          set -e
-          echo "🧪 Running tests..."
+          echo "🧪 Running backend tests in /server ..."
           cd server
-          npm ci --include=dev --no-audit || npm install --include=dev --no-audit
-          npx jest --runInBand --passWithNoTests || echo "⚠️ Jest completed with warnings"
+          if ! npm ci --include=dev --no-audit; then
+            npm install --include=dev --no-audit
+          fi
+          npx jest --runInBand --passWithNoTests
           cd ..
-          echo "🧹 Linting + Audit..."
-          npm run lint || echo "⚠️ Lint warnings ignored"
-          npm audit --audit-level=critical || echo "⚠️ Audit warnings ignored"
+          echo "🧹 Running lint and audit in root..."
+          npm run lint || true
+          npm audit --audit-level=moderate || true
 
-      - name: Set up Docker Buildx (container driver)
+      - name: 🧰 Set up Docker Buildx (container driver)
         if: steps.changes.outputs.code == 'true'
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
 
-      - name: Docker Build (only if code changed)
+      - name: 🐳 Docker Build (only if code changed)
         if: steps.changes.outputs.code == 'true'
         uses: docker/build-push-action@v5
         with:

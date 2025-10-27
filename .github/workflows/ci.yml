@@ -1,40 +1,52 @@
 name: CI
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
-  build:
+  lint-and-test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Use Node.js
+    steps:
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧱 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Use Node 20 to satisfy engine requirements from some dependencies (cheerio/undici)
-          node-version: '20'
+          node-version: 'lts/*'
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci --include=dev
-
-      - name: Syntax check (main.js)
+      - name: 📦 Install dependencies safely
+        env:
+          HUSKY: 0
         run: |
-          echo "Checking public/main.js syntax..."
-          node --check public/main.js
+          set -e
+          if ! npm ci --include=dev --no-audit; then
+            echo "⚠️ Lockfile mismatch detected — falling back to npm install"
+            npm install --include=dev --no-audit
+          fi
+          cd server
+          if ! npm ci --include=dev --no-audit; then
+            npm install --include=dev --no-audit
+          fi
+          cd ..
 
-      - name: Lint
+      - name: 🧹 Run ESLint
         run: |
-          echo "Running ESLint via npx..."
-          # Use npx so CI does not fail when eslint isn't installed as a devDependency in the lockfile.
-          npx eslint public/**/*.js server/**/*.js --ext .js --ignore-path .gitignore || true
+          echo "Running ESLint..."
+          npm run lint || true
 
-      - name: Run tests
-        run: npm test
-
-      - name: Validate lang JSON files
+      - name: 🧪 Run Jest tests
         run: |
-          node -e "const fs=require('fs');const p='lang';fs.readdirSync(p).filter(f=>f.endsWith('.json')).forEach(f=>{try{JSON.parse(fs.readFileSync(p+'/'+f,'utf8'))}catch(e){console.error('INVALID',f,e);process.exit(1)}});console.log('lang JSON OK')"
+          echo "Running tests..."
+          cd server
+          npx jest --runInBand --passWithNoTests

@@ -1,0 +1,35 @@
+# Automatisches Mergen von sicheren Dependabot-Updates
+# ----------------------------------------------------
+# Voraussetzungen:
+# - Repository Settings → Branch Protection → main → Require status checks to pass before merging
+# - GitHub Actions müssen erfolgreich durchlaufen (build + ci)
+# - Kein Review erforderlich, sofern CI erfolgreich
+
+version: 1
+rules:
+  - match:
+      dependency_type: development
+      update_type: semver:minor
+    merge_method: squash
+    merge_message: "chore(deps): auto-merge minor dev update by Dependabot 🤖"
+    required_checks:
+      - build
+      - ci/lint-and-test
+
+  - match:
+      dependency_type: development
+      update_type: semver:patch
+    merge_method: squash
+    merge_message: "chore(deps): auto-merge patch dev update by Dependabot 🤖"
+    required_checks:
+      - build
+      - ci/lint-and-test
+
+  - match:
+      dependency_type: production
+      update_type: semver:patch
+    merge_method: squash
+    merge_message: "chore(deps): auto-merge safe production patch by Dependabot 🤖"
+    required_checks:
+      - build
+      - ci/lint-and-test

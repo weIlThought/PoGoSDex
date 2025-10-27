@@ -1,19 +1,57 @@
 version: 2
 updates:
+  # 🧱 1️⃣ Haupt-Repo (Frontend)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
     versioning-strategy: increase
-    labels:
-      - dependencies
-      - ready-to-merge
+    commit-message:
+      prefix: "chore(deps)"
+    rebase-strategy: "auto"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "all"
+    ignore:
+      - dependency-name: "eslint"
+        versions: ["<8.0.0"]
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+
+  # ⚙️ 2️⃣ Server-Ordner (Backend)
   - package-ecosystem: "npm"
     directory: "/server"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - automerge
+      day: "monday"
+      time: "04:30"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore(deps-server)"
+    rebase-strategy: "auto"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "all"
+
+  # 🧩 3️⃣ GitHub Actions selbst aktuell halten
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      gh-actions:
+        patterns:
+          - "*"
