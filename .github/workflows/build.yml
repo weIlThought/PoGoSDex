@@ -99,6 +99,12 @@ jobs:
           npm run lint || echo "⚠️ Lint warnings ignored"
           npm audit --audit-level=critical || echo "⚠️ Audit warnings ignored"
 
+      - name: Set up Docker Buildx (container driver)
+        if: steps.changes.outputs.code == 'true'
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
       - name: Docker Build (only if code changed)
         if: steps.changes.outputs.code == 'true'
         uses: docker/build-push-action@v5
