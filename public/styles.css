@@ -28,71 +28,6 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Keep a tiny set of CSS variables for colors so authors can override
-   if needed — most theme tokens should live in tailwind.config.js */
-:root {
-  --gd-accent: #06b6d4;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-}
-
-.modal {
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.input {
-  background-color: #1e293b;
-  color: #f8fafc;
-  border: 1px solid #334155;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  width: 100%;
-}
-
-.btn-primary {
-  background-color: #0ea5e9;
-  color: #0f172a;
-  font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.5rem;
-  transition: all 0.15s ease;
-}
-
-.btn-primary:hover {
-  background-color: #0284c7;
-}
-
-.btn-secondary {
-  background-color: #334155;
-  color: #e2e8f0;
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.5rem;
-  transition: all 0.15s ease;
-}
-
-.btn-secondary:hover {
-  background-color: #475569;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @layer base {
   body {
     background-color: #0b1220;
@@ -122,22 +57,7 @@
   }
   .border-slate-800 { border-color: rgba(148, 191, 255, 0.4) !important; }
 
-  .card-gradient {
-    background: linear-gradient(160deg, rgba(20, 30, 52, 0.92), rgba(30, 42, 68, 0.92));
-    border: 1px solid rgba(164, 210, 255, 0.25);
-    box-shadow: 0 18px 40px rgba(8, 16, 32, 0.4);
-  }
-
-  .soft-button {
-    background: linear-gradient(135deg, rgba(82, 152, 255, 0.16), rgba(127, 201, 255, 0.1));
-    border: 1px solid rgba(147, 198, 255, 0.35);
-    color: #cde5ff !important;
-  }
-
-  .soft-button:hover {
-    background: linear-gradient(135deg, rgba(82, 152, 255, 0.25), rgba(127, 201, 255, 0.18));
-    border-color: rgba(147, 198, 255, 0.5);
-  }
+  /* Removed project-specific helpers (card-gradient, soft-button) — replaced by utility classes in markup */
 }
 
 .fade {
@@ -160,10 +80,7 @@
   padding-bottom: 0.5rem;
 }
 
-.card-hover:hover {
-  /* removed: replaced by Tailwind util classes (hover:-translate-y-1) */
-  transform: none;
-}
+/* .card-hover helper removed — use Tailwind utilities where needed */
 
 #pgsharp-version-ticker {
   background: #0f1724; 
@@ -262,10 +179,7 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  .card-hover {
-    /* removed: transitions handled via Tailwind utilities */
-    transition: none;
-  }
+  /* .card-hover helper removed from responsive rules */
 }
 
 @media (max-width: 640px) {
@@ -293,10 +207,7 @@
   }
   /* card-hover behavior removed for small screens; use Tailwind utilities in markup */
 
-  .input {
-    padding: 0.65rem 0.9rem;
-    font-size: 0.95rem;
-  }
+  /* input helper removed — use Tailwind form utilities in markup */
 
   #modalBackdrop .max-w-3xl,
   #newsModalBackdrop .max-w-3xl,
@@ -315,7 +226,5 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
   }
-  .card-hover {
-    transform: translateY(-4px);
-  }
+  /* card-hover removed; use Tailwind utilities in markup */
 }

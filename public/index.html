@@ -12,7 +12,7 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="min-h-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
-  <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800 header--compact">
+  <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-3">
@@ -104,10 +104,10 @@
           <div class="bg-slate-900 rounded-xl p-6 border border-slate-800">
             <form id="pgsharp-report-form" class="bg-slate-800 rounded-lg p-6 shadow-lg max-w-2xl">
               <label for="pgsharp-report-email" class="block mb-2 font-medium" data-i18n="pgsharp_report_email_label">Your Email</label>
-              <input id="pgsharp-report-email" type="email" class="input mb-4" placeholder="you@example.com" />
+              <input id="pgsharp-report-email" type="email" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 mb-4" placeholder="you@example.com" />
               <label for="pgsharp-report-message" class="block mb-2 font-medium" data-i18n="pgsharp_report_message_label">Message</label>
-              <textarea id="pgsharp-report-message" class="input mb-4" rows="4" placeholder="Describe your issue or question..."></textarea>
-              <button type="submit" class="btn-primary" data-i18n="pgsharp_report_submit">Send</button>
+              <textarea id="pgsharp-report-message" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 mb-4" rows="4" placeholder="Describe your issue or question..."></textarea>
+              <button type="submit" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition" data-i18n="pgsharp_report_submit">Send</button>
             </form>
             <p class="mt-4 text-slate-400" data-i18n="pgsharp_report_text">Alternatively, contact <a href="mailto:pogosdex@gmail.com" class="text-emerald-400 underline" data-i18n="contact_email">pogosdex@gmail.com</a>. </p>
           </div>
@@ -163,7 +163,7 @@
         </section>
         <section id="pgsharpSection" class="hidden">
           <div class="max-w-3xl mx-auto px-4 py-10">
-            <div class="card-gradient rounded-xl shadow-xl p-6 bg-slate-900">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800 rounded-xl shadow-xl p-6">
               <h2 class="text-2xl font-semibold mb-4" data-i18n="pgsharp_title">PGSharp</h2>
               <div id="pgsharp-version-ticker" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
                 <h3 class="text-lg font-semibold mb-2" data-i18n="pgsharp_version_heading">Version Status</h3>
@@ -232,9 +232,9 @@
             </div>
           </div>
         </footer>
-        <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform">
-            <button id="closeModal" class="ml-auto text-slate-400">✕</button>
+        <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform" role="document" tabindex="-1">
+            <button id="closeModal" class="ml-auto text-slate-400" aria-label="Close dialog">✕</button>
             <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
             <p id="modalMeta" class="text-sm text-slate-400"></p>
             <p id="modalDesc" class="mt-3 text-slate-200"></p>
@@ -252,9 +252,9 @@
             <div id="modalRootLinks" class="mt-4"></div>
           </div>
         </div>
-        <div id="newsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform">
-            <button id="closeNewsModal" class="ml-auto text-slate-400">✕</button>
+        <div id="newsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform" role="document" tabindex="-1">
+            <button id="closeNewsModal" class="ml-auto text-slate-400" aria-label="Close news dialog">✕</button>
             <h3 id="newsModalTitle" class="text-2xl font-semibold mt-2"></h3>
             <div id="newsModalMeta" class="text-xs text-slate-400 mt-1"></div>
             <div id="newsModalBody" class="mt-4 space-y-3 text-sm text-slate-200"></div>
@@ -264,27 +264,27 @@
             </div>
           </div>
         </div>
-        <div id="deviceModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur">
-          <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6">
+        <div id="deviceModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6" role="document" tabindex="-1">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_builder_title"> Prepare a new device entry </h3>
                 <p class="text-xs text-slate-400" data-i18n="device_builder_intro"> Fill out the form to generate a JSON snippet you can paste into data/devices.json. </p>
               </div>
-              <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close"> Close </button>
+              <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close" aria-label="Close builder"> Close </button>
             </div>
             <form id="deviceBuilderForm" class="grid md:grid-cols-2 gap-3" autocomplete="off">
-              <input class="input" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
-              <input class="input" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
-              <input class="input" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
-              <input class="input" type="text" id="builderType" placeholder="Type (Phone/Tablet)" data-i18n-target="placeholder" data-i18n="placeholder_type" />
-              <input class="input" type="text" id="builderPrice" placeholder="Price range (optional)" data-i18n-target="placeholder" data-i18n="device_builder_price_placeholder" />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderType" placeholder="Type (Phone/Tablet)" data-i18n-target="placeholder" data-i18n="placeholder_type" />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderPrice" placeholder="Price range (optional)" data-i18n-target="placeholder" data-i18n="device_builder_price_placeholder" />
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="builderCompatible" />
                 <label for="builderCompatible" class="text-sm" data-i18n="table_compatible">Compatible</label>
               </div>
-              <textarea class="input md:col-span-2" id="builderNotes" placeholder="Notes (comma separated)" data-i18n-target="placeholder" data-i18n="placeholder_notes"></textarea>
-              <textarea class="input md:col-span-2" id="builderRootLinks" placeholder="Root Links (comma separated URLs)" data-i18n-target="placeholder" data-i18n="placeholder_rootlinks"></textarea>
+              <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderNotes" placeholder="Notes (comma separated)" data-i18n-target="placeholder" data-i18n="placeholder_notes"></textarea>
+              <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderRootLinks" placeholder="Root Links (comma separated URLs)" data-i18n-target="placeholder" data-i18n="placeholder_rootlinks"></textarea>
               <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
                 <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_clear"> Clear </button>
                 <a href="https://github.com/weIlThought/pogosdex-data/pulls" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition" data-i18n="device_builder_upload"> ↥ Upload (Pull Request) </a>

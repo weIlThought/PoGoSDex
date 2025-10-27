@@ -345,8 +345,16 @@ function hydrateGrid() {
 }
 
 function openModal(d) {
-  qs('#modalBackdrop').classList.remove('hidden');
-  qs('#modalBackdrop').classList.add('flex');
+  // accessibility: remember focused element and set aria-hidden
+  try {
+    openModal._lastFocus = document.activeElement;
+  } catch (e) {
+    openModal._lastFocus = null;
+  }
+  const mb = qs('#modalBackdrop');
+  mb.setAttribute('aria-hidden', 'false');
+  mb.classList.remove('hidden');
+  mb.classList.add('flex');
   qs('#modalTitle').textContent = d.model;
   qs('#modalMeta').textContent = `${d.brand} • ${d.type} • ${d.os}`;
   qs('#modalDesc').textContent = d.compatible
@@ -372,12 +380,23 @@ function openModal(d) {
   const pogoDetails = [d.pogo, d.pgsharp].filter(Boolean).join(' • ');
   qs('#modalPoGoComp').textContent = pogoDetails || dash();
   document.body.style.overflow = 'hidden';
+  // focus the close button for keyboard users
+  setTimeout(() => qs('#closeModal')?.focus(), 0);
 }
 
 function closeModal() {
-  qs('#modalBackdrop').classList.add('hidden');
-  qs('#modalBackdrop').classList.remove('flex');
+  const mb = qs('#modalBackdrop');
+  if (mb) mb.setAttribute('aria-hidden', 'true');
+  mb.classList.add('hidden');
+  mb.classList.remove('flex');
   document.body.style.overflow = '';
+  // restore focus
+  try {
+    const last = openModal._lastFocus;
+    if (last && typeof last.focus === 'function') last.focus();
+  } catch (e) {
+    // ignore
+  }
 }
 
 qs('#closeModal')?.addEventListener('click', closeModal);
@@ -771,6 +790,12 @@ function openCoordsModal(item) {
     cerr('openCoordsModal: modal backdrop not found');
     return;
   }
+  try {
+    openCoordsModal._lastFocus = document.activeElement;
+  } catch (e) {
+    openCoordsModal._lastFocus = null;
+  }
+  backdrop.setAttribute('aria-hidden', 'false');
   qs('#coordsModalTitle').textContent = item.name || '—';
   qs('#coordsModalMeta').textContent = `Lat: ${item.lat ?? '—'} • Lng: ${item.lng ?? '—'}`;
   qs('#coordsModalNote').textContent = item.note || '';
@@ -799,14 +824,20 @@ function openCoordsModal(item) {
   backdrop.classList.remove('hidden');
   backdrop.classList.add('flex');
   document.body.style.overflow = 'hidden';
+  setTimeout(() => qs('#coordsModalClose')?.focus(), 0);
 }
 
 function closeCoordsModal() {
   const backdrop = qs('#coordsModalBackdrop');
   if (!backdrop) return;
+  backdrop.setAttribute('aria-hidden', 'true');
   backdrop.classList.add('hidden');
   backdrop.classList.remove('flex');
   document.body.style.overflow = '';
+  try {
+    const last = openCoordsModal._lastFocus;
+    if (last && typeof last.focus === 'function') last.focus();
+  } catch (e) {}
 }
 
 qs('#coordsModalClose')?.addEventListener('click', closeCoordsModal);
@@ -892,12 +923,24 @@ function openNewsModal(original, translated = {}) {
   newsModalBackdrop.classList.remove('hidden');
   newsModalBackdrop.classList.add('flex');
   document.body.style.overflow = 'hidden';
+  try {
+    openNewsModal._lastFocus = document.activeElement;
+  } catch (e) {
+    openNewsModal._lastFocus = null;
+  }
+  newsModalBackdrop.setAttribute('aria-hidden', 'false');
+  setTimeout(() => qs('#closeNewsModal')?.focus(), 0);
 }
 
 function closeNewsModal() {
+  newsModalBackdrop.setAttribute('aria-hidden', 'true');
   newsModalBackdrop.classList.add('hidden');
   newsModalBackdrop.classList.remove('flex');
   document.body.style.overflow = '';
+  try {
+    const last = openNewsModal._lastFocus;
+    if (last && typeof last.focus === 'function') last.focus();
+  } catch (e) {}
 }
 
 closeNewsModalBtn?.addEventListener('click', closeNewsModal);
