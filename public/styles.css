@@ -161,7 +161,8 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-6px);
+  /* removed: replaced by Tailwind util classes (hover:-translate-y-1) */
+  transform: none;
 }
 
 #pgsharp-version-ticker {
@@ -262,7 +263,8 @@
     padding-right: 1rem;
   }
   .card-hover {
-    transition: transform 0.16s ease;
+    /* removed: transitions handled via Tailwind utilities */
+    transition: none;
   }
 }
 
@@ -289,12 +291,7 @@
     gap: 1rem;
     grid-template-columns: 1fr !important;
   }
-  .card-hover {
-    transform: none;
-  }
-  .card-hover:hover {
-    transform: none;
-  }
+  /* card-hover behavior removed for small screens; use Tailwind utilities in markup */
 
   .input {
     padding: 0.65rem 0.9rem;
@@ -310,10 +307,7 @@
     margin: 0 1rem;
   }
 
-  #coords-list .coords-item {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
+  /* coords-item styling moved to markup (Tailwind utilities) */
 }
 
 @media (min-width: 641px) and (max-width: 992px) {

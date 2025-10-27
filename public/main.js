@@ -126,8 +126,9 @@ function renderNews(items) {
         : null;
 
     const article = document.createElement('article');
+    // Use explicit Tailwind utilities instead of legacy helper classes
     article.className =
-      'bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer card-hover transition';
+      'bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer transition-transform hover:-translate-y-1 shadow-lg';
     article.tabIndex = 0;
     article.setAttribute('role', 'button');
     article.innerHTML = sanitizeHtml(`
@@ -307,7 +308,7 @@ function cardHtml(d) {
   <div><span class="${badgeClass}">${d.compatible ? 'Compatible' : 'Unknown'}</span></div>
       </div>
       <p class="mt-3 text-slate-300 text-sm">${esc(d.os)}</p>
-      <p class="card-note">${notePreview}</p>
+      <p class="mt-2 text-sm text-slate-400">${notePreview}</p>
     </div>
     <div class="mt-4 text-xs text-slate-400">&nbsp;</div>
   </article>`;
@@ -738,7 +739,7 @@ function renderCoords(list) {
           )
           .join('');
         return `
-      <div class="coords-item py-3 border-b border-slate-700 cursor-pointer" data-idx="${idx}">
+      <div data-idx="${idx}" class="py-3 border-b border-slate-700 cursor-pointer">
         <div class="flex items-baseline justify-between">
           <div class="font-semibold text-slate-200">${esc(c.name || '(Unbenannt)')}</div>
           <div class="text-xs text-slate-400 ml-4">${esc(localTime)}</div>
@@ -754,7 +755,9 @@ function renderCoords(list) {
       .join('')
   );
 
-  Array.from(container.querySelectorAll('.coords-item')).forEach((el, i) => {
+  // Attach click handlers using the data-idx attribute (avoid relying on legacy class names)
+  Array.from(container.querySelectorAll('[data-idx]')).forEach((el) => {
+    const i = Number(el.getAttribute('data-idx'));
     el.addEventListener('click', () => {
       const item = filtered[i];
       if (item) openCoordsModal(item);
@@ -1017,8 +1020,27 @@ window.addEventListener('load', () => {
   const header = document.querySelector('header');
   if (!header) return;
   function update() {
-    if (window.scrollY > 64) header.classList.add('header--compact');
-    else header.classList.remove('header--compact');
+    const inner = header.querySelector('.max-w-6xl');
+    const logo = header.querySelector('img');
+    if (window.scrollY > 64) {
+      if (inner) {
+        inner.classList.add('h-12', 'transition-all', 'duration-150', 'ease-in-out');
+        inner.classList.remove('h-16');
+      }
+      if (logo) {
+        logo.classList.add('w-10', 'h-10');
+        logo.classList.remove('w-12', 'h-12');
+      }
+    } else {
+      if (inner) {
+        inner.classList.remove('h-12');
+        inner.classList.add('h-16');
+      }
+      if (logo) {
+        logo.classList.remove('w-10', 'h-10');
+        logo.classList.add('w-12', 'h-12');
+      }
+    }
   }
   window.addEventListener('scroll', update, { passive: true });
   // initial

@@ -33,14 +33,7 @@ export default {
     { pattern: /^(grid|md:grid|sm:grid)-cols-./ },
     { pattern: /^col-span-./ },
     { pattern: /^rounded(-lg|-xl)?$/ },
-    // project specific helpers
-    'card-base',
-    'card-hover',
-    'btn-primary',
-    'btn-secondary',
-    'badge-compat',
-    'bg-slate-950/70',
-    'bg-slate-900/60',
+    // project-specific helpers were used during migration; keep minimal dynamic patterns
   ],
   plugins: [forms(), typography()],
 };
