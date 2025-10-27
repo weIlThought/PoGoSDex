@@ -92,8 +92,6 @@ jobs:
           echo "🚀 Running Tailwind via official @tailwindcss/cli package..."
           npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify
 
-
-
       - name: 🧪 Run tests and lint
         if: steps.changes.outputs.code == 'true'
         env:

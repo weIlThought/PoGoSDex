@@ -1,40 +1,56 @@
-# Multi-stage build: install at repo root (workspaces-aware), build assets, runtime uses built artifacts
+# ==========================================
+# 🚀 Multi-Stage Dockerfile for PoGoSDex
+# Fully Tailwind v4+ compatible + Railway safe
+# ==========================================
 
-# Build stage: install deps at repo root and build Tailwind
+# === Stage 1: Build ===
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Copy root package files so workspace deps are installed once
+# Disable husky hooks during build
+ENV HUSKY=0
+
+# Copy minimal files first (better cache)
 COPY package.json package-lock.json ./
 
-# Skip husky hooks during image build and install (prevents ".git can't be found")
-ENV HUSKY=0
-RUN npm ci --include=dev
+# Install dependencies (with devDeps)
+RUN npm ci --include=dev --no-audit
 
-# Copy all sources (so tailwind can read templates) and build CSS
+# Copy all source files
 COPY . .
-RUN npx tailwindcss -i ./public/styles.css -o ./public/output.css --minify
 
-# Remove devDependencies to make node_modules production-only for runtime image
+# === Build Tailwind (official v4+ CLI method) ===
+RUN set -e \
+    && echo "🎨 Building Tailwind (official @tailwindcss/cli)..." \
+    && if ! npm list @tailwindcss/cli >/dev/null 2>&1; then \
+    echo "⚙️ Installing @tailwindcss/cli (official Tailwind v4+ CLI)"; \
+    npm install @tailwindcss/cli --save-dev --no-audit; \
+    fi \
+    && echo "🚀 Running Tailwind via official CLI..." \
+    && npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify
+
+# Remove devDependencies for smaller runtime image
 RUN npm prune --production
 
-# Runtime stage: use built node_modules and only needed files
+
+# === Stage 2: Runtime ===
 FROM node:22-alpine AS runtime
 WORKDIR /app
 
-# Copy production deps and app files from build stage
+# Copy only the production artifacts
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 
-# copy public assets, server code and required data/lang/external folders
+# Copy built static assets, server, and data
 COPY --from=build /app/public ./public
 COPY --from=build /app/server ./server
 COPY --from=build /app/data ./data
 COPY --from=build /app/lang ./lang
 COPY --from=build /app/external ./external
 
+# Runtime config
 ENV NODE_ENV=production
 EXPOSE 3000
 
-# Start server (adjust if your start script differs)
+# Start the server
 CMD ["node", "server/server.js"]
