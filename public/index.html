@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-i18n="page_title">PoGoSDex – Devices & PGSharp Info</title>
-    <!-- Optional: load Inter for improved typography -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta name="description" content="A searchable collection of phones and tablets compatible with Pokémon GO." />
@@ -35,14 +34,16 @@
           </div>
         </div>
         <nav class="mt-4 flex items-center">
-          <div class="flex gap-2">
-            <button type="button" data-section="overview" class="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-sm transition" data-i18n="nav_overview" aria-selected="true"> Overview </button>
-            <button type="button" data-section="devices" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" data-i18n="nav_devices" aria-selected="false"> Devices </button>
-            <button type="button" data-section="news" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" data-i18n="nav_news" aria-selected="false"> News </button>
-            <button type="button" data-section="pgsharp" class="px-4 py-2 rounded-lg border border-transparent bg-slate-800/60 hover:bg-slate-700/80 text-sm transition" aria-selected="false" data-i18n="nav_pgsharp">PGSharp</button>
-          </div>
-          <div class="ml-auto">
-            <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition" data-i18n="nav_report" aria-selected="false">Report</button>
+          <div class="sticky top-16 z-20 w-full bg-slate-900/80 border-b border-slate-800 shadow-sm flex items-center px-2 py-2 rounded-b-xl">
+            <div class="flex gap-2">
+              <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview" aria-selected="true"> Overview </button>
+              <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices" aria-selected="false"> Devices </button>
+              <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news" aria-selected="false"> News </button>
+              <button type="button" data-section="pgsharp" class="nav-btn" aria-selected="false" data-i18n="nav_pgsharp">PGSharp</button>
+            </div>
+            <div class="ml-auto">
+              <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition" data-i18n="nav_report" aria-selected="false">Report</button>
+            </div>
           </div>
         </nav>
       </div>
