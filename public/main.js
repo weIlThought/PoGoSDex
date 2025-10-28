@@ -296,7 +296,7 @@ function cardHtml(d) {
     ? 'inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200'
     : 'inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200';
   const titleId = `device-title-${esc(d.id)}`;
-  return `<article class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer transform transition hover:-translate-y-1 shadow-lg" data-id="${esc(
+  return `<article class="bg-linear-to-br from-slate-800 to-slate-900 border border-slate-800 rounded-lg p-6 h-full flex flex-col justify-between cursor-pointer transform transition hover:-translate-y-1 shadow-lg" data-id="${esc(
     d.id
   )}" role="article" aria-labelledby="${titleId}">
     <div>
