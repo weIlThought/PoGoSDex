@@ -33,21 +33,20 @@
             </select>
           </div>
         </div>
-        <nav class="fixed top-0 left-0 w-full z-50 border-b border-slate-800 backdrop-blur-xl">
+      </div>
+    </header>
+    <nav class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-lg border-b border-slate-800">
           <div class="max-w-6xl mx-auto flex justify-between items-center px-4 py-3 text-slate-100">
-            <div class="flex gap-2">
+            <div class="flex gap-4">
               <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview" aria-selected="true"> Overview </button>
               <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices" aria-selected="false"> Devices </button>
               <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news" aria-selected="false"> News </button>
               <button type="button" data-section="pgsharp" class="nav-btn" aria-selected="false" data-i18n="nav_pgsharp">PGSharp</button>
             </div>
-            <div class="ml-auto">
-              <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition" data-i18n="nav_report" aria-selected="false">Report</button>
+              <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition text-sm" data-i18n="nav_report">Report</button>
             </div>
           </div>
         </nav>
-      </div>
-    </header>
     <main class="py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <section id="overviewSection" aria-labelledby="overviewTitle">
