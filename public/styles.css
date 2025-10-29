@@ -220,7 +220,7 @@
   }
 }
 
-nav {
+header, nav {
   transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-transform: translateZ(0);
