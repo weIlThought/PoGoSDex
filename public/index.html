@@ -11,7 +11,7 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="min-h-full bg-linear-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
-  <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
+    <header class="bg-slate-900/60 backdrop-blur sticky top-0 z-30 border-b border-slate-800">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-3">
@@ -35,18 +35,18 @@
         </div>
       </div>
     </header>
-    <nav class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-lg border-b border-slate-800">
-          <div class="max-w-6xl mx-auto flex justify-between items-center px-4 py-3 text-slate-100">
-            <div class="flex gap-4">
-              <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview" aria-selected="true"> Overview </button>
-              <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices" aria-selected="false"> Devices </button>
-              <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news" aria-selected="false"> News </button>
-              <button type="button" data-section="pgsharp" class="nav-btn" aria-selected="false" data-i18n="nav_pgsharp">PGSharp</button>
-            </div>
-              <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition text-sm" data-i18n="nav_report">Report</button>
-            </div>
-          </div>
-        </nav>
+    <nav class="fixed top-0 left-0 w-full z-50 bg-slate-900/90 border-b border-slate-800 backdrop-blur-xl shadow-lg">
+      <div class="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
+        <div class="flex gap-3">
+          <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview">Overview</button>
+          <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices">Devices</button>
+          <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news">News</button>
+          <button type="button" data-section="pgsharp" class="nav-btn" data-i18n="nav_pgsharp">PGSharp</button>
+        </div>
+        <button type="button" data-section="report" class="report-btn" data-i18n="nav_report"> Report </button>
+      </div>
+    </nav>
+    <main class="pt-16"></main>
     <main class="py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <section id="overviewSection" aria-labelledby="overviewTitle">
@@ -151,11 +151,11 @@
           </section>
         </section>
         <section id="newsSection" class="hidden flex-col gap-4">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <input id="newsSearchInput" type="search" class="w-full md:w-72 px-4 py-2 rounded border border-slate-700 bg-slate-900 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" data-i18n-target="placeholder" data-i18n="news_search_placeholder" placeholder="Search news…" />
             <div class="w-full md:w-auto">
               <label for="newsTagFilter" class="block text-sm text-slate-400 mb-2" data-i18n="news_filter_tags_label"> Filter by tags </label>
-                <div id="newsTagFilter"></div>
+              <div id="newsTagFilter"></div>
               </select>
             </div>
           </div>
@@ -167,10 +167,18 @@
               <h2 class="text-2xl font-semibold mb-4" data-i18n="pgsharp_title">PGSharp</h2>
               <div id="pgsharp-version-ticker" class="mb-6 p-4 bg-slate-800 rounded-md border border-slate-700">
                 <h3 class="text-lg font-semibold mb-2" data-i18n="pgsharp_version_heading">Version Status</h3>
-                <div><span data-i18n="pgsharp_page_version">PGSharp page version</span>: <strong id="pg-page">–</strong></div>
-                <div><span data-i18n="pgsharp_apk_version">PGSharp APK (inner)</span>: <strong id="pg-apk">–</strong></div>
-                <div><span data-i18n="pokemon_go_apk_version">Pokemon GO APK Version</span>: <strong id="pk-apk">–</strong></div>
-                <div><span data-i18n="pg_status_label">Status</span>: <span id="pg-status" class="font-semibold">–</span></div>
+                <div>
+                  <span data-i18n="pgsharp_page_version">PGSharp page version</span>: <strong id="pg-page">–</strong>
+                </div>
+                <div>
+                  <span data-i18n="pgsharp_apk_version">PGSharp APK (inner)</span>: <strong id="pg-apk">–</strong>
+                </div>
+                <div>
+                  <span data-i18n="pokemon_go_apk_version">Pokemon GO APK Version</span>: <strong id="pk-apk">–</strong>
+                </div>
+                <div>
+                  <span data-i18n="pg_status_label">Status</span>: <span id="pg-status" class="font-semibold">–</span>
+                </div>
                 <div class="mt-3 text-sm">
                   <a id="link-pg" class="text-emerald-300 underline" href="https://www.pgsharp.com" target="_blank" rel="noopener" data-i18n="pg_link">PGSharp</a>
                   <span class="mx-2 text-slate-500">|</span>
