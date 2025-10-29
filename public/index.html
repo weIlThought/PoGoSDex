@@ -35,19 +35,41 @@
         </div>
       </div>
     </header>
-    <nav class="fixed top-[72px] left-0 w-full z-[9999] isolate bg-[rgba(15,23,42,0.95)] backdrop-blur-md border-b border-slate-800 shadow-md will-change-transform">
-      <div class="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
-        <div class="flex gap-3">
-          <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview">Overview</button>
-          <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices">Devices</button>
-          <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news">News</button>
-          <button type="button" data-section="pgsharp" class="nav-btn" data-i18n="nav_pgsharp">PGSharp</button>
+  <div class="sticky top-0 z-[10000] bg-slate-900/95 backdrop-blur-md border-b border-slate-800 isolate">
+    <header class="px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="/assets/logo.png" alt="PoGoSDex logo" class="w-12 h-12 rounded-xl shadow-lg" />
+        <div>
+          <h1 id="siteTitle" data-i18n="site_name" class="text-lg font-semibold"> PoGoSDex </h1>
+          <p id="siteSubtitle" data-i18n="site_subtitle" class="text-xs text-slate-400"> Devices & PGSharp info </p>
         </div>
-        <button type="button" data-section="report" class="report-btn" data-i18n="nav_report"> Report </button>
+      </div>
+      <div class="flex items-center space-x-3">
+        <select id="langSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+          <option value="en">EN</option>
+          <option value="de">DE</option>
+          <option value="es">ES</option>
+          <option value="fr">FR</option>
+          <option value="it">IT</option>
+          <option value="pt">PT</option>
+          <option value="ru">RU</option>
+        </select>
+      </div>
+    </header>
+    <nav class="border-t border-slate-800 px-4 py-2 flex justify-between items-center">
+      <div class="flex gap-2">
+        <button type="button" data-section="overview" class="nav-btn" data-i18n="nav_overview" aria-selected="true"> Overview </button>
+        <button type="button" data-section="devices" class="nav-btn" data-i18n="nav_devices" aria-selected="false"> Devices </button>
+        <button type="button" data-section="news" class="nav-btn" data-i18n="nav_news" aria-selected="false"> News </button>
+        <button type="button" data-section="pgsharp" class="nav-btn" aria-selected="false" data-i18n="nav_pgsharp">PGSharp</button>
+      </div>
+      <div class="ml-auto">
+        <button type="button" data-section="report" class="inline-flex items-center gap-2 rounded-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-slate-900 font-semibold shadow-md transition" data-i18n="nav_report" aria-selected="false">Report</button>
       </div>
     </nav>
+  </div>
     <main class="relative z-0 pt-16">
-    <main class="py-8">
+  <main class="pt-[140px] py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <section id="overviewSection" aria-labelledby="overviewTitle">
           <h2 id="overviewTitle" class="text-2xl font-semibold" data-i18n="overview_intro_heading"> Welcome to PoGoSDex </h2>
