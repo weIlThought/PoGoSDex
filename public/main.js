@@ -465,6 +465,13 @@ if (!LANG_LOCK && langSelect) {
 }
 
 function applyTranslations() {
+  // Allow pages to opt-out from i18n replacement
+  if (
+    document.body?.hasAttribute('data-no-i18n') ||
+    document.documentElement?.hasAttribute('data-no-i18n')
+  ) {
+    return;
+  }
   document.title = t('title', 'Pokémon GO Compatible Devices & PGSharp Updates');
 
   qs('#siteTitle') && (qs('#siteTitle').textContent = t('site_name', qs('#siteTitle').textContent));
