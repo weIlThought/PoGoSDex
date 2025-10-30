@@ -220,15 +220,22 @@
   }
 }
 
-header, nav {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav {
+  position: sticky;
+  top: 72px;
+  z-index: 999;
 }
 
 main {
-  padding-top: 4.5rem;
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
 }
 
 .nav-btn {
