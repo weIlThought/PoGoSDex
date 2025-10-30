@@ -71,11 +71,14 @@ const newsTagFilterWrap = qs('#newsTagFilter');
 let i18n = {};
 // Supported languages - keep in sync with /lang/*.json
 const SUPPORTED_LANGS = ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru'];
+// Feature flag: lock language to English temporarily (no code removal)
+const LANG_LOCK = true;
 let currentLang =
   new URLSearchParams(window.location.search).get('lang') ||
   localStorage.getItem('lang') ||
   (navigator.language || 'en').slice(0, 2);
 if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = 'en';
+if (LANG_LOCK) currentLang = 'en';
 
 let dateFormatter = new Intl.DateTimeFormat(currentLang, {
   dateStyle: 'medium',
@@ -164,6 +167,7 @@ function renderNews(items) {
 }
 
 async function loadLang(lang) {
+  if (LANG_LOCK) lang = 'en';
   try {
     const res = await fetch(`/lang/${lang}.json`);
     if (!res.ok) throw new Error('lang not found');
@@ -449,13 +453,15 @@ function applyFilters() {
 }
 
 const langSelect = qs('#langSelect');
-langSelect?.addEventListener('change', (e) => {
-  const lang = e.target.value;
-  const params = new URLSearchParams(window.location.search);
-  params.set('lang', lang);
-  history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
-  loadLang(lang);
-});
+if (!LANG_LOCK && langSelect) {
+  langSelect.addEventListener('change', (e) => {
+    const lang = e.target.value;
+    const params = new URLSearchParams(window.location.search);
+    params.set('lang', lang);
+    history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+    loadLang(lang);
+  });
+}
 
 function applyTranslations() {
   document.title = t('title', 'Pokémon GO Compatible Devices & PGSharp Updates');
