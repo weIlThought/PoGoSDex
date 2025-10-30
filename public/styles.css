@@ -222,7 +222,7 @@ nav {
 main {
   position: relative;
   z-index: 1;
-  margin-top: 1rem;
+  /* margin-top: 1rem; */
 }
 
 .nav-btn {
