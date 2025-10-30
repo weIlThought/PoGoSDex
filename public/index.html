@@ -32,7 +32,17 @@
           <option value="ru">RU</option>
         </select>
         -->
-        <span class="text-xs text-slate-300 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 select-none">EN</span>
+        <div class="relative group select-none">
+          <span class="inline-flex items-center gap-1 text-xs text-slate-200 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
+            EN
+            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100-2 1 1 0 000 2zm-1 2a1 1 0 000 2h1v4a1 1 0 102 0v-5a1 1 0 00-1-1h-2z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          <div class="hidden group-hover:block absolute right-0 mt-2 w-72 rounded-md border border-slate-700 bg-slate-900 text-slate-200 text-xs p-3 shadow-xl z-[11001]">
+            Currently only English is available. Translations (DE/ES/FR/IT/PT/RU) are in progress.
+          </div>
+        </div>
       </div>
     </header>
     <nav class="border-t border-slate-800 px-4 py-2 flex justify-between items-center">
@@ -47,7 +57,7 @@
       </div>
     </nav>
   </div>
-    <main class="pt-4 pb-8">
+    <main class="pt-5 pb-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <section id="overviewSection" aria-labelledby="overviewTitle">
           <h2 id="overviewTitle" class="text-2xl font-semibold" data-i18n="overview_intro_heading"> Welcome to PoGoSDex </h2>
@@ -155,7 +165,7 @@
             <input id="newsSearchInput" type="search" class="w-full md:w-72 px-4 py-2 rounded border border-slate-700 bg-slate-900 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/60" data-i18n-target="placeholder" data-i18n="news_search_placeholder" placeholder="Search news…" />
             <div class="w-full md:w-auto">
               <label for="newsTagFilter" class="block text-sm text-slate-400 mb-2" data-i18n="news_filter_tags_label"> Filter by tags </label>
-              <div id="newsTagFilter"></div>
+              <div id="newsTagFilter" class="flex flex-wrap gap-2"></div>
               </select>
             </div>
           </div>
@@ -240,8 +250,14 @@
               <a href="/tos.html" class="hover:text-emerald-400" data-i18n="footer_link_terms">Terms</a>
             </div>
           </div>
+          <div class="max-w-5xl mx-auto px-6 pb-2">
+            <p class="text-xs leading-relaxed text-slate-500">
+              All rights reserved by their respective owners. This website is not officially affiliated with Pokémon GO and is intended to fall under Fair Use doctrine, similar to any other informational site such as a wiki.
+              Pokémon and its trademarks are ©1995-2025 Nintendo, Creatures, and GAMEFREAK. All images and names owned and trademarked by Nintendo, Niantic, The Pokémon Company, and GAMEFREAK are property of their respective owners.
+            </p>
+          </div>
         </footer>
-        <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="modalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[11000]" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform" role="document" tabindex="-1">
             <button id="closeModal" class="ml-auto text-slate-400" aria-label="Close dialog">✕</button>
             <h3 id="modalTitle" class="text-2xl font-semibold mt-2"></h3>
@@ -261,7 +277,7 @@
             <div id="modalRootLinks" class="mt-4"></div>
           </div>
         </div>
-        <div id="newsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="newsModalBackdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[11000]" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 transform transition-transform" role="document" tabindex="-1">
             <button id="closeNewsModal" class="ml-auto text-slate-400" aria-label="Close news dialog">✕</button>
             <h3 id="newsModalTitle" class="text-2xl font-semibold mt-2"></h3>
@@ -273,7 +289,7 @@
             </div>
           </div>
         </div>
-        <div id="deviceModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="deviceModal" class="fixed inset-0 z-[11000] hidden items-center justify-center bg-slate-950/80 backdrop-blur" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6" role="document" tabindex="-1">
             <div class="flex items-center justify-between">
               <div>

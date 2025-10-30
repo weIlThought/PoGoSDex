@@ -285,10 +285,11 @@ function populateNewsTagFilter(items) {
     btn.textContent = tag;
     btn.dataset.tag = tagKey;
     btn.className =
-      'px-3 py-1 text-xs rounded-full border transition-colors ' +
+      'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ' +
+      'hover:bg-slate-700/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ' +
       (newsSelectedTags.has(tagKey)
-        ? 'bg-emerald-600 border-emerald-400'
-        : 'bg-slate-800 border-slate-700');
+        ? 'bg-emerald-600 text-white border-emerald-400'
+        : 'bg-slate-800/80 text-slate-200 border-slate-700');
     newsTagFilterWrap.appendChild(btn);
   });
 }
