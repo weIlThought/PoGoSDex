@@ -121,19 +121,6 @@
   text-decoration: underline;
 }
 
-.ad-placeholder {
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-  border-radius: 0.375rem;
-  padding: 1rem;
-  min-height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  border: 1px dashed rgba(148,163,184,0.06);
-  font-size: 0.9rem;
-}
-
 #pgsharp-coords {
   background: #0b1220;
   border: 1px solid rgba(148,163,184,0.06);
