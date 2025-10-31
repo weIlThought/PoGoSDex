@@ -410,6 +410,8 @@ export async function createServer() {
         .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || '')
         .replace(/{{ASSET_VERSION}}/g, assetVersion);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      // Prevent caching of HTML documents to ensure fresh template placeholders and assets
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.send(out);
     });
   }
