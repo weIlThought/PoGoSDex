@@ -43,6 +43,8 @@ export async function createServer() {
   const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   const trustProxyInput = (process.env.TRUST_PROXY || '').trim().toLowerCase();
   let trustProxy = false;
+  // Static asset version for cache-busting in HTML templates
+  const assetVersion = process.env.ASSET_VERSION || String(Math.floor(Date.now() / 1000));
 
   if (trustProxyInput === 'loopback' || trustProxyInput === 'true') {
     trustProxy = 'loopback';
@@ -398,7 +400,9 @@ export async function createServer() {
         return res.status(404).send('Not found');
       }
 
-      let out = content.replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || '');
+      let out = content
+        .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || '')
+        .replace(/{{ASSET_VERSION}}/g, assetVersion);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(out);
     });
