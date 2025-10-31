@@ -1172,15 +1172,32 @@ class ModalManager {
 
   close() {
     if (!this.backdrop) return;
+    // Move focus away from elements inside the modal BEFORE hiding it,
+    // to avoid focusing a descendant of an aria-hidden container.
+    try {
+      const restore =
+        this.lastFocus ||
+        document.querySelector('[data-section][aria-selected="true"]') ||
+        document.body;
+      if (restore === document.body) {
+        document.body.setAttribute('tabindex', '-1');
+        document.body.focus();
+      } else if (restore && typeof restore.focus === 'function') {
+        restore.focus();
+      }
+      // Clean up temporary tabindex later
+      if (restore === document.body) {
+        setTimeout(() => document.body.removeAttribute('tabindex'), 0);
+      }
+    } catch (e) {
+      // ignore focus errors
+    }
+
+    // Now hide and mark aria-hidden
     this.backdrop.setAttribute('aria-hidden', 'true');
     this.backdrop.classList.add('hidden');
     this.backdrop.classList.remove('flex');
     document.body.style.overflow = '';
-    try {
-      if (this.lastFocus && typeof this.lastFocus.focus === 'function') {
-        this.lastFocus.focus();
-      }
-    } catch (e) {}
   }
 }
 
@@ -1498,17 +1515,28 @@ function openModal(d) {
 
 function closeModal() {
   const mb = qs('#modalBackdrop');
+  // Move focus back before hiding the modal to avoid aria-hidden focus violation
+  try {
+    const last =
+      openModal._lastFocus ||
+      document.querySelector('[data-section][aria-selected="true"]') ||
+      document.body;
+    if (last === document.body) {
+      document.body.setAttribute('tabindex', '-1');
+      document.body.focus();
+    } else if (last && typeof last.focus === 'function') {
+      last.focus();
+    }
+    if (last === document.body) {
+      setTimeout(() => document.body.removeAttribute('tabindex'), 0);
+    }
+  } catch (e) {
+    // ignore
+  }
   if (mb) mb.setAttribute('aria-hidden', 'true');
   mb.classList.add('hidden');
   mb.classList.remove('flex');
   document.body.style.overflow = '';
-  // restore focus
-  try {
-    const last = openModal._lastFocus;
-    if (last && typeof last.focus === 'function') last.focus();
-  } catch (e) {
-    // ignore
-  }
 }
 
 // Modal event handlers now managed by EventManager and data-action attributes
