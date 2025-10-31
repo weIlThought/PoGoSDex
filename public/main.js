@@ -1323,27 +1323,8 @@ let activeSection = 'overview';
 let navButtons = [];
 
 function showSection(name = 'overview') {
-  if (!sections[name]) return;
-  Object.entries(sections).forEach(([key, getNode]) => {
-    const node = getNode();
-    if (!node) return;
-    if (key === name) {
-      node.classList.remove('hidden');
-    } else {
-      node.classList.add('hidden');
-    }
-  });
-  navButtons.forEach((btn) => {
-    const isActive = btn.dataset.section === name;
-    btn.setAttribute('aria-selected', String(isActive));
-    btn.classList.toggle('border-slate-700', isActive);
-    btn.classList.toggle('bg-slate-800', isActive);
-    btn.classList.toggle('bg-slate-800/60', !isActive);
-    btn.classList.toggle('border-transparent', !isActive);
-  });
-  activeSection = name;
-  if (name === 'devices') applyFilters();
-  if (name === 'news') renderNews(news);
+  // Delegate to the unified handler which manages visibility, history and lazy loads
+  showSectionByName(name);
 }
 function bindNavigation() {
   navButtons = qsa('[data-section]');
@@ -1532,7 +1513,7 @@ function applyFilters() {
 }
 
 const langSelect = qs('#langSelect');
-if (!LANG_LOCK && langSelect) {
+if (!CONFIG.LANG_LOCK && langSelect) {
   langSelect.addEventListener('change', (e) => {
     const lang = e.target.value;
     const params = new URLSearchParams(window.location.search);
@@ -2097,6 +2078,19 @@ function showSectionByName(name) {
       console.warn('initNewsFilters', e);
     }
   }
+
+  // Update nav button state (ARIA + styles)
+  const buttons = document.querySelectorAll('[data-section]');
+  buttons.forEach((btn) => {
+    const isActive = btn.getAttribute('data-section') === plain;
+    btn.setAttribute('aria-selected', String(isActive));
+    btn.classList.toggle('border-slate-700', isActive);
+    btn.classList.toggle('bg-slate-800', isActive);
+    btn.classList.toggle('bg-slate-800/60', !isActive);
+    btn.classList.toggle('border-transparent', !isActive);
+  });
+
+  activeSection = plain;
 }
 
 document.addEventListener('click', (ev) => {
