@@ -216,5 +216,10 @@
   "uptime_label": "Uptime",
   "pgsharp_status_error": "Error",
   "contact_email": "support@pogosdex.com",
-  "site_copyright": "2025 - PoGoSDex. All rights reserved by their respective owners."
+  "site_copyright": "2025 - PoGoSDex. All rights reserved by their respective owners.",
+  "status_up": "All systems operational",
+  "status_degraded": "Degraded performance",
+  "status_down": "Service interruption",
+  "status_unknown": "Status unknown",
+  "status_uptime_label": "Uptime"
 }

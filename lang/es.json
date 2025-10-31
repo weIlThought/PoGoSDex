@@ -212,5 +212,10 @@
   "type_all": "Todos los dispositivos",
   "type_phone": "Teléfonos",
   "type_tablet": "Tabletas",
-  "uptime_label": "Tiempo de actividad"
+  "uptime_label": "Tiempo de actividad",
+  "status_up": "Todos los sistemas operan con normalidad",
+  "status_degraded": "Rendimiento degradado",
+  "status_down": "Interrupción del servicio",
+  "status_unknown": "Estado desconocido",
+  "status_uptime_label": "Tiempo de actividad"
 }

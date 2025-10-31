@@ -212,5 +212,10 @@
   "type_all": "Tous les appareils",
   "type_phone": "Téléphones",
   "type_tablet": "Tablettes",
-  "uptime_label": "Disponibilité"
+  "uptime_label": "Disponibilité",
+  "status_up": "Tous les systèmes opérationnels",
+  "status_degraded": "Performances dégradées",
+  "status_down": "Interruption du service",
+  "status_unknown": "Statut inconnu",
+  "status_uptime_label": "Disponibilité"
 }

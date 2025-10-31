@@ -212,5 +212,10 @@
   "type_all": "Все устройства",
   "type_phone": "Телефоны",
   "type_tablet": "Планшеты",
-  "uptime_label": "Аптайм"
+  "uptime_label": "Аптайм",
+  "status_up": "Все системы работают нормально",
+  "status_degraded": "Сниженная производительность",
+  "status_down": "Перебой в работе сервиса",
+  "status_unknown": "Статус неизвестен",
+  "status_uptime_label": "Доступность"
 }

@@ -212,5 +212,10 @@
   "type_all": "Alle Geräte",
   "type_phone": "Handys",
   "type_tablet": "Tablets",
-  "uptime_label": "Laufzeit"
+  "uptime_label": "Laufzeit",
+  "status_up": "Alle Systeme sind betriebsbereit",
+  "status_degraded": "Eingeschränkte Leistung",
+  "status_down": "Dienstunterbrechung",
+  "status_unknown": "Status unbekannt",
+  "status_uptime_label": "Verfügbarkeit"
 }

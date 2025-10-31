@@ -2243,15 +2243,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPgSharpTabs();
   updateCoordsTime();
   loadCoords();
-  fetch('/api/uptime')
-    .then((res) => res.json())
-    .then((data) => {
-      const el = document.getElementById('uptime');
-      if (el && data && typeof data.uptime === 'number') {
-        el.textContent = `${t('uptime_label', 'Uptime')} : ${data.uptime.toFixed(2)} %`;
-      }
-    })
-    .catch(() => {});
+  // Initialize live service status from backend
+  initServiceStatus();
 
   const reportForm = qs('#pgsharp-report-form');
   if (reportForm) {
@@ -2274,3 +2267,63 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(loadPgsharpVersion, CONFIG.API_REFRESH_INTERVAL);
   setInterval(loadPokeminersVersion, CONFIG.API_REFRESH_INTERVAL);
 });
+
+// ---------- Service Status (UptimeRobot) UI ----------
+const STATUS_COLORS = {
+  up: 'bg-emerald-400',
+  degraded: 'bg-yellow-400',
+  down: 'bg-red-400',
+  unknown: 'bg-slate-400',
+};
+
+function setStatusUI({ state = 'unknown', uptimeRatio = null } = {}) {
+  const indicator = document.getElementById('statusIndicator');
+  const message = document.getElementById('statusMessage');
+  const uptime = document.getElementById('statusUptime');
+  if (!indicator || !message || !uptime) return;
+
+  // Reset indicator color classes and pulse
+  indicator.classList.remove('animate-pulse');
+  Object.values(STATUS_COLORS).forEach((cls) => indicator.classList.remove(cls));
+  indicator.classList.add(STATUS_COLORS[state] || STATUS_COLORS.unknown);
+
+  // Message by state
+  let msg = t('status_unknown', 'Status unknown');
+  if (state === 'up') msg = t('status_up', 'All systems operational');
+  else if (state === 'degraded') msg = t('status_degraded', 'Degraded performance');
+  else if (state === 'down') msg = t('status_down', 'Service interruption');
+  message.textContent = msg;
+
+  // Uptime text
+  const label = t('status_uptime_label', 'Uptime');
+  if (typeof uptimeRatio === 'number' && Number.isFinite(uptimeRatio)) {
+    uptime.textContent = `${label}: ${uptimeRatio.toFixed(2)} %`;
+  } else {
+    uptime.textContent = `${label}: ${t('status_uptime_na', '— %')}`;
+  }
+}
+
+async function fetchServiceStatus() {
+  try {
+    const res = await fetch('/status/uptime', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || !('state' in data)) throw new Error('Invalid payload');
+    setStatusUI({ state: data.state || 'unknown', uptimeRatio: data.uptimeRatio ?? null });
+  } catch (err) {
+    // Leave previous UI, but ensure we don't show endless loading
+    setStatusUI({ state: 'unknown', uptimeRatio: null });
+    debug('Service status fetch failed:', err);
+  }
+}
+
+function initServiceStatus() {
+  // Show loading pulse until first update happens
+  const indicator = document.getElementById('statusIndicator');
+  if (indicator) indicator.classList.add('animate-pulse');
+  fetchServiceStatus();
+  // Server caches for 3 minutes; poll accordingly
+  if (!initServiceStatus._interval) {
+    initServiceStatus._interval = setInterval(fetchServiceStatus, 3 * 60 * 1000);
+  }
+}

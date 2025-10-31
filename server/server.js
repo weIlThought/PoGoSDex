@@ -38,6 +38,7 @@ const uptimeCache = {
 };
 
 export async function createServer() {
+  const isTest = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
   const port = Number(process.env.PORT || 3000);
   const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   const trustProxyInput = (process.env.TRUST_PROXY || '').trim().toLowerCase();
@@ -64,8 +65,11 @@ export async function createServer() {
     transports: [new winston.transports.Console()],
   });
 
-  await initDB();
-  await validateData(logger);
+  // Skip heavy startup routines during tests
+  if (!isTest) {
+    await initDB();
+    await validateData(logger);
+  }
 
   const app = express();
 
@@ -141,61 +145,66 @@ export async function createServer() {
       stream: {
         write: (message) => logger.info(message.trim()),
       },
+      skip: () => isTest, // keep test output clean
     })
   );
 
-  const globalLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    limit: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
+  if (!isTest) {
+    const globalLimiter = rateLimit({
+      windowMs: 10 * 60 * 1000,
+      limit: 200,
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
 
-  const burstLimiter = rateLimit({
-    windowMs: 45 * 1000,
-    limit: 60,
-    standardHeaders: false,
-    legacyHeaders: false,
-  });
+    const burstLimiter = rateLimit({
+      windowMs: 45 * 1000,
+      limit: 60,
+      standardHeaders: false,
+      legacyHeaders: false,
+    });
 
-  app.use(globalLimiter);
-  app.use(burstLimiter);
+    app.use(globalLimiter);
+    app.use(burstLimiter);
+  }
 
-  const scrapeBuckets = new Map();
-  const SCRAPE_WINDOW_MS = 30_000;
-  const SCRAPE_THRESHOLD = 45;
+  if (!isTest) {
+    const scrapeBuckets = new Map();
+    const SCRAPE_WINDOW_MS = 30_000;
+    const SCRAPE_THRESHOLD = 45;
 
-  setInterval(() => {
-    const cutoff = Date.now() - SCRAPE_WINDOW_MS;
-    for (const [ip, hits] of scrapeBuckets.entries()) {
-      const filtered = hits.filter((ts) => ts >= cutoff);
-      if (filtered.length) {
-        scrapeBuckets.set(ip, filtered);
-      } else {
-        scrapeBuckets.delete(ip);
+    setInterval(() => {
+      const cutoff = Date.now() - SCRAPE_WINDOW_MS;
+      for (const [ip, hits] of scrapeBuckets.entries()) {
+        const filtered = hits.filter((ts) => ts >= cutoff);
+        if (filtered.length) {
+          scrapeBuckets.set(ip, filtered);
+        } else {
+          scrapeBuckets.delete(ip);
+        }
       }
-    }
-  }, 300_000).unref();
+    }, 300_000).unref();
 
-  app.use((req, res, next) => {
-    const ua = req.get('user-agent') || '';
-    if (!ua || /curl|wget|python|scrapy|httpclient|httpx/i.test(ua)) {
-      return res.status(403).send('Forbidden');
-    }
-    next();
-  });
+    app.use((req, res, next) => {
+      const ua = req.get('user-agent') || '';
+      if (!ua || /curl|wget|python|scrapy|httpclient|httpx/i.test(ua)) {
+        return res.status(403).send('Forbidden');
+      }
+      next();
+    });
 
-  app.use((req, res, next) => {
-    const now = Date.now();
-    const bucket = scrapeBuckets.get(req.ip) || [];
-    const recent = bucket.filter((ts) => now - ts < SCRAPE_WINDOW_MS);
-    recent.push(now);
-    scrapeBuckets.set(req.ip, recent);
-    if (recent.length > SCRAPE_THRESHOLD) {
-      return res.status(429).send('Too many requests');
-    }
-    next();
-  });
+    app.use((req, res, next) => {
+      const now = Date.now();
+      const bucket = scrapeBuckets.get(req.ip) || [];
+      const recent = bucket.filter((ts) => now - ts < SCRAPE_WINDOW_MS);
+      recent.push(now);
+      scrapeBuckets.set(req.ip, recent);
+      if (recent.length > SCRAPE_THRESHOLD) {
+        return res.status(429).send('Too many requests');
+      }
+      next();
+    });
+  }
 
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true }));
@@ -405,8 +414,10 @@ export async function createServer() {
     }
     next();
   });
-  schedulePgsharpAutoRefresh(logger);
-  schedulePokeminersAutoRefresh(logger);
+  if (!isTest) {
+    schedulePgsharpAutoRefresh(logger);
+    schedulePokeminersAutoRefresh(logger);
+  }
   return { app, port, logger };
 }
 
