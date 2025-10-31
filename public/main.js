@@ -4,16 +4,1077 @@ function qs(s) {
 function qsa(s) {
   return Array.from(document.querySelectorAll(s));
 }
-function esc(t) {
-  const d = document.createElement('div');
-  d.textContent = t;
-  return d.innerHTML;
+// Unified HTML escaping and sanitization utility
+function sanitizeAndEscape(input, options = {}) {
+  if (typeof input !== 'string') {
+    input = String(input || '');
+  }
+
+  // Fast HTML escape for simple strings
+  if (!options.allowHtml) {
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Use existing sanitizeHtml for complex HTML content
+  return sanitizeHtml(input);
 }
 
+// Backward compatibility aliases
+function esc(t) {
+  return sanitizeAndEscape(t);
+}
+
+function escapeHtml(s) {
+  return sanitizeAndEscape(s);
+}
+
+// Application Configuration - centralized constants
+const CONFIG = {
+  // Timing constants
+  FOCUS_DELAY: 0, // setTimeout delay for focus management
+  CLOCK_UPDATE_INTERVAL: 1000, // 1 second for time updates
+  API_REFRESH_INTERVAL: 30 * 60 * 1000, // 30 minutes for version checks
+  TIMEZONE_OFFSET_MS: 60 * 60 * 1000, // 1 hour in milliseconds
+
+  // UI constants
+  HEADER_SHRINK_THRESHOLD: 64, // Scroll Y position for header shrinking
+
+  // Feature flags
+  DEBUG: false,
+  LANG_LOCK: true, // Temporarily lock language to English
+
+  // Supported languages
+  SUPPORTED_LANGS: ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru'],
+};
+
+// Generic DataLoader - eliminates repetitive async patterns
+class DataLoader {
+  static async loadJSON(url, fallbackValue = null, errorContext = 'data') {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return await res.json();
+    } catch (e) {
+      console.error(`Failed to load ${errorContext} from ${url}:`, e);
+      if (fallbackValue !== null) {
+        debug(`Using fallback value for ${errorContext}:`, fallbackValue);
+        return fallbackValue;
+      }
+      throw e;
+    }
+  }
+
+  static async loadWithRetry(loadFn, maxRetries = 2, delay = 1000) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await loadFn();
+      } catch (e) {
+        if (attempt === maxRetries) throw e;
+        debug(`Load attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+}
+
+// DOM Element Cache - reduces repeated querySelector calls
+class DOMCache {
+  constructor() {
+    this.cache = new Map();
+    this.initialized = false;
+  }
+
+  init() {
+    if (this.initialized) return;
+
+    // Cache frequently used elements
+    const elements = {
+      // Sections
+      overviewSection: '#overviewSection',
+      devicesSection: '#devicesSection',
+      newsSection: '#newsSection',
+      pgsharpSection: '#pgsharpSection',
+
+      // Modals
+      modalBackdrop: '#modalBackdrop',
+      coordsModalBackdrop: '#coordsModalBackdrop',
+      newsModalBackdrop: '#newsModalBackdrop',
+      closeModal: '#closeModal',
+      coordsModalClose: '#coordsModalClose',
+      closeNewsModal: '#closeNewsModal',
+
+      // Modal content
+      modalTitle: '#modalTitle',
+      modalMeta: '#modalMeta',
+      modalDesc: '#modalDesc',
+      modalNotesList: '#modalNotesList',
+      modalRootLinks: '#modalRootLinks',
+      modalPriceRange: '#modalPriceRange',
+      modalPoGoComp: '#modalPoGoComp',
+
+      // Coords modal
+      coordsModalTitle: '#coordsModalTitle',
+      coordsModalMeta: '#coordsModalMeta',
+      coordsModalNote: '#coordsModalNote',
+      coordsModalTags: '#coordsModalTags',
+      coordsModalMaps: '#coordsModalMaps',
+
+      // News modal
+      newsModalTitle: '#newsModalTitle',
+      newsModalMeta: '#newsModalMeta',
+      newsModalBody: '#newsModalBody',
+      newsModalTagsWrap: '#newsModalTagsWrap',
+      newsModalTags: '#newsModalTags',
+
+      // Search and filters
+      searchInput: '#searchInput',
+      newsSearchInput: '#newsSearchInput',
+      newsTagFilter: '#newsTagFilter',
+      newsWrap: '#newsWrap',
+
+      // Other frequently used
+      coordsTime: '#coords-time',
+    };
+
+    Object.entries(elements).forEach(([key, selector]) => {
+      this.cache.set(key, document.querySelector(selector));
+    });
+
+    this.initialized = true;
+    debug('DOM Cache initialized with', this.cache.size, 'elements');
+  }
+
+  get(key) {
+    if (!this.initialized) this.init();
+    return this.cache.get(key);
+  }
+
+  // Fallback for non-cached selectors
+  query(selector) {
+    return document.querySelector(selector);
+  }
+}
+
+// Global DOM cache instance
+const domCache = new DOMCache();
+
+// Device Filter System - manages complex device filtering logic
+class DeviceFilter {
+  constructor() {
+    this.devices = [];
+    this.searchQuery = '';
+    this.typeFilter = 'all';
+    this.sortOrder = 'default';
+    this.initialized = false;
+  }
+
+  init(devices = []) {
+    this.devices = devices;
+    this.bindEventListeners();
+    this.initialized = true;
+    debug('DeviceFilter initialized with', devices.length, 'devices');
+  }
+
+  bindEventListeners() {
+    const searchInput = domCache.query('#searchInput');
+    const typeFilter = domCache.query('#typeFilter');
+    const sortSelect = domCache.query('#sortSelect');
+
+    searchInput?.addEventListener('input', () => this.handleSearch(searchInput.value));
+    typeFilter?.addEventListener('change', () => this.handleTypeFilter(typeFilter.value));
+    sortSelect?.addEventListener('change', () => this.handleSort(sortSelect.value));
+  }
+
+  handleSearch(query) {
+    this.searchQuery = (query || '').trim().toLowerCase();
+    this.applyFilters();
+  }
+
+  handleTypeFilter(type) {
+    this.typeFilter = type || 'all';
+    this.applyFilters();
+  }
+
+  handleSort(sort) {
+    this.sortOrder = sort || 'default';
+    this.applyFilters();
+  }
+
+  filterDevices() {
+    return this.devices.filter((device) => {
+      const searchText = [device.model, device.brand, device.os, (device.notes || []).join(' ')]
+        .join(' ')
+        .toLowerCase();
+
+      const matchesSearch = !this.searchQuery || searchText.includes(this.searchQuery);
+      const matchesType = this.typeFilter === 'all' || device.type === this.typeFilter;
+
+      return matchesSearch && matchesType;
+    });
+  }
+
+  sortDevices(devices) {
+    if (this.sortOrder === 'default') return devices;
+
+    return devices.sort((a, b) => {
+      switch (this.sortOrder) {
+        case 'brand':
+          return a.brand.localeCompare(b.brand);
+        case 'model':
+          return a.model.localeCompare(b.model);
+        case 'os':
+          return a.os.localeCompare(b.os);
+        case 'compatibility':
+          const aComp = Boolean(a.compatible);
+          const bComp = Boolean(b.compatible);
+          if (aComp === bComp) {
+            const byBrand = String(a.brand || '').localeCompare(String(b.brand || ''));
+            if (byBrand !== 0) return byBrand;
+            return String(a.model || '').localeCompare(String(b.model || ''));
+          }
+          return aComp ? -1 : 1;
+        default:
+          return 0;
+      }
+    });
+  }
+
+  applyFilters() {
+    if (!this.initialized) return;
+
+    const filtered = this.filterDevices();
+    const sorted = this.sortDevices(filtered);
+
+    debug('Device filter applied:', {
+      total: this.devices.length,
+      filtered: filtered.length,
+      query: this.searchQuery,
+      type: this.typeFilter,
+      sort: this.sortOrder,
+    });
+
+    renderDevices(sorted);
+  }
+
+  updateDevices(devices) {
+    this.devices = devices;
+    this.applyFilters();
+  }
+}
+
+// Global device filter instance
+const deviceFilter = new DeviceFilter();
+
+// Event Management System - centralizes all event handling
+class EventManager {
+  constructor() {
+    this.listeners = new Map();
+    this.delegated = new Map();
+    this.initialized = false;
+  }
+
+  init() {
+    if (this.initialized) return;
+    this.setupGlobalDelegation();
+    this.setupGlobalKeyboardHandlers();
+    this.initialized = true;
+    debug('EventManager initialized');
+  }
+
+  setupGlobalDelegation() {
+    // Single click handler for the entire document
+    document.addEventListener('click', (e) => {
+      this.handleGlobalClick(e);
+    });
+
+    // Single change handler for forms
+    document.addEventListener('change', (e) => {
+      this.handleGlobalChange(e);
+    });
+
+    // Single input handler for search fields
+    document.addEventListener('input', (e) => {
+      this.handleGlobalInput(e);
+    });
+
+    // Single keydown handler for interactive elements
+    document.addEventListener('keydown', (e) => {
+      this.handleGlobalKeydown(e);
+    });
+
+    // Single submit handler for forms
+    document.addEventListener('submit', (e) => {
+      this.handleGlobalSubmit(e);
+    });
+  }
+
+  setupGlobalKeyboardHandlers() {
+    // Global ESC key handler
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.handleEscapeKey(e);
+      }
+    });
+  }
+
+  handleGlobalClick(e) {
+    const target = e.target.closest('[data-action]');
+    if (!target) return;
+
+    const action = target.dataset.action;
+    const param = target.dataset.param;
+
+    switch (action) {
+      case 'close-modal':
+        this.handleCloseModal(target, param);
+        break;
+      case 'open-modal':
+        this.handleOpenModal(target, param);
+        break;
+      case 'section-nav':
+        this.handleSectionNav(target, param);
+        break;
+      case 'copy-json':
+        this.handleCopyJson(target, param);
+        break;
+      case 'toggle-device-modal':
+        this.handleToggleDeviceModal(target, param);
+        break;
+      case 'clear-form':
+        this.handleClearForm(target, param);
+        break;
+      default:
+        debug('Unknown action:', action);
+    }
+  }
+
+  handleGlobalChange(e) {
+    const target = e.target;
+
+    if (target.matches('#langSelect')) {
+      this.handleLanguageChange(target);
+    } else if (target.matches('#newsTagFilter input[type="checkbox"]')) {
+      this.handleNewsTagFilter(target);
+    }
+  }
+
+  handleGlobalInput(e) {
+    const target = e.target;
+
+    if (target.matches('#newsSearchInput')) {
+      this.handleNewsSearch(target);
+    }
+  }
+
+  handleGlobalKeydown(e) {
+    const target = e.target;
+
+    // Handle Enter/Space on interactive elements
+    if ((e.key === 'Enter' || e.key === ' ') && target.matches('[role="button"]')) {
+      e.preventDefault();
+      target.click();
+    }
+  }
+
+  handleGlobalSubmit(e) {
+    const target = e.target;
+
+    if (target.matches('#deviceBuilderForm')) {
+      this.handleDeviceBuilderSubmit(e);
+    } else if (target.matches('#pgsharp-report-form')) {
+      this.handlePgsharpReportSubmit(e);
+    }
+  }
+
+  handleEscapeKey(e) {
+    // Close all modals on ESC
+    coordsModalManager.close();
+    newsModalManager.close();
+    if (typeof closeModal === 'function') closeModal();
+  }
+
+  // Specific action handlers
+  handleCloseModal(target, param) {
+    if (param === 'coords') coordsModalManager.close();
+    else if (param === 'news') newsModalManager.close();
+    else if (typeof closeModal === 'function') closeModal();
+  }
+
+  handleOpenModal(target, param) {
+    // Implementation depends on modal type and data
+    debug('Open modal:', param);
+  }
+
+  handleSectionNav(target, param) {
+    if (param) showSection(param);
+  }
+
+  handleCopyJson(target, param) {
+    // Copy device JSON implementation
+    debug('Copy JSON for:', param);
+  }
+
+  handleToggleDeviceModal(target, param) {
+    const modal = domCache.query('#deviceModal');
+    const isOpen = param === 'open';
+
+    if (modal) {
+      modal.classList.toggle('hidden', !isOpen);
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+  }
+
+  handleClearForm(target, param) {
+    const form = domCache.query(`#${param}`);
+    if (form) form.reset();
+  }
+
+  handleLanguageChange(target) {
+    const lang = target.value;
+    const params = new URLSearchParams(window.location.search);
+    params.set('lang', lang);
+    history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+    loadLang(lang);
+  }
+
+  handleNewsTagFilter(target) {
+    const tag = target.value.toLowerCase();
+    if (target.checked) {
+      newsSelectedTags.add(tag);
+    } else {
+      newsSelectedTags.delete(tag);
+    }
+    renderNews(news);
+  }
+
+  handleNewsSearch(target) {
+    newsSearch = target.value.toLowerCase();
+    renderNews(news);
+  }
+
+  handleDeviceBuilderSubmit(e) {
+    e.preventDefault();
+    // Existing device builder logic
+    debug('Device builder form submitted');
+  }
+
+  handlePgsharpReportSubmit(e) {
+    e.preventDefault();
+    const email = domCache.query('#pgsharp-report-email')?.value || '';
+    const message = domCache.query('#pgsharp-report-message')?.value || '';
+    const form = e.target;
+
+    form.innerHTML = sanitizeHtml(
+      `<div class="text-green-400">${t(
+        'pgsharp_report_local_success',
+        'Thanks — your message was processed locally.'
+      )}</div>`
+    );
+    debug('PGSharp report (local):', { email, message });
+  }
+
+  // Legacy method for backward compatibility
+  addEventListener(element, event, handler) {
+    if (element && typeof element.addEventListener === 'function') {
+      element.addEventListener(event, handler);
+
+      // Track for potential cleanup
+      const key = `${element.id || 'anonymous'}-${event}`;
+      if (!this.listeners.has(key)) {
+        this.listeners.set(key, []);
+      }
+      this.listeners.get(key).push({ element, event, handler });
+    }
+  }
+
+  removeEventListener(element, event, handler) {
+    if (element && typeof element.removeEventListener === 'function') {
+      element.removeEventListener(event, handler);
+    }
+  }
+
+  cleanup() {
+    // Clean up all tracked listeners
+    this.listeners.forEach((handlers, key) => {
+      handlers.forEach(({ element, event, handler }) => {
+        this.removeEventListener(element, event, handler);
+      });
+    });
+    this.listeners.clear();
+    debug('EventManager cleanup completed');
+  }
+}
+
+// Global event manager instance
+const eventManager = new EventManager();
+
+// Enhanced Error Handling System with User Feedback
+class ErrorHandler {
+  constructor() {
+    this.errorQueue = [];
+    this.isShowingError = false;
+    this.retryAttempts = new Map();
+    this.maxRetries = 3;
+    this.init();
+  }
+
+  init() {
+    // Global error handlers
+    window.addEventListener('error', (e) => this.handleGlobalError(e));
+    window.addEventListener('unhandledrejection', (e) => this.handleUnhandledRejection(e));
+
+    // Network error detection
+    window.addEventListener('online', () => this.handleNetworkRestore());
+    window.addEventListener('offline', () => this.handleNetworkLoss());
+
+    debug('ErrorHandler initialized');
+  }
+
+  handleGlobalError(event) {
+    const error = {
+      type: 'javascript',
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      stack: event.error?.stack,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.logError(error);
+    this.showUserFriendlyError('An unexpected error occurred. The page may need to be refreshed.');
+  }
+
+  handleUnhandledRejection(event) {
+    const error = {
+      type: 'promise',
+      message: event.reason?.message || 'Promise rejection',
+      stack: event.reason?.stack,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.logError(error);
+
+    // Don't show user feedback for fetch errors - they're handled elsewhere
+    if (!event.reason?.message?.includes('fetch')) {
+      this.showUserFriendlyError('Something went wrong. Please try again.');
+    }
+
+    event.preventDefault(); // Prevent console spam
+  }
+
+  handleNetworkLoss() {
+    this.showUserFriendlyError(
+      'You appear to be offline. Some features may not work.',
+      'warning',
+      0
+    );
+  }
+
+  handleNetworkRestore() {
+    this.showUserFriendlyError('Connection restored!', 'success', 3000);
+  }
+
+  async handleAsyncError(operation, context = 'operation') {
+    const key = `${context}-${Date.now()}`;
+    const attempts = this.retryAttempts.get(context) || 0;
+
+    try {
+      const result = await operation();
+      this.retryAttempts.delete(context); // Reset on success
+      return result;
+    } catch (error) {
+      this.logError({
+        type: 'async',
+        context,
+        message: error.message,
+        stack: error.stack,
+        attempts: attempts + 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (attempts < this.maxRetries) {
+        this.retryAttempts.set(context, attempts + 1);
+        const delay = Math.pow(2, attempts) * 1000; // Exponential backoff
+
+        this.showUserFriendlyError(
+          `${context} failed. Retrying in ${delay / 1000} seconds... (${attempts + 1}/${
+            this.maxRetries
+          })`,
+          'warning',
+          delay
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.handleAsyncError(operation, context);
+      } else {
+        this.retryAttempts.delete(context);
+        this.showUserFriendlyError(
+          `${context} failed after ${this.maxRetries} attempts. Please refresh the page.`,
+          'error'
+        );
+        throw error;
+      }
+    }
+  }
+
+  logError(error) {
+    console.error('Application Error:', error);
+
+    // In production, send to monitoring service
+    if (!CONFIG.DEBUG) {
+      this.sendToMonitoring(error);
+    }
+  }
+
+  sendToMonitoring(error) {
+    // Placeholder for error monitoring service (e.g., Sentry, LogRocket)
+    debug('Would send to monitoring:', error);
+  }
+
+  showUserFriendlyError(message, type = 'error', duration = 5000) {
+    if (this.isShowingError && type !== 'success') return;
+
+    const error = { message, type, duration, id: Date.now() };
+    this.errorQueue.push(error);
+
+    if (!this.isShowingError) {
+      this.displayNextError();
+    }
+  }
+
+  displayNextError() {
+    if (this.errorQueue.length === 0) {
+      this.isShowingError = false;
+      return;
+    }
+
+    const error = this.errorQueue.shift();
+    this.isShowingError = true;
+
+    const toast = this.createToast(error);
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+
+    // Auto-dismiss
+    if (error.duration > 0) {
+      setTimeout(() => {
+        this.dismissToast(toast);
+      }, error.duration);
+    }
+  }
+
+  createToast(error) {
+    const toast = document.createElement('div');
+    toast.className = `error-toast error-toast-${error.type}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
+
+    const colors = {
+      error: 'bg-red-900 border-red-500 text-red-100',
+      warning: 'bg-yellow-900 border-yellow-500 text-yellow-100',
+      success: 'bg-green-900 border-green-500 text-green-100',
+      info: 'bg-blue-900 border-blue-500 text-blue-100',
+    };
+
+    toast.innerHTML = sanitizeHtml(`
+      <div class="flex items-center justify-between p-4 rounded-lg border ${
+        colors[error.type]
+      } shadow-lg max-w-md">
+        <div class="flex items-center">
+          <div class="mr-3">
+            ${this.getIcon(error.type)}
+          </div>
+          <p class="text-sm font-medium">${esc(error.message)}</p>
+        </div>
+        <button class="ml-4 text-current hover:opacity-75" onclick="this.parentElement.parentElement.remove()">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+    `);
+
+    // Position toast
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease-in-out;
+    `;
+
+    toast.classList.add('error-toast');
+
+    return toast;
+  }
+
+  getIcon(type) {
+    const icons = {
+      error: '⚠️',
+      warning: '⚡',
+      success: '✅',
+      info: 'ℹ️',
+    };
+    return icons[type] || icons.info;
+  }
+
+  dismissToast(toast) {
+    toast.classList.remove('show');
+    toast.style.transform = 'translateX(100%)';
+    toast.style.opacity = '0';
+
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+      this.displayNextError(); // Show next error in queue
+    }, 300);
+  }
+
+  // Enhanced DataLoader with error handling
+  static enhanceDataLoader() {
+    const originalLoadJSON = DataLoader.loadJSON;
+    DataLoader.loadJSON = async function (url, fallbackValue = null, errorContext = 'data') {
+      return errorHandler.handleAsyncError(async () => {
+        return originalLoadJSON.call(this, url, fallbackValue, errorContext);
+      }, `Loading ${errorContext}`);
+    };
+  }
+}
+
+// Global error handler instance
+const errorHandler = new ErrorHandler();
+
+// Add CSS for error toasts
+const toastStyles = document.createElement('style');
+toastStyles.textContent = `
+  .error-toast.show {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+  }
+`;
+document.head.appendChild(toastStyles);
+
+// Performance Monitoring and Metrics System
+class PerformanceMonitor {
+  constructor() {
+    this.metrics = new Map();
+    this.observers = new Map();
+    this.startTime = performance.now();
+    this.init();
+  }
+
+  init() {
+    if (!window.performance) {
+      debug('Performance API not available');
+      return;
+    }
+
+    this.trackPageLoad();
+    this.trackUserInteractions();
+    this.trackResourceUsage();
+    this.setupPerformanceObservers();
+
+    debug('PerformanceMonitor initialized');
+  }
+
+  trackPageLoad() {
+    window.addEventListener('load', () => {
+      const navigation = performance.getEntriesByType('navigation')[0];
+      const paint = performance.getEntriesByType('paint');
+
+      const metrics = {
+        domContentLoaded: navigation.domContentLoadedEventEnd - navigation.navigationStart,
+        loadComplete: navigation.loadEventEnd - navigation.navigationStart,
+        firstPaint: paint.find((p) => p.name === 'first-paint')?.startTime || 0,
+        firstContentfulPaint:
+          paint.find((p) => p.name === 'first-contentful-paint')?.startTime || 0,
+        domInteractive: navigation.domInteractive - navigation.navigationStart,
+        resourcesLoaded: navigation.loadEventStart - navigation.navigationStart,
+      };
+
+      this.recordMetric('pageLoad', metrics);
+      this.logPerformanceReport();
+    });
+  }
+
+  trackUserInteractions() {
+    const interactionTypes = ['click', 'input', 'scroll', 'keydown'];
+
+    interactionTypes.forEach((type) => {
+      document.addEventListener(
+        type,
+        (e) => {
+          this.recordInteraction(type, e);
+        },
+        { passive: true }
+      );
+    });
+  }
+
+  trackResourceUsage() {
+    // Monitor memory usage (if available)
+    if (performance.memory) {
+      setInterval(() => {
+        const memory = {
+          used: performance.memory.usedJSHeapSize,
+          total: performance.memory.totalJSHeapSize,
+          limit: performance.memory.jsHeapSizeLimit,
+          timestamp: Date.now(),
+        };
+        this.recordMetric('memory', memory);
+      }, CONFIG.API_REFRESH_INTERVAL); // Every 30 minutes
+    }
+  }
+
+  setupPerformanceObservers() {
+    // Long Task Observer
+    if ('PerformanceObserver' in window) {
+      try {
+        const longTaskObserver = new PerformanceObserver((list) => {
+          list.getEntries().forEach((entry) => {
+            if (entry.duration > 50) {
+              // Tasks longer than 50ms
+              this.recordMetric('longTask', {
+                duration: entry.duration,
+                startTime: entry.startTime,
+                name: entry.name,
+              });
+            }
+          });
+        });
+        longTaskObserver.observe({ entryTypes: ['longtask'] });
+        this.observers.set('longTask', longTaskObserver);
+      } catch (e) {
+        debug('Long task observer not supported');
+      }
+
+      // Layout Shift Observer
+      try {
+        const layoutShiftObserver = new PerformanceObserver((list) => {
+          list.getEntries().forEach((entry) => {
+            if (entry.value > 0.1) {
+              // Significant layout shifts
+              this.recordMetric('layoutShift', {
+                value: entry.value,
+                startTime: entry.startTime,
+                hadRecentInput: entry.hadRecentInput,
+              });
+            }
+          });
+        });
+        layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
+        this.observers.set('layoutShift', layoutShiftObserver);
+      } catch (e) {
+        debug('Layout shift observer not supported');
+      }
+    }
+  }
+
+  recordMetric(name, data) {
+    if (!this.metrics.has(name)) {
+      this.metrics.set(name, []);
+    }
+
+    const entry = {
+      ...data,
+      timestamp: performance.now(),
+      datetime: new Date().toISOString(),
+    };
+
+    this.metrics.get(name).push(entry);
+
+    // Keep only last 100 entries per metric
+    const entries = this.metrics.get(name);
+    if (entries.length > 100) {
+      entries.splice(0, entries.length - 100);
+    }
+
+    if (CONFIG.DEBUG) {
+      debug(`Metric recorded - ${name}:`, entry);
+    }
+  }
+
+  recordInteraction(type, event) {
+    const interaction = {
+      type,
+      target: event.target?.tagName || 'unknown',
+      targetId: event.target?.id || null,
+      targetClass: event.target?.className || null,
+      timestamp: performance.now(),
+    };
+
+    this.recordMetric('interactions', interaction);
+  }
+
+  measureFunction(name, fn) {
+    const start = performance.now();
+    const result = fn();
+    const duration = performance.now() - start;
+
+    this.recordMetric('functionPerformance', {
+      name,
+      duration,
+      type: typeof result === 'object' && result?.then ? 'async' : 'sync',
+    });
+
+    if (duration > 100) {
+      debug(`Slow function detected: ${name} took ${duration.toFixed(2)}ms`);
+    }
+
+    return result;
+  }
+
+  async measureAsyncFunction(name, asyncFn) {
+    const start = performance.now();
+    try {
+      const result = await asyncFn();
+      const duration = performance.now() - start;
+
+      this.recordMetric('functionPerformance', {
+        name,
+        duration,
+        type: 'async',
+        success: true,
+      });
+
+      return result;
+    } catch (error) {
+      const duration = performance.now() - start;
+
+      this.recordMetric('functionPerformance', {
+        name,
+        duration,
+        type: 'async',
+        success: false,
+        error: error.message,
+      });
+
+      throw error;
+    }
+  }
+
+  getMetrics(name = null) {
+    if (name) {
+      return this.metrics.get(name) || [];
+    }
+
+    const allMetrics = {};
+    this.metrics.forEach((value, key) => {
+      allMetrics[key] = value;
+    });
+    return allMetrics;
+  }
+
+  getPerformanceSummary() {
+    const summary = {
+      uptime: performance.now() - this.startTime,
+      metricsCollected: this.metrics.size,
+      totalInteractions: this.getMetrics('interactions').length,
+      averageMemoryUsage: this.calculateAverageMemory(),
+      slowFunctions: this.getSlowFunctions(),
+      layoutShifts: this.getMetrics('layoutShift').length,
+      longTasks: this.getMetrics('longTask').length,
+    };
+
+    return summary;
+  }
+
+  calculateAverageMemory() {
+    const memoryEntries = this.getMetrics('memory');
+    if (memoryEntries.length === 0) return null;
+
+    const avgUsed =
+      memoryEntries.reduce((sum, entry) => sum + entry.used, 0) / memoryEntries.length;
+    return {
+      averageUsed: Math.round(avgUsed / 1024 / 1024), // MB
+      entries: memoryEntries.length,
+    };
+  }
+
+  getSlowFunctions() {
+    const perfEntries = this.getMetrics('functionPerformance');
+    return perfEntries
+      .filter((entry) => entry.duration > 100)
+      .sort((a, b) => b.duration - a.duration)
+      .slice(0, 10);
+  }
+
+  logPerformanceReport() {
+    const summary = this.getPerformanceSummary();
+    const pageLoadMetrics = this.getMetrics('pageLoad')[0];
+
+    console.group('🚀 Performance Report');
+    console.log('Page Load Metrics:', pageLoadMetrics);
+    console.log('Performance Summary:', summary);
+
+    if (summary.slowFunctions.length > 0) {
+      console.warn('Slow Functions Detected:', summary.slowFunctions);
+    }
+
+    if (summary.layoutShifts > 0) {
+      console.warn('Layout Shifts Detected:', summary.layoutShifts);
+    }
+
+    console.groupEnd();
+  }
+
+  exportMetrics() {
+    const data = {
+      summary: this.getPerformanceSummary(),
+      metrics: this.getMetrics(),
+      userAgent: navigator.userAgent,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance-metrics-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  cleanup() {
+    this.observers.forEach((observer) => observer.disconnect());
+    this.observers.clear();
+    this.metrics.clear();
+  }
+}
+
+// Global performance monitor instance
+const performanceMonitor = new PerformanceMonitor();
+
+// Add global performance measurement helpers
+window.measurePerformance = (name, fn) => performanceMonitor.measureFunction(name, fn);
+window.measureAsyncPerformance = (name, fn) => performanceMonitor.measureAsyncFunction(name, fn);
+window.getPerformanceMetrics = () => performanceMonitor.getMetrics();
+window.exportPerformanceReport = () => performanceMonitor.exportMetrics();
+
 // Debug wrapper - gate console output behind a flag
-const DEBUG = false;
 function debug(...args) {
-  if (DEBUG) console.log(...args);
+  if (CONFIG.DEBUG) console.log(...args);
 }
 
 // Lightweight HTML sanitizer (fallback) — removes script/style and on* attributes
@@ -68,17 +1129,62 @@ let newsSelectedTags = new Set();
 const newsSearchInput = qs('#newsSearchInput');
 const newsTagFilterWrap = qs('#newsTagFilter');
 
+// Generic Modal Manager - eliminates code duplication
+class ModalManager {
+  constructor(backdropId, closeButtonId, focusElementId = null) {
+    this.backdrop = qs(backdropId);
+    this.closeButton = qs(closeButtonId);
+    this.focusElement = focusElementId ? qs(focusElementId) : this.closeButton;
+    this.lastFocus = null;
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    if (this.closeButton) {
+      this.closeButton.addEventListener('click', () => this.close());
+    }
+    if (this.backdrop) {
+      this.backdrop.addEventListener('click', (e) => {
+        if (e.target === this.backdrop) this.close();
+      });
+    }
+  }
+
+  open() {
+    if (!this.backdrop) return;
+    try {
+      this.lastFocus = document.activeElement;
+    } catch (e) {
+      this.lastFocus = null;
+    }
+    this.backdrop.setAttribute('aria-hidden', 'false');
+    this.backdrop.classList.remove('hidden');
+    this.backdrop.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => this.focusElement?.focus(), CONFIG.FOCUS_DELAY);
+  }
+
+  close() {
+    if (!this.backdrop) return;
+    this.backdrop.setAttribute('aria-hidden', 'true');
+    this.backdrop.classList.add('hidden');
+    this.backdrop.classList.remove('flex');
+    document.body.style.overflow = '';
+    try {
+      if (this.lastFocus && typeof this.lastFocus.focus === 'function') {
+        this.lastFocus.focus();
+      }
+    } catch (e) {}
+  }
+}
+
 let i18n = {};
-// Supported languages - keep in sync with /lang/*.json
-const SUPPORTED_LANGS = ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru'];
-// Feature flag: lock language to English temporarily (no code removal)
-const LANG_LOCK = true;
 let currentLang =
   new URLSearchParams(window.location.search).get('lang') ||
   localStorage.getItem('lang') ||
   (navigator.language || 'en').slice(0, 2);
-if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = 'en';
-if (LANG_LOCK) currentLang = 'en';
+if (!CONFIG.SUPPORTED_LANGS.includes(currentLang)) currentLang = 'en';
+if (CONFIG.LANG_LOCK) currentLang = 'en';
 
 let dateFormatter = new Intl.DateTimeFormat(currentLang, {
   dateStyle: 'medium',
@@ -88,11 +1194,9 @@ function t(key, fallback) {
   return (i18n && i18n[key]) || fallback || key;
 }
 
-function renderNews(items) {
-  const wrap = qs('#newsWrap');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  const filtered = items.filter((item) => {
+// News filtering logic - separated for better maintainability
+function filterNews(items) {
+  return items.filter((item) => {
     const title = item.title?.toLowerCase() || '';
     const excerpt = item.excerpt?.toLowerCase() || '';
     const content = item.content?.toLowerCase() || '';
@@ -105,73 +1209,96 @@ function renderNews(items) {
     const matchesTags = !newsSelectedTags.size || itemTags.some((tag) => newsSelectedTags.has(tag));
     return matchesSearch && matchesTags;
   });
-  if (!filtered.length) {
-    wrap.innerHTML = sanitizeHtml(
-      `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
-        'news_empty',
-        'No news available yet.'
-      )}</div>`
-    );
-    return;
-  }
+}
+
+// Generate HTML for a single news card
+function generateNewsCard(item) {
+  const title = item.title;
+  const excerpt = item.excerpt;
+  const tags = item.tags || [];
+  const content = item.content || item.excerpt || '';
+
+  const pub = item.publishedAt ? dateFormatter.format(new Date(item.publishedAt)) : dash();
+  const upd =
+    item.updatedAt && item.updatedAt !== item.publishedAt
+      ? dateFormatter.format(new Date(item.updatedAt))
+      : null;
+
   const publishedLabel = t('news_published', 'Published');
   const updatedLabel = t('news_updated', 'Updated');
-  filtered.forEach((item) => {
-    const title = item.title;
-    const excerpt = item.excerpt;
-    const tags = item.tags || [];
-    const content = item.content || item.excerpt || '';
 
-    const pub = item.publishedAt ? dateFormatter.format(new Date(item.publishedAt)) : dash();
-    const upd =
-      item.updatedAt && item.updatedAt !== item.publishedAt
-        ? dateFormatter.format(new Date(item.updatedAt))
-        : null;
+  const article = document.createElement('article');
+  article.className =
+    'bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer transition-transform hover:-translate-y-1 shadow-lg';
+  article.tabIndex = 0;
+  article.setAttribute('role', 'button');
 
-    const article = document.createElement('article');
-    // Use explicit Tailwind utilities instead of legacy helper classes
-    article.className =
-      'bg-slate-900 border border-slate-800 rounded-lg p-6 cursor-pointer transition-transform hover:-translate-y-1 shadow-lg';
-    article.tabIndex = 0;
-    article.setAttribute('role', 'button');
-    article.innerHTML = sanitizeHtml(`
-      <h3 class="text-xl font-semibold">${esc(title)}</h3>
-      <div class="text-xs text-slate-400 mt-2 space-x-3">
-        <span>${publishedLabel}: ${esc(pub)}</span>
-        ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ''}
-      </div>
-      ${excerpt ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>` : ''}
-      ${
-        tags.length
-          ? `<div class="flex flex-wrap gap-2 mt-3">${tags
-              .map(
-                (tag) =>
-                  `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
-                    tag
-                  )}</span>`
-              )
-              .join('')}</div>`
-          : ''
-      }
-    `);
-    const open = () => openNewsModal(item, { content });
-    article.addEventListener('click', open);
-    article.addEventListener('keydown', (evt) => {
-      if (evt.key === 'Enter' || evt.key === ' ') {
-        evt.preventDefault();
-        open();
-      }
-    });
-    wrap.appendChild(article);
+  article.innerHTML = sanitizeHtml(`
+    <h3 class="text-xl font-semibold">${esc(title)}</h3>
+    <div class="text-xs text-slate-400 mt-2 space-x-3">
+      <span>${publishedLabel}: ${esc(pub)}</span>
+      ${upd ? `<span>${updatedLabel}: ${esc(upd)}</span>` : ''}
+    </div>
+    ${excerpt ? `<p class="text-sm text-slate-300 mt-3">${esc(excerpt)}</p>` : ''}
+    ${
+      tags.length
+        ? `<div class="flex flex-wrap gap-2 mt-3">${tags
+            .map(
+              (tag) =>
+                `<span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs">${esc(
+                  tag
+                )}</span>`
+            )
+            .join('')}</div>`
+        : ''
+    }
+  `);
+
+  return { article, content };
+}
+
+// Bind event listeners to news card
+function bindNewsCardEvents(article, item, content) {
+  const openModal = () => openNewsModal(item, { content });
+  article.addEventListener('click', openModal);
+  article.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Enter' || evt.key === ' ') {
+      evt.preventDefault();
+      openModal();
+    }
   });
 }
 
+// Main news rendering function - now much cleaner and focused
+function renderNews(items) {
+  return performanceMonitor.measureFunction('renderNews', () => {
+    const wrap = domCache.get('newsWrap');
+    if (!wrap) return;
+
+    wrap.innerHTML = '';
+    const filtered = filterNews(items);
+
+    if (!filtered.length) {
+      wrap.innerHTML = sanitizeHtml(
+        `<div class="border border-slate-800 bg-slate-900 rounded-lg p-6 text-center text-slate-400">${t(
+          'news_empty',
+          'No news available yet.'
+        )}</div>`
+      );
+      return;
+    }
+
+    filtered.forEach((item) => {
+      const { article, content } = generateNewsCard(item);
+      bindNewsCardEvents(article, item, content);
+      wrap.appendChild(article);
+    });
+  });
+}
 async function loadLang(lang) {
-  if (LANG_LOCK) lang = 'en';
+  if (CONFIG.LANG_LOCK) lang = 'en';
   try {
-    const res = await fetch(`/lang/${lang}.json`);
-    if (!res.ok) throw new Error('lang not found');
-    i18n = await res.json();
+    i18n = await DataLoader.loadJSON(`/lang/${lang}.json`, {}, `language ${lang}`);
     currentLang = lang;
     localStorage.setItem('lang', lang);
     dateFormatter = new Intl.DateTimeFormat(currentLang, {
@@ -186,10 +1313,10 @@ async function loadLang(lang) {
 }
 
 const sections = {
-  overview: qs('#overviewSection'),
-  devices: qs('#devicesSection'),
-  news: qs('#newsSection'),
-  pgsharp: qs('#pgsharpSection'),
+  overview: () => domCache.get('overviewSection'),
+  devices: () => domCache.get('devicesSection'),
+  news: () => domCache.get('newsSection'),
+  pgsharp: () => domCache.get('pgsharpSection'),
 };
 let activeSection = 'overview';
 
@@ -197,7 +1324,8 @@ let navButtons = [];
 
 function showSection(name = 'overview') {
   if (!sections[name]) return;
-  Object.entries(sections).forEach(([key, node]) => {
+  Object.entries(sections).forEach(([key, getNode]) => {
+    const node = getNode();
     if (!node) return;
     if (key === name) {
       node.classList.remove('hidden');
@@ -227,26 +1355,18 @@ function bindNavigation() {
 }
 
 async function loadDevices() {
-  try {
-    const res = await fetch('/data/devices.json');
-    devices = await res.json();
-  } catch (e) {
-    devices = [];
-    console.error('Failed to load devices.json', e);
-  }
-  applyFilters();
+  return performanceMonitor.measureAsyncFunction('loadDevices', async () => {
+    devices = await DataLoader.loadJSON('/data/devices.json', [], 'devices');
+    deviceFilter.updateDevices(devices);
+  });
 }
 
 async function loadNews() {
-  try {
-    const res = await fetch('/data/news.json');
-    news = await res.json();
-  } catch (e) {
-    news = [];
-    console.error('Failed to load news.json', e);
-  }
-  populateNewsTagFilter(news);
-  if (activeSection === 'news') renderNews(news);
+  return performanceMonitor.measureAsyncFunction('loadNews', async () => {
+    news = await DataLoader.loadJSON('/data/news.json', [], 'news');
+    populateNewsTagFilter(news);
+    if (activeSection === 'news') renderNews(news);
+  });
 }
 
 function populateNewsTagFilter(items) {
@@ -404,53 +1524,11 @@ function closeModal() {
   }
 }
 
-qs('#closeModal')?.addEventListener('click', closeModal);
-qs('#modalBackdrop')?.addEventListener('click', (e) => {
-  if (e.target === qs('#modalBackdrop')) closeModal();
-});
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
-});
+// Modal event handlers now managed by EventManager and data-action attributes
 
-const searchInput = qs('#searchInput');
-const typeFilter = qs('#typeFilter');
-const sortSelect = qs('#sortSelect');
-
-searchInput?.addEventListener('input', applyFilters);
-typeFilter?.addEventListener('change', applyFilters);
-sortSelect?.addEventListener('change', applyFilters);
-
+// Legacy function for backward compatibility
 function applyFilters() {
-  const wrap = qs('#gridWrap');
-  if (!wrap) return;
-  const q = (searchInput?.value || '').trim().toLowerCase();
-  const type = typeFilter?.value || 'all';
-  const sort = sortSelect?.value || 'default';
-  let filtered = devices.filter((d) => {
-    const hay = [d.model, d.brand, d.os, (d.notes || []).join(' ')].join(' ').toLowerCase();
-    const matchesSearch = q ? hay.includes(q) : true;
-    const matchesType = type === 'all' ? true : d.type === type;
-    return matchesSearch && matchesType;
-  });
-  if (sort !== 'default') {
-    filtered.sort((a, b) => {
-      if (sort === 'brand') return a.brand.localeCompare(b.brand);
-      if (sort === 'model') return a.model.localeCompare(b.model);
-      if (sort === 'os') return a.os.localeCompare(b.os);
-      if (sort === 'compatibility') {
-        const aComp = Boolean(a.compatible);
-        const bComp = Boolean(b.compatible);
-        if (aComp === bComp) {
-          const byBrand = String(a.brand || '').localeCompare(String(b.brand || ''));
-          if (byBrand !== 0) return byBrand;
-          return String(a.model || '').localeCompare(String(b.model || ''));
-        }
-        return aComp ? -1 : 1;
-      }
-      return 0;
-    });
-  }
-  renderDevices(filtered);
+  deviceFilter.applyFilters();
 }
 
 const langSelect = qs('#langSelect');
@@ -679,7 +1757,7 @@ function formatLocalTimeAtLng(lng) {
   if (typeof lng !== 'number' || Number.isNaN(lng)) return '—';
   const hoursOffset = Math.round(lng / 15);
   const now = new Date();
-  const local = new Date(now.getTime() + hoursOffset * 60 * 60 * 1000);
+  const local = new Date(now.getTime() + hoursOffset * CONFIG.TIMEZONE_OFFSET_MS);
   try {
     return local.toLocaleTimeString(currentLang, {
       hour: '2-digit',
@@ -799,22 +1877,18 @@ function renderCoords(list) {
 }
 
 function openCoordsModal(item) {
-  const backdrop = qs('#coordsModalBackdrop');
-  if (!backdrop) {
-    cerr('openCoordsModal: modal backdrop not found');
+  if (!coordsModalManager.backdrop) {
+    console.error('openCoordsModal: modal backdrop not found');
     return;
   }
-  try {
-    openCoordsModal._lastFocus = document.activeElement;
-  } catch (e) {
-    openCoordsModal._lastFocus = null;
-  }
-  backdrop.setAttribute('aria-hidden', 'false');
+
+  // Populate modal content
   qs('#coordsModalTitle').textContent = item.name || '—';
   qs('#coordsModalMeta').textContent = `Lat: ${item.lat ?? '—'} • Lng: ${item.lng ?? '—'}`;
   qs('#coordsModalNote').textContent = item.note || '';
+
   const tagsWrap = qs('#coordsModalTags');
-  if (tagsWrap)
+  if (tagsWrap) {
     tagsWrap.innerHTML = sanitizeHtml(
       (item.tags || [])
         .map(
@@ -825,6 +1899,8 @@ function openCoordsModal(item) {
         )
         .join(' ')
     );
+  }
+
   const mapsLink = qs('#coordsModalMaps');
   if (mapsLink) {
     if (typeof item.lat !== 'undefined' && typeof item.lng !== 'undefined') {
@@ -835,29 +1911,15 @@ function openCoordsModal(item) {
       mapsLink.removeAttribute('href');
     }
   }
-  backdrop.classList.remove('hidden');
-  backdrop.classList.add('flex');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => qs('#coordsModalClose')?.focus(), 0);
+
+  coordsModalManager.open();
 }
 
-function closeCoordsModal() {
-  const backdrop = qs('#coordsModalBackdrop');
-  if (!backdrop) return;
-  backdrop.setAttribute('aria-hidden', 'true');
-  backdrop.classList.add('hidden');
-  backdrop.classList.remove('flex');
-  document.body.style.overflow = '';
-  try {
-    const last = openCoordsModal._lastFocus;
-    if (last && typeof last.focus === 'function') last.focus();
-  } catch (e) {}
-}
+// closeCoordsModal function removed - now handled by coordsModalManager.close()
 
-qs('#coordsModalClose')?.addEventListener('click', closeCoordsModal);
-qs('#coordsModalBackdrop')?.addEventListener('click', (e) => {
-  if (e.target === qs('#coordsModalBackdrop')) closeCoordsModal();
-});
+// Initialize Modal Managers
+const coordsModalManager = new ModalManager('#coordsModalBackdrop', '#coordsModalClose');
+const newsModalManager = new ModalManager('#newsModalBackdrop', '#closeNewsModal');
 
 function updateCoordsTime() {
   const el = qs('#coords-time');
@@ -870,23 +1932,31 @@ function updateCoordsTime() {
     el.textContent = `${label}: ${now.toLocaleTimeString()} (${suffix})`;
   }
   tick();
-  if (!updateCoordsTime._interval) updateCoordsTime._interval = setInterval(tick, 1000);
+  if (!updateCoordsTime._interval)
+    updateCoordsTime._interval = setInterval(tick, CONFIG.CLOCK_UPDATE_INTERVAL);
 }
-const newsModalBackdrop = qs('#newsModalBackdrop');
-const closeNewsModalBtn = qs('#closeNewsModal');
-const newsModalTitle = qs('#newsModalTitle');
-const newsModalMeta = qs('#newsModalMeta');
-const newsModalBody = qs('#newsModalBody');
-const newsModalTagsWrap = qs('#newsModalTagsWrap');
-const newsModalTags = qs('#newsModalTags');
+// News Modal DOM References - using cache for better performance
+const newsModalTitle = () => domCache.get('newsModalTitle');
+const newsModalMeta = () => domCache.get('newsModalMeta');
+const newsModalBody = () => domCache.get('newsModalBody');
+const newsModalTagsWrap = () => domCache.get('newsModalTagsWrap');
+const newsModalTags = () => domCache.get('newsModalTags');
 
 function openNewsModal(original, translated = {}) {
+  if (!newsModalManager.backdrop) {
+    console.error('openNewsModal: modal backdrop not found');
+    return;
+  }
+
   const merged = {
     ...original,
     ...translated,
     tags: original.tags || [],
   };
-  newsModalTitle.textContent = merged.title;
+
+  // Populate modal content
+  newsModalTitle().textContent = merged.title;
+
   const pub = merged.publishedAt ? dateFormatter.format(new Date(merged.publishedAt)) : dash();
   const upd =
     merged.updatedAt && merged.updatedAt !== merged.publishedAt
@@ -895,15 +1965,14 @@ function openNewsModal(original, translated = {}) {
 
   const publishedLabel = t('news_published', 'Published');
   const updatedLabel = t('news_updated', 'Updated');
-  newsModalMeta.innerHTML = `
+  newsModalMeta().innerHTML = sanitizeHtml(`
     <span>${publishedLabel}: ${esc(pub)}</span>
     ${upd ? `<span class="ml-3">${updatedLabel}: ${esc(upd)}</span>` : ''}
-  `;
-  newsModalMeta.innerHTML = sanitizeHtml(newsModalMeta.innerHTML);
+  `);
 
   const body = merged.content || merged.excerpt || '';
   if (body) {
-    newsModalBody.innerHTML = sanitizeHtml(
+    newsModalBody().innerHTML = sanitizeHtml(
       body
         .split(/\n{2,}/)
         .map(
@@ -912,13 +1981,13 @@ function openNewsModal(original, translated = {}) {
         .join('')
     );
   } else {
-    newsModalBody.innerHTML = sanitizeHtml(
+    newsModalBody().innerHTML = sanitizeHtml(
       `<p>${esc(t('news_modal_no_content', 'No additional details provided.'))}</p>`
     );
   }
 
   if (merged.tags && merged.tags.length) {
-    newsModalTags.innerHTML = sanitizeHtml(
+    newsModalTags().innerHTML = sanitizeHtml(
       merged.tags
         .map(
           (tag) =>
@@ -928,45 +1997,17 @@ function openNewsModal(original, translated = {}) {
         )
         .join('')
     );
-    newsModalTagsWrap.classList.remove('hidden');
+    newsModalTagsWrap().classList.remove('hidden');
   } else {
-    newsModalTagsWrap.classList.add('hidden');
-    newsModalTags.innerHTML = '';
+    newsModalTagsWrap().classList.add('hidden');
+    newsModalTags().innerHTML = '';
   }
 
-  newsModalBackdrop.classList.remove('hidden');
-  newsModalBackdrop.classList.add('flex');
-  document.body.style.overflow = 'hidden';
-  try {
-    openNewsModal._lastFocus = document.activeElement;
-  } catch (e) {
-    openNewsModal._lastFocus = null;
-  }
-  newsModalBackdrop.setAttribute('aria-hidden', 'false');
-  setTimeout(() => qs('#closeNewsModal')?.focus(), 0);
+  newsModalManager.open();
 }
 
-function closeNewsModal() {
-  newsModalBackdrop.setAttribute('aria-hidden', 'true');
-  newsModalBackdrop.classList.add('hidden');
-  newsModalBackdrop.classList.remove('flex');
-  document.body.style.overflow = '';
-  try {
-    const last = openNewsModal._lastFocus;
-    if (last && typeof last.focus === 'function') last.focus();
-  } catch (e) {}
-}
-
-closeNewsModalBtn?.addEventListener('click', closeNewsModal);
-newsModalBackdrop?.addEventListener('click', (evt) => {
-  if (evt.target === newsModalBackdrop) closeNewsModal();
-});
-window.addEventListener('keydown', (evt) => {
-  if (evt.key === 'Escape') {
-    closeModal();
-    closeNewsModal();
-  }
-});
+// closeNewsModal function removed - now handled by newsModalManager.close()
+// Global ESC handler now managed by EventManager
 
 function setupPgSharpTabs() {
   const root = qs('#pgsharpSection');
@@ -1079,7 +2120,7 @@ window.addEventListener('load', () => {
   function update() {
     const inner = header.querySelector('.max-w-6xl');
     const logo = header.querySelector('img');
-    if (window.scrollY > 64) {
+    if (window.scrollY > CONFIG.HEADER_SHRINK_THRESHOLD) {
       if (inner) {
         inner.classList.add('h-12', 'transition-all', 'duration-150', 'ease-in-out');
         inner.classList.remove('h-16');
@@ -1104,14 +2145,7 @@ window.addEventListener('load', () => {
   update();
 })();
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// escapeHtml function removed - now using unified sanitizeAndEscape()
 
 async function loadPokeminersVersion() {
   const pkApkEl = document.getElementById('pk-apk');
@@ -1193,6 +2227,16 @@ loadLang(currentLang).then(() => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize core systems first for better performance
+  domCache.init();
+  eventManager.init();
+
+  // Enhance DataLoader with error handling
+  ErrorHandler.enhanceDataLoader();
+
+  // Initialize device filter system
+  deviceFilter.init(devices);
+
   hydrateTranslations();
   hydrateGrid();
   bindNavigation();
@@ -1227,6 +2271,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadPgsharpVersion();
   loadPokeminersVersion();
-  setInterval(loadPgsharpVersion, 30 * 60 * 1000);
-  setInterval(loadPokeminersVersion, 30 * 60 * 1000);
+  setInterval(loadPgsharpVersion, CONFIG.API_REFRESH_INTERVAL);
+  setInterval(loadPokeminersVersion, CONFIG.API_REFRESH_INTERVAL);
 });
