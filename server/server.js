@@ -87,10 +87,16 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
+      // Allow scripts from self and jsDelivr CDN (for DOMPurify)
       "script-src 'self' https://cdn.jsdelivr.net",
+      // Allow API calls to self and UptimeRobot
       "connect-src 'self' data: https://api.uptimerobot.com",
+      // Allow images from self and data URLs
       "img-src 'self' data:",
+      // Allow styles from self and HTTPS (includes Google Fonts CSS); keep inline styles for minimal runtime style injection
       "style-src 'self' 'unsafe-inline' https:",
+      // Explicitly allow font files from Google Fonts CDN
+      "font-src 'self' https://fonts.gstatic.com data:",
       "frame-ancestors 'none'",
       "object-src 'none'",
       'report-to csp-endpoint',

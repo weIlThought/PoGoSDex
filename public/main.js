@@ -2113,6 +2113,15 @@ function showSectionByName(name) {
     }
   }
 
+  // Ensure news are rendered when the News section becomes active
+  if (plain === 'news' && Array.isArray(news)) {
+    try {
+      renderNews(news);
+    } catch (e) {
+      console.error('renderNews on section switch failed:', e);
+    }
+  }
+
   // Update nav button state (ARIA + styles)
   const buttons = document.querySelectorAll('[data-section]');
   buttons.forEach((btn) => {
@@ -2136,6 +2145,8 @@ document.addEventListener('click', (ev) => {
 });
 
 window.addEventListener('load', () => {
+  const hasOverview = !!document.getElementById('overviewSection');
+  if (!hasOverview) return;
   const h = (location.hash || '').replace('#', '');
   if (h) showSectionByName(h);
   else showSectionByName('overview');
@@ -2195,6 +2206,9 @@ async function loadPokeminersVersion() {
 }
 
 async function loadPgsharpVersion() {
+  // Run only on pages that contain the PGSharp section
+  const pgRoot = document.getElementById('pgsharpSection');
+  if (!pgRoot) return;
   const pgPageEl = document.getElementById('pg-page');
   const pgApkEl = document.getElementById('pg-apk');
   const pgStatusEl = document.getElementById('pg-status');
@@ -2208,18 +2222,19 @@ async function loadPgsharpVersion() {
     const [pgData, pkData] = await Promise.all([pgRes.json(), pkRes.json()]);
 
     if (pgData.ok) {
-      pgPageEl.textContent = pgData.pageVersion || '–';
-      pgApkEl.textContent = pgData.pogoVersion || '–';
+      if (pgPageEl) pgPageEl.textContent = pgData.pageVersion || '–';
+      if (pgApkEl) pgApkEl.textContent = pgData.pogoVersion || '–';
     }
 
     if (pkData.ok) {
-      pkApkEl.textContent = pkData.apkVersion || '–';
+      if (pkApkEl) pkApkEl.textContent = pkData.apkVersion || '–';
     }
 
     if (pgData.ok && pkData.ok) {
       const pgVer = parseFloat((pgData.pogoVersion || '0').replace(/[^\d.]/g, ''));
       const pkVer = parseFloat((pkData.apkVersion || '0').replace(/[^\d.]/g, ''));
 
+      if (!pgStatusEl) return;
       if (pgVer >= pkVer) {
         pgStatusEl.textContent =
           pgVer === pkVer
@@ -2234,13 +2249,17 @@ async function loadPgsharpVersion() {
         pgStatusEl.className = 'font-semibold text-red-400';
       }
     } else {
-      pgStatusEl.textContent = '–';
-      pgStatusEl.className = 'font-semibold text-yellow-400';
+      if (pgStatusEl) {
+        pgStatusEl.textContent = '–';
+        pgStatusEl.className = 'font-semibold text-yellow-400';
+      }
     }
   } catch (err) {
     console.error('Failed to load PGSharp or Pokeminers version:', err);
-    pgStatusEl.textContent = t('pgsharp_status_error', 'Error');
-    pgStatusEl.className = 'font-semibold text-red-400';
+    if (pgStatusEl) {
+      pgStatusEl.textContent = t('pgsharp_status_error', 'Error');
+      pgStatusEl.className = 'font-semibold text-red-400';
+    }
   }
 }
 
@@ -2267,12 +2286,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   hydrateTranslations();
   hydrateGrid();
-  bindNavigation();
-  setupPgSharpTabs();
-  updateCoordsTime();
-  loadCoords();
-  // Initialize live service status from backend
-  initServiceStatus();
+
+  // Page type detection
+  const hasOverview = !!document.getElementById('overviewSection');
+  const hasPgsharp = !!document.getElementById('pgsharpSection');
+  const hasStatus = !!document.getElementById('statusCard');
+
+  if (hasOverview) {
+    bindNavigation();
+  }
+  if (hasPgsharp) {
+    setupPgSharpTabs();
+    updateCoordsTime();
+    loadCoords();
+  }
+  if (hasStatus) {
+    // Initialize live service status from backend
+    initServiceStatus();
+  }
 
   const reportForm = qs('#pgsharp-report-form');
   if (reportForm) {
@@ -2290,10 +2321,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  loadPgsharpVersion();
-  loadPokeminersVersion();
-  setInterval(loadPgsharpVersion, CONFIG.API_REFRESH_INTERVAL);
-  setInterval(loadPokeminersVersion, CONFIG.API_REFRESH_INTERVAL);
+  if (hasPgsharp) {
+    loadPgsharpVersion();
+    loadPokeminersVersion();
+    setInterval(loadPgsharpVersion, CONFIG.API_REFRESH_INTERVAL);
+    setInterval(loadPokeminersVersion, CONFIG.API_REFRESH_INTERVAL);
+  }
 
   // Wire up device details modal close interactions (button + backdrop)
   const deviceDetailsBackdrop = document.getElementById('modalBackdrop');
