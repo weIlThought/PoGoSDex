@@ -264,12 +264,23 @@ export async function createServer() {
 
       const monitor = json.monitors[0];
       const statusCode = Number(monitor.status);
-      const uptimeRatio = Number(monitor.all_time_uptime_ratio);
+      // Prefer all-time uptime; fallback to custom ratios (we requested 1-7-30, last is 30d)
+      let uptimeRatio = Number(monitor.all_time_uptime_ratio);
+      if (!Number.isFinite(uptimeRatio) && typeof monitor.custom_uptime_ratio === 'string') {
+        const parts = monitor.custom_uptime_ratio
+          .split('-')
+          .map((s) => parseFloat(String(s).trim()))
+          .filter((n) => Number.isFinite(n));
+        if (parts.length) {
+          uptimeRatio = parts[parts.length - 1];
+        }
+      }
 
       let state = 'unknown';
+      // UptimeRobot status codes: 0 paused, 1 not checked, 2 up, 8 seems down, 9 down
       if (statusCode === 2) state = 'up';
-      else if (statusCode === 9) state = 'degraded';
-      else if ([0, 1, 8].includes(statusCode)) state = 'down';
+      else if (statusCode === 8) state = 'degraded';
+      else if (statusCode === 9 || statusCode === 0 || statusCode === 1) state = 'down';
 
       const payload = {
         state,
