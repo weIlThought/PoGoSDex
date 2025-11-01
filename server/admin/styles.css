@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+
+/* Admin spezifische Styles (aus admin.css) */
+:root{--bg:#0b1020;--fg:#e6ecff;--muted:#94a3b8;--card:#151b2e;--primary:#3b82f6;--danger:#ef4444;--border:#25304d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;color:var(--fg);background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+.container{max-width:420px;margin:8vh auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+h1,h2,h3{margin:0 0 12px}
+.form{display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:6px}
+input,select,textarea{background:#0e1428;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:10px}
+.btn{background:#1c2545;color:var(--fg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--primary);border-color:transparent}
+.btn.danger{background:var(--danger);border-color:transparent}
+.error{color:#ffd2d2}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);background:#0c142b;position:sticky;top:0;z-index:10}
+.brand{font-weight:700}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 48px)}
+.sidebar{border-right:1px solid var(--border);padding:12px;background:#0d152e}
+.tab{display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
+.tab.active{background:var(--card);border-color:var(--border)}
+.content{padding:16px}
+.panel-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.tools{display:flex;gap:8px;align-items:center}
+.table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border)}
+.table th,.table td{border-bottom:1px solid var(--border);padding:8px;text-align:left}
+.table tbody tr:nth-child(even){background:#111834}
+.hidden{display:none}
+.toast{position:fixed;bottom:16px;right:16px;background:#0b122a;border:1px solid var(--border);padding:10px 12px;border-radius:10px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.modal-form{min-width:320px}
+menu{display:flex;justify-content:flex-end;gap:8px;margin:12px 0 0;padding:0}
+@media (max-width: 860px){.layout{grid-template-columns:1fr}.sidebar{display:flex;gap:8px}.tab{flex:1}}

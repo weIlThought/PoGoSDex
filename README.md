@@ -166,3 +166,22 @@ Hinweis: In Railway kannst du ENV-Referenzen wie `${{VAR}}` verwenden. Lokale `.
 
 - Bild-Uploads sind als URL-Feld integriert. Ein echtes Datei-Upload-Backend kann später ergänzt werden (z. B. S3/Cloudflare R2 + Signierte Uploads).
 - Pagination/Suche sind rudimentär (Query `?q=` und Limit/Offset intern begrenzt) – kann erweitert werden.
+
+### Admin-CSS mit Tailwind bauen (optional)
+
+Das Adminpanel verwendet eine separate `admin.css`. Standardmäßig ist das eine kleine, manuell gepflegte CSS-Datei. Falls du Tailwind dafür nutzen möchtest, ist die Pipeline vorbereitet:
+
+- Quelle: `server/admin/styles.css` (enthält `@import 'tailwindcss'` + die bisherigen Admin-Regeln)
+- Ziel: `server/admin/admin.css`
+
+Build/Watch:
+
+```powershell
+# Nur Admin-CSS beobachten
+npm run dev:admin
+
+# Admin-CSS minifiziert bauen (z. B. für Deploy)
+npm run build:admin
+```
+
+Hinweis: Die Tailwind-Content-Globs scannen auch `server/**/*.{html,js,...}` – Admin-HTML/-JS wird also berücksichtigt.

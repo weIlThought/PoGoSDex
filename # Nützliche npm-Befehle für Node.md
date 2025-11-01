@@ -58,6 +58,8 @@ npm update
 # Aktualisiert alle Pakete auf die neueste erlaubte Version
 
 npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify
+
+npx --yes @tailwindcss/cli -i .\server\admin\styles.css -o .\server\admin\admin.css --minify
 # styles.css to output.css
 ```
 

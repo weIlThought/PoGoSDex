@@ -4,7 +4,7 @@ import typography from '@tailwindcss/typography';
 
 export default {
   // Tailwind v4 is JIT-only and scans these paths for used classes.
-  content: ['./public/**/*.{html,js}', './server/**/*.{js,ts,jsx,tsx}'],
+  content: ['./public/**/*.{html,js}', './server/**/*.{html,js,ts,jsx,tsx}'],
   // Keep some theme extensions so existing layouts retain expected spacing and sizes.
   theme: {
     extend: {
