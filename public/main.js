@@ -1023,18 +1023,21 @@ class PerformanceMonitor {
   }
 
   logPerformanceReport() {
+    // Only log in debug mode to reduce console noise in production
+    if (!CONFIG.DEBUG) return;
+
     const summary = this.getPerformanceSummary();
-    const pageLoadMetrics = this.getMetrics('pageLoad')[0];
+    const pageLoadMetrics = this.getMetrics('pageLoad')[0] || {};
 
     console.group('🚀 Performance Report');
     console.log('Page Load Metrics:', pageLoadMetrics);
     console.log('Performance Summary:', summary);
 
-    if (summary.slowFunctions.length > 0) {
+    if (Array.isArray(summary.slowFunctions) && summary.slowFunctions.length > 0) {
       console.warn('Slow Functions Detected:', summary.slowFunctions);
     }
 
-    if (summary.layoutShifts > 0) {
+    if (Number(summary.layoutShifts) > 0) {
       console.warn('Layout Shifts Detected:', summary.layoutShifts);
     }
 

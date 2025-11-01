@@ -11,6 +11,7 @@
     "dev:css": "npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --watch",
     "build:css": "npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify",
     "start": "node server/server.js",
+    "bump:assets": "node scripts/bump-asset-version.mjs",
     "lint": "eslint . --ext .js --ignore-path .gitignore",
     "lint:fix": "eslint . --ext .js --fix --ignore-path .gitignore",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
