@@ -1578,7 +1578,11 @@ function applyTranslations() {
     const key = el.getAttribute('data-i18n');
     const target = el.getAttribute('data-i18n-target') || 'text';
     const fallback =
-      target === 'placeholder' ? el.getAttribute('placeholder') || '' : el.textContent || '';
+      target === 'placeholder'
+        ? el.getAttribute('placeholder') || ''
+        : target === 'html'
+        ? el.innerHTML
+        : el.textContent || '';
     const value = t(key, fallback);
     if (target === 'text') el.textContent = value;
     if (target === 'html') el.innerHTML = sanitizeHtml(value);
@@ -2071,6 +2075,10 @@ function showSectionByName(name) {
   }
 
   document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach((s) => {
+    // Keep persistent sections (like legal/status) always visible
+    if (s.id === 'statusSection' || s.id === 'legalSection') {
+      return;
+    }
     if (s === target) {
       s.classList.remove('hidden');
       s.style.display = '';
@@ -2269,7 +2277,10 @@ async function loadPgsharpVersion() {
 window.loadCoords = loadCoords;
 
 setupDeviceBuilder();
-showSectionByName(activeSection);
+// Only perform section switching on pages that contain the overview
+if (document.getElementById('overviewSection')) {
+  showSectionByName(activeSection);
+}
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
