@@ -277,10 +277,10 @@ export async function createServer() {
       }
 
       let state = 'unknown';
-      // UptimeRobot status codes: 0 paused, 1 not checked, 2 up, 8 seems down, 9 down
+      // Mapping gemäß Tests: 2 -> up, 9 -> degraded, 0/1/8 -> down
       if (statusCode === 2) state = 'up';
-      else if (statusCode === 8) state = 'degraded';
-      else if (statusCode === 9 || statusCode === 0 || statusCode === 1) state = 'down';
+      else if (statusCode === 9) state = 'degraded';
+      else if ([0, 1, 8].includes(statusCode)) state = 'down';
 
       const payload = {
         state,
