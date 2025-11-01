@@ -2075,10 +2075,6 @@ function showSectionByName(name) {
   }
 
   document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach((s) => {
-    // Keep persistent sections (like legal/status) always visible
-    if (s.id === 'statusSection' || s.id === 'legalSection') {
-      return;
-    }
     if (s === target) {
       s.classList.remove('hidden');
       s.style.display = '';
@@ -2145,6 +2141,23 @@ function showSectionByName(name) {
   });
 
   activeSection = plain;
+
+  // Show legal and status ONLY on overview section
+  const overviewActive = plain === 'overview';
+  const legal = document.getElementById('legalSection');
+  const status = document.getElementById('statusSection');
+  [legal, status].forEach((el) => {
+    if (!el) return;
+    if (overviewActive) {
+      el.classList.remove('hidden');
+      el.style.display = '';
+      el.setAttribute('aria-hidden', 'false');
+    } else {
+      el.classList.add('hidden');
+      el.style.display = 'none';
+      el.setAttribute('aria-hidden', 'true');
+    }
+  });
 }
 
 document.addEventListener('click', (ev) => {
