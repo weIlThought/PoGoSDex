@@ -7,7 +7,7 @@
     "content": "Highlights\n- Android 15 compatibility is now officially supported.\n- Joystick presets gained smoother acceleration and dead zone toggles.\n- Softban detection received stability fixes to avoid false positives.\n\nTip\nAfter updating, restart your device once to ensure the new background services register correctly.",
     "publishedAt": "2025-09-30T10:00:00Z",
     "updatedAt": "2025-10-05T08:30:00Z",
-    "tags": ["Update", "Android 15", "Bugfix"]
+    "tags": ["Update", "Bugfix"]
   },
   {
     "id": "pgsharp-event-oct",

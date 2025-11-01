@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • PoGoSDex</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">PoGoSDex Admin</div>
+      <nav class="actions">
+        <button id="logoutBtn" class="btn">Logout</button>
+      </nav>
+    </header>
+    <main class="layout">
+      <aside class="sidebar" role="tablist" aria-orientation="vertical">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="devices">
+          Devices
+        </button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="news">News</button>
+      </aside>
+      <section class="content">
+        <div id="toast" class="toast" hidden></div>
+
+        <section id="panel-devices" class="panel" role="tabpanel">
+          <div class="panel-header">
+            <h2>Devices</h2>
+            <div class="tools">
+              <input id="devSearch" type="search" placeholder="Suche…" />
+              <button id="devRefresh" class="btn">Neu laden</button>
+              <button id="devNew" class="btn primary">Neu</button>
+            </div>
+          </div>
+          <table class="table" id="devTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Bild</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <dialog id="devDialog">
+            <form id="devForm" method="dialog" class="form modal-form">
+              <h3 id="devDialogTitle">Device</h3>
+              <input type="hidden" name="id" />
+              <label><span>Name</span><input name="name" required /></label>
+              <label
+                ><span>Status</span>
+                <select name="status">
+                  <option value="active">active</option>
+                  <option value="inactive">inactive</option>
+                  <option value="deprecated">deprecated</option>
+                </select>
+              </label>
+              <label><span>Bild-URL</span><input name="image_url" placeholder="https://…" /></label>
+              <label
+                ><span>Beschreibung</span><textarea name="description" rows="5"></textarea>
+              </label>
+              <menu>
+                <button value="cancel" class="btn">Abbrechen</button>
+                <button id="devSave" value="confirm" class="btn primary">Speichern</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="panel-news" class="panel hidden" role="tabpanel">
+          <div class="panel-header">
+            <h2>News</h2>
+            <div class="tools">
+              <input id="newsSearch" type="search" placeholder="Suche…" />
+              <button id="newsRefresh" class="btn">Neu laden</button>
+              <button id="newsNew" class="btn primary">Neu</button>
+            </div>
+          </div>
+          <table class="table" id="newsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Titel</th>
+                <th>Publiziert</th>
+                <th>Bild</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <dialog id="newsDialog">
+            <form id="newsForm" method="dialog" class="form modal-form">
+              <h3 id="newsDialogTitle">News</h3>
+              <input type="hidden" name="id" />
+              <label><span>Titel</span><input name="title" required /></label>
+              <label
+                ><span>Publiziert</span>
+                <select name="published">
+                  <option value="1">Ja</option>
+                  <option value="0">Nein</option>
+                </select>
+              </label>
+              <label><span>Bild-URL</span><input name="image_url" placeholder="https://…" /></label>
+              <label
+                ><span>Inhalt</span><textarea name="content" rows="8" required></textarea>
+              </label>
+              <menu>
+                <button value="cancel" class="btn">Abbrechen</button>
+                <button id="newsSave" value="confirm" class="btn primary">Speichern</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+      </section>
+    </main>
+    <script defer src="/admin.js"></script>
+  </body>
+</html>

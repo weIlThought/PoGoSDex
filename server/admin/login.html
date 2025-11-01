@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Login • PoGoSDex</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <h1>Admin Login</h1>
+        <form id="loginForm" class="form">
+          <label>
+            <span>Benutzername</span>
+            <input type="text" name="username" required autocomplete="username" />
+          </label>
+          <label>
+            <span>Passwort</span>
+            <input type="password" name="password" required autocomplete="current-password" />
+          </label>
+          <button type="submit" class="btn primary">Einloggen</button>
+        </form>
+        <p id="loginError" class="error" aria-live="polite" hidden></p>
+      </section>
+    </main>
+    <script defer src="/admin.js"></script>
+  </body>
+</html>

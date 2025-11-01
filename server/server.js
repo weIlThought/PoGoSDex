@@ -14,6 +14,15 @@ import rateLimit from 'express-rate-limit';
 import winston from 'winston';
 import { fileURLToPath } from 'url';
 import { initDB } from './db.js';
+import { migrate, seedAdminIfNeeded } from './mysql.js';
+import {
+  authMiddleware,
+  handleLogin,
+  handleLogout,
+  requireAuth,
+  requireCsrf,
+  meHandler,
+} from './auth.js';
 import { validateData } from './validate-data.js';
 import fetch from 'node-fetch';
 
@@ -71,10 +80,23 @@ export async function createServer() {
   // Skip heavy startup routines during tests
   if (!isTest) {
     await initDB();
+    // Initialize MySQL schema and seed admin if configured
+    try {
+      await migrate();
+    } catch (e) {
+      logger && logger.error && logger.error(`❌ MySQL migration failed: ${String(e)}`);
+    }
+    try {
+      await seedAdminIfNeeded(logger);
+    } catch (e) {
+      logger && logger.warn && logger.warn(`⚠️ Admin seed skipped: ${String(e)}`);
+    }
     await validateData(logger);
   }
 
   const app = express();
+  // Auth cookie parser
+  authMiddleware(app);
 
   app.set('trust proxy', trustProxy || 1);
 
@@ -218,6 +240,29 @@ export async function createServer() {
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // --- Auth routes ---
+  const loginLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.post('/admin/login', loginLimiter, async (req, res) => {
+    try {
+      await handleLogin(req, res);
+    } catch (e) {
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+  app.post('/admin/logout', requireAuth, (req, res) => {
+    try {
+      handleLogout(req, res);
+    } catch {
+      res.json({ ok: true });
+    }
+  });
+  app.get('/admin/me', requireAuth, meHandler);
+
   app.get('/status/uptime', async (_req, res) => {
     if (!uptimeApiKey) {
       return res.status(501).json({ error: 'Uptime monitoring not configured' });
@@ -342,6 +387,47 @@ export async function createServer() {
     })
   );
 
+  // --- Admin frontend (served from private folder, auth required) ---
+  const adminDir = path.join(__dirname, 'admin');
+  app.get('/login.html', async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'login.html');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+  app.get('/admin.html', requireAuth, async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'admin.html');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+  app.get('/admin.js', requireAuth, async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'admin.js');
+      res.type('application/javascript');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+  app.get('/admin.css', requireAuth, async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'admin.css');
+      res.type('text/css');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+
   app.get('/data/coords.json', (req, res) => {
     const coordsPath = path.join(__dirname, '..', 'data', 'coords.json');
     res.type('application/json');
@@ -439,6 +525,108 @@ export async function createServer() {
       res.send(out);
     });
   }
+
+  // --- Admin API (protected, JSON) ---
+  const parsePagination = (req) => {
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)));
+    const offset = Math.max(0, Number(req.query.offset || 0));
+    const q = (req.query.q || '').toString().trim() || undefined;
+    return { limit, offset, q };
+  };
+
+  const { listDevices, getDevice, createDevice, updateDevice, deleteDevice } = await import(
+    './repositories.js'
+  );
+  const { listNews, getNews, createNews, updateNews, deleteNews } = await import(
+    './repositories.js'
+  );
+
+  // Devices
+  app.get('/admin/api/devices', requireAuth, async (req, res) => {
+    try {
+      const rows = await listDevices(parsePagination(req));
+      res.json({ items: rows });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to list devices' });
+    }
+  });
+  app.post('/admin/api/devices', requireAuth, requireCsrf, async (req, res) => {
+    const { name, description, image_url, status } = req.body || {};
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
+    try {
+      const created = await createDevice({ name: name.trim(), description, image_url, status });
+      res.status(201).json(created);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to create device' });
+    }
+  });
+  app.put('/admin/api/devices/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const updated = await updateDevice(id, req.body || {});
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to update device' });
+    }
+  });
+  app.delete('/admin/api/devices/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const ok = await deleteDevice(id);
+      if (!ok) return res.status(404).json({ error: 'not found' });
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to delete device' });
+    }
+  });
+
+  // News
+  app.get('/admin/api/news', requireAuth, async (req, res) => {
+    try {
+      const rows = await listNews(parsePagination(req));
+      res.json({ items: rows });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to list news' });
+    }
+  });
+  app.post('/admin/api/news', requireAuth, requireCsrf, async (req, res) => {
+    const { title, content, image_url, published } = req.body || {};
+    if (!title || typeof title !== 'string')
+      return res.status(400).json({ error: 'title required' });
+    if (!content || typeof content !== 'string')
+      return res.status(400).json({ error: 'content required' });
+    try {
+      const created = await createNews({ title: title.trim(), content, image_url, published });
+      res.status(201).json(created);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to create news' });
+    }
+  });
+  app.put('/admin/api/news/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const updated = await updateNews(id, req.body || {});
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to update news' });
+    }
+  });
+  app.delete('/admin/api/news/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const ok = await deleteNews(id);
+      if (!ok) return res.status(404).json({ error: 'not found' });
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to delete news' });
+    }
+  });
 
   app.use((req, res, next) => {
     if (req.path === '/data/coords.json') {
