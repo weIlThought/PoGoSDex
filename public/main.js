@@ -2375,7 +2375,7 @@ const STATUS_COLORS = {
   unknown: 'bg-slate-400',
 };
 
-function setStatusUI({ state = 'unknown', uptimeRatio = null } = {}) {
+function setStatusUI({ state = 'unknown', uptimeRatio = null, uptimeText = null } = {}) {
   const indicator = document.getElementById('statusIndicator');
   const message = document.getElementById('statusMessage');
   const uptime = document.getElementById('statusUptime');
@@ -2395,7 +2395,9 @@ function setStatusUI({ state = 'unknown', uptimeRatio = null } = {}) {
 
   // Uptime text
   const label = t('status_uptime_label', 'Uptime');
-  if (typeof uptimeRatio === 'number' && Number.isFinite(uptimeRatio)) {
+  if (typeof uptimeText === 'string') {
+    uptime.textContent = `${label}: ${uptimeText}`;
+  } else if (typeof uptimeRatio === 'number' && Number.isFinite(uptimeRatio)) {
     uptime.textContent = `${label}: ${uptimeRatio.toFixed(2)} %`;
   } else {
     uptime.textContent = `${label}: ${t('status_uptime_na', '— %')}`;
@@ -2405,9 +2407,19 @@ function setStatusUI({ state = 'unknown', uptimeRatio = null } = {}) {
 async function fetchServiceStatus() {
   try {
     const res = await fetch('/status/uptime', { cache: 'no-store' });
+    if (res.status === 501) {
+      // Not configured
+      setStatusUI({
+        state: 'unknown',
+        uptimeRatio: null,
+        uptimeText: t('status_uptime_not_configured', 'Not configured'),
+      });
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (!data || !('state' in data)) throw new Error('Invalid payload');
+    if (!data || (!('state' in data) && !('uptimeRatio' in data)))
+      throw new Error('Invalid payload');
     setStatusUI({ state: data.state || 'unknown', uptimeRatio: data.uptimeRatio ?? null });
   } catch (err) {
     // Leave previous UI, but ensure we don't show endless loading

@@ -57,6 +57,7 @@ export async function createServer() {
   }
 
   const uptimeApiKey = process.env.UPTIMEROBOT_API_KEY || '';
+  const uptimeMonitorId = process.env.UPTIMEROBOT_MONITOR_ID || '';
 
   const logger = winston.createLogger({
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -89,8 +90,8 @@ export async function createServer() {
       "form-action 'self'",
       // Allow scripts from self and jsDelivr CDN (for DOMPurify)
       "script-src 'self' https://cdn.jsdelivr.net",
-      // Allow API calls to self and UptimeRobot
-      "connect-src 'self' data: https://api.uptimerobot.com",
+      // Allow API calls to self and UptimeRobot; include jsDelivr for optional sourcemap requests in DevTools
+      "connect-src 'self' data: https://api.uptimerobot.com https://cdn.jsdelivr.net",
       // Allow images from self and data URLs
       "img-src 'self' data:",
       // Allow styles from self and HTTPS (includes Google Fonts CSS); keep inline styles for minimal runtime style injection
@@ -233,6 +234,10 @@ export async function createServer() {
       params.append('format', 'json');
       params.append('logs', '0');
       params.append('custom_uptime_ratios', '1-7-30');
+      if (uptimeMonitorId) {
+        // If a specific monitor is configured, request only that monitor
+        params.append('monitors', uptimeMonitorId);
+      }
 
       const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
         method: 'POST',
@@ -245,8 +250,16 @@ export async function createServer() {
       }
 
       const json = await response.json();
-      if (json.stat !== 'ok' || !Array.isArray(json.monitors) || !json.monitors.length) {
+      if (json.stat !== 'ok' || !Array.isArray(json.monitors)) {
         throw new Error('Invalid UptimeRobot payload');
+      }
+
+      if (!json.monitors.length) {
+        // No monitor found (e.g., wrong monitor ID). Return graceful unknown state.
+        const payload = { state: 'unknown', statusCode: null, uptimeRatio: null, checkedAt: null };
+        uptimeCache.payload = payload;
+        uptimeCache.timestamp = now;
+        return res.json(payload);
       }
 
       const monitor = json.monitors[0];

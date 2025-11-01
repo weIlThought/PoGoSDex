@@ -221,5 +221,6 @@
   "status_degraded": "Degraded performance",
   "status_down": "Service interruption",
   "status_unknown": "Status unknown",
-  "status_uptime_label": "Uptime"
+  "status_uptime_label": "Uptime",
+  "status_uptime_not_configured": "Not configured"
 }
