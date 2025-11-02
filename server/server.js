@@ -273,6 +273,16 @@ export async function createServer() {
       res.status(503).json({ ok: false, db: false });
     }
   });
+  // Public alias for healthcheck under /api as well (some proxies whitelist /api/*)
+  app.get('/api/health', async (_req, res) => {
+    try {
+      const p = getPool();
+      await p.query('SELECT 1');
+      res.json({ ok: true, db: true });
+    } catch {
+      res.status(503).json({ ok: false, db: false });
+    }
+  });
 
   app.get('/status/uptime', async (_req, res) => {
     if (!uptimeApiKey) {

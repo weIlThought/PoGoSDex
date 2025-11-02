@@ -3,12 +3,23 @@ import mysql from 'mysql2/promise';
 function parseMysqlUrl(urlStr) {
   try {
     const u = new URL(urlStr);
+    const protocol = (u.protocol || '').replace(':', '').toLowerCase();
+    if (protocol && !['mysql', 'mariadb'].includes(protocol)) return null;
+    const params = Object.fromEntries(u.searchParams.entries());
+    const sslParam = (params.ssl || params.sslmode || '').toString().toLowerCase();
+    // Accept ssl=true, sslmode=required/prefer
+    const ssl =
+      sslParam === 'true' || sslParam === '1' || sslParam === 'required' || sslParam === 'prefer';
+    const sslSkipVerify =
+      sslParam === 'skip-verify' || sslParam === 'allow' || sslParam === 'insecure';
     return {
       host: u.hostname,
       port: u.port ? Number(u.port) : 3306,
       user: decodeURIComponent(u.username || 'root'),
       password: decodeURIComponent(u.password || ''),
       database: (u.pathname || '/').replace(/^\//, '') || 'railway',
+      ssl,
+      sslSkipVerify,
     };
   } catch {
     return null;
@@ -17,7 +28,12 @@ function parseMysqlUrl(urlStr) {
 
 function resolveMysqlConfig(env = process.env) {
   // Prefer full URLs if provided
-  const urlFromEnv = env.MYSQL_URL || env.MYSQL_PUBLIC_URL;
+  const urlFromEnv =
+    env.MYSQL_URL ||
+    env.MYSQL_PUBLIC_URL ||
+    env.DATABASE_URL ||
+    env.CLEARDB_DATABASE_URL ||
+    env.JAWSDB_URL;
   const parsed = urlFromEnv ? parseMysqlUrl(urlFromEnv) : null;
   if (parsed) {
     // If URL points to Railway private domain but a TCP proxy is available, prefer the proxy
@@ -62,8 +78,12 @@ function resolveMysqlConfig(env = process.env) {
   const user = env.MYSQL_USER || env.MYSQLUSER || 'root';
   const password = env.MYSQL_PASSWORD || env.MYSQLPASSWORD || env.MYSQL_ROOT_PASSWORD || '';
   const database = env.MYSQL_DATABASE || env.MYSQLDATABASE || 'railway';
+  // Optional SSL toggle via env
+  const sslEnv = (env.MYSQL_SSL || '').toString().toLowerCase();
+  const ssl = sslEnv === 'true' || sslEnv === '1' || sslEnv === 'required' || sslEnv === 'on';
+  const sslSkipVerify = sslEnv === 'skip-verify' || sslEnv === 'allow' || sslEnv === 'insecure';
 
-  return { host, port, user, password, database };
+  return { host, port, user, password, database, ssl, sslSkipVerify };
 }
 
 let pool;
@@ -71,6 +91,13 @@ let pool;
 export function getPool() {
   if (!pool) {
     const cfg = resolveMysqlConfig();
+    // Safe one-line log to help diagnose prod connectivity
+    try {
+      const mode = cfg.sslSkipVerify ? 'skip-verify' : cfg.ssl ? 'on' : 'off';
+      console.info(
+        `[mysql] connecting host=${cfg.host} port=${cfg.port} db=${cfg.database} ssl=${mode}`
+      );
+    } catch {}
     pool = mysql.createPool({
       host: cfg.host,
       port: Number(cfg.port || 3306),
@@ -81,6 +108,11 @@ export function getPool() {
       connectionLimit: 10,
       queueLimit: 0,
       timezone: 'Z',
+      ...(cfg.sslSkipVerify
+        ? { ssl: { rejectUnauthorized: false } }
+        : cfg.ssl
+        ? { ssl: { rejectUnauthorized: true } }
+        : {}),
     });
   }
   return pool;

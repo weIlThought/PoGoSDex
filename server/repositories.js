@@ -10,8 +10,9 @@ export async function listDevices({ q, limit = 50, offset = 0 } = {}) {
     sql += ' WHERE name LIKE ? OR description LIKE ?';
     params.push(`%${q}%`, `%${q}%`);
   }
-  sql += ' ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?';
-  params.push(Number(limit), Number(offset));
+  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
+  const off = Math.max(0, Number(offset) || 0);
+  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   return rows;
 }
@@ -70,8 +71,9 @@ export async function listNews({ q, limit = 50, offset = 0 } = {}) {
     sql += ' WHERE title LIKE ? OR content LIKE ?';
     params.push(`%${q}%`, `%${q}%`);
   }
-  sql += ' ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?';
-  params.push(Number(limit), Number(offset));
+  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
+  const off = Math.max(0, Number(offset) || 0);
+  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   return rows;
 }
@@ -136,8 +138,9 @@ export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
     params.push(`%${q}%`, `%${q}%`);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
-  sql += ' ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?';
-  params.push(Number(limit), Number(offset));
+  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
+  const off = Math.max(0, Number(offset) || 0);
+  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseTags = (t) => {
     if (t == null) return null;
