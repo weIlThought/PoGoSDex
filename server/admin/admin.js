@@ -1119,7 +1119,8 @@
       const u = await ensureMe();
       if (!u) return;
       attachEvents();
-      await loadDevices();
+      // Standard-Ansicht: Dashboard zuerst anzeigen
+      switchTab('dashboard');
     }
   });
 })();
