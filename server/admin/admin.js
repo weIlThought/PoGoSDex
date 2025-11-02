@@ -148,14 +148,26 @@
     applySortIndicators('devTable', sortState.devices);
     for (const d of items) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${d.id}</td><td>${escapeHtml(d.name)}</td><td>${escapeHtml(
-        d.status || ''
-      )}</td><td>${
-        d.image_url ? `<a href="${attr(d.image_url)}" target="_blank">Bild</a>` : ''
-      }</td><td>
-        <button class="btn" data-edit="${d.id}">Bearbeiten</button>
-        <button class="btn danger" data-del="${d.id}">Löschen</button>
-      </td>`;
+      const notesCount = Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0;
+      const rootsCount = Array.isArray(d.root_links) ? d.root_links.length : d.root_links ? 1 : 0;
+      const manuf = d.manufacturer_url
+        ? `<a href="${attr(d.manufacturer_url)}" target="_blank">Link</a>`
+        : '';
+      tr.innerHTML = `<td>${d.id}</td>
+        <td>${escapeHtml(d.model || d.name || '')}</td>
+        <td>${escapeHtml(d.brand || '')}</td>
+        <td>${escapeHtml(d.type || '')}</td>
+        <td>${escapeHtml(d.os || '')}</td>
+        <td>${d.compatible ? 'Yes' : 'No'}</td>
+        <td>${escapeHtml(d.price_range || '')}</td>
+        <td>${escapeHtml(d.pogo_comp || '')}</td>
+        <td>${manuf}</td>
+        <td>${notesCount}</td>
+        <td>${rootsCount}</td>
+        <td>
+          <button class="btn" data-edit="${d.id}">Bearbeiten</button>
+          <button class="btn danger" data-del="${d.id}">Löschen</button>
+        </td>`;
       tbody.appendChild(tr);
     }
   }
@@ -166,10 +178,18 @@
     form.reset();
     if (data) {
       form.id.value = data.id;
-      form.name.value = data.name || '';
-      form.status.value = data.status || 'active';
-      form.image_url.value = data.image_url || '';
-      form.description.value = data.description || '';
+      form.model.value = data.model || '';
+      form.brand.value = data.brand || '';
+      form.type.value = data.type || '';
+      form.os.value = data.os || '';
+      form.compatible.value = data.compatible ? '1' : '0';
+      form.price_range.value = data.price_range || '';
+      form.pogo_comp.value = data.pogo_comp || '';
+      form.manufacturer_url.value = data.manufacturer_url || '';
+      form.notes.value = Array.isArray(data.notes) ? data.notes.join('\n') : data.notes || '';
+      form.root_links.value = Array.isArray(data.root_links)
+        ? data.root_links.join('\n')
+        : data.root_links || '';
       qs('#devDialogTitle').textContent = 'Device bearbeiten';
     } else {
       qs('#devDialogTitle').textContent = 'Device erstellen';
@@ -180,14 +200,30 @@
   async function saveDevice() {
     const form = qs('#devForm');
     const id = form.id.value ? Number(form.id.value) : null;
+    const notes = (form.notes.value || '')
+      .split(/\n|,/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const rootLinks = (form.root_links.value || '')
+      .split(/\n|,/)
+      .map((s) => s.trim())
+      .filter(Boolean);
     const payload = {
-      name: form.name.value.trim(),
-      status: form.status.value,
-      image_url: form.image_url.value.trim() || null,
-      description: form.description.value.trim() || null,
+      model: form.model.value.trim(),
+      brand: form.brand.value.trim() || null,
+      type: form.type.value.trim() || null,
+      os: form.os.value.trim() || null,
+      compatible: form.compatible.value === '1',
+      price_range: form.price_range.value.trim() || null,
+      pogo_comp: form.pogo_comp.value.trim() || null,
+      manufacturer_url: form.manufacturer_url.value.trim() || null,
+      notes,
+      root_links: rootLinks,
+      // legacy: backend falls back to name if provided
+      name: form.model.value.trim(),
     };
-    if (!payload.name) {
-      showToast('Name ist erforderlich', 'error');
+    if (!payload.model) {
+      showToast('Model ist erforderlich', 'error');
       return;
     }
     try {
@@ -241,14 +277,18 @@
     applySortIndicators('newsTable', sortState.news);
     for (const n of items) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${n.id}</td><td>${escapeHtml(n.title)}</td><td>${
-        n.published ? 'Ja' : 'Nein'
-      }</td><td>${
-        n.image_url ? `<a href="${attr(n.image_url)}" target="_blank">Bild</a>` : ''
-      }</td><td>
-        <button class="btn" data-edit-news="${n.id}">Bearbeiten</button>
-        <button class="btn danger" data-del-news="${n.id}">Löschen</button>
-      </td>`;
+      const tags = Array.isArray(n.tags) ? n.tags.join(', ') : n.tags || '';
+      tr.innerHTML = `<td>${escapeHtml(n.slug || '')}</td>
+        <td>${escapeHtml(n.date || '')}</td>
+        <td>${escapeHtml(n.title)}</td>
+        <td>${escapeHtml(n.excerpt || '')}</td>
+        <td>${escapeHtml(n.published_at || '')}</td>
+        <td>${escapeHtml(n.updated_at_ext || '')}</td>
+        <td>${escapeHtml(tags)}</td>
+        <td>
+          <button class="btn" data-edit-news="${n.id}">Bearbeiten</button>
+          <button class="btn danger" data-del-news="${n.id}">Löschen</button>
+        </td>`;
       tbody.appendChild(tr);
     }
   }
@@ -259,10 +299,14 @@
     form.reset();
     if (data) {
       form.id.value = data.id;
+      form.slug.value = data.slug || '';
+      form.date.value = data.date || '';
       form.title.value = data.title || '';
-      form.published.value = String(data.published ? 1 : 0);
-      form.image_url.value = data.image_url || '';
+      form.excerpt.value = data.excerpt || '';
       form.content.value = data.content || '';
+      form.published_at.value = data.published_at ? data.published_at.replace('Z', '') : '';
+      form.updated_at_ext.value = data.updated_at_ext ? data.updated_at_ext.replace('Z', '') : '';
+      form.tags.value = Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || '';
       qs('#newsDialogTitle').textContent = 'News bearbeiten';
     } else {
       qs('#newsDialogTitle').textContent = 'News erstellen';
@@ -274,10 +318,17 @@
     const form = qs('#newsForm');
     const id = form.id.value ? Number(form.id.value) : null;
     const payload = {
+      slug: form.slug.value.trim() || null,
+      date: form.date.value || null,
       title: form.title.value.trim(),
-      published: form.published.value === '1',
-      image_url: form.image_url.value.trim() || null,
+      excerpt: form.excerpt.value.trim() || null,
       content: form.content.value.trim(),
+      published_at: form.published_at.value || null,
+      updated_at_ext: form.updated_at_ext.value || null,
+      tags: (form.tags.value || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
     };
     if (!payload.title || !payload.content) {
       showToast('Titel und Inhalt sind erforderlich', 'error');
@@ -341,6 +392,7 @@
     qs('#devRefresh')?.addEventListener('click', loadDevices);
     qs('#devSearch')?.addEventListener('change', loadDevices);
     qs('#devNew')?.addEventListener('click', () => openDevDialog(null));
+    qs('#devCancel')?.addEventListener('click', () => qs('#devDialog')?.close());
     qs('#devSave')?.addEventListener('click', (e) => {
       e.preventDefault();
       saveDevice();
@@ -349,18 +401,20 @@
       const t = e.target.closest('button');
       if (!t) return;
       if (t.dataset.edit) {
-        // fetch current and open
         const id = Number(t.dataset.edit);
-        const res = await fetch(`/admin/api/devices?limit=1&offset=0&q=${id}`);
-        await loadDevices(); // ensure list (for simplicity, just reload)
-        // A small trick: we don't have an endpoint get by id open; simplify by reading row
         const row = t.closest('tr');
         openDevDialog({
           id,
-          name: row.children[1].textContent,
-          status: row.children[2].textContent,
-          image_url: row.children[3].querySelector('a')?.getAttribute('href') || '',
-          description: '',
+          model: row.children[1]?.textContent || '',
+          brand: row.children[2]?.textContent || '',
+          type: row.children[3]?.textContent || '',
+          os: row.children[4]?.textContent || '',
+          compatible: row.children[5]?.textContent === 'Yes',
+          price_range: row.children[6]?.textContent || '',
+          pogo_comp: row.children[7]?.textContent || '',
+          manufacturer_url: row.children[8]?.querySelector('a')?.getAttribute('href') || '',
+          notes: [],
+          root_links: [],
         });
       }
       if (t.dataset.del) {
@@ -372,6 +426,7 @@
     qs('#newsRefresh')?.addEventListener('click', loadNews);
     qs('#newsSearch')?.addEventListener('change', loadNews);
     qs('#newsNew')?.addEventListener('click', () => openNewsDialog(null));
+    qs('#newsCancel')?.addEventListener('click', () => qs('#newsDialog')?.close());
     qs('#newsSave')?.addEventListener('click', (e) => {
       e.preventDefault();
       saveNews();
@@ -381,13 +436,19 @@
       if (!t) return;
       if (t.dataset.editNews) {
         const id = Number(t.dataset.editNews);
-        // naive: open dialog with partial info; for full content we'd need GET by id
         const row = t.closest('tr');
         openNewsDialog({
           id,
-          title: row.children[1].textContent,
-          published: row.children[2].textContent === 'Ja',
-          image_url: row.children[3].querySelector('a')?.getAttribute('href') || '',
+          slug: row.children[0]?.textContent || '',
+          date: row.children[1]?.textContent || '',
+          title: row.children[2]?.textContent || '',
+          excerpt: row.children[3]?.textContent || '',
+          published_at: row.children[4]?.textContent || '',
+          updated_at_ext: row.children[5]?.textContent || '',
+          tags: (row.children[6]?.textContent || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
           content: '',
         });
       }
@@ -401,6 +462,7 @@
     qs('#coordsSearch')?.addEventListener('change', loadCoords);
     qs('#coordsCategory')?.addEventListener('change', loadCoords);
     qs('#coordsNew')?.addEventListener('click', () => openCoordsDialog(null));
+    qs('#coordsCancel')?.addEventListener('click', () => qs('#coordsDialog')?.close());
     qs('#coordsSave')?.addEventListener('click', (e) => {
       e.preventDefault();
       saveCoord();
@@ -458,6 +520,28 @@
     // Overview events
     qs('#ovRefresh')?.addEventListener('click', loadOverview);
     qs('#ovRange')?.addEventListener('change', loadOverview);
+
+    // Close dialogs on backdrop click (CSP-safe, no inline handlers)
+    const initDialogClose = (dlg) => {
+      if (!dlg) return;
+      // Some browsers fire click on <dialog> when clicking backdrop
+      dlg.addEventListener('click', (e) => {
+        if (e.target === dlg) dlg.close();
+      });
+      // Fallback: check bounds on mousedown
+      dlg.addEventListener('mousedown', (e) => {
+        const rect = dlg.getBoundingClientRect();
+        const inside =
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom;
+        if (!inside) dlg.close();
+      });
+    };
+    initDialogClose(qs('#devDialog'));
+    initDialogClose(qs('#newsDialog'));
+    initDialogClose(qs('#coordsDialog'));
   }
 
   // Coords

@@ -174,6 +174,74 @@ export async function migrate() {
     hits INT NOT NULL DEFAULT 0,
     PRIMARY KEY (day)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // --- Extend schema to match JSON structures (idempotent column adds) ---
+  // Helper to check/add column
+  const hasColumn = async (table, column) => {
+    const [rows] = await p.execute(
+      `SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    );
+    return Number(rows?.[0]?.c || 0) > 0;
+  };
+
+  // devices extra columns
+  if (!(await hasColumn('devices', 'model'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN model VARCHAR(191) NULL AFTER name`);
+  }
+  if (!(await hasColumn('devices', 'brand'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN brand VARCHAR(191) NULL AFTER model`);
+  }
+  if (!(await hasColumn('devices', 'type'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN type VARCHAR(50) NULL AFTER brand`);
+  }
+  if (!(await hasColumn('devices', 'os'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN os VARCHAR(100) NULL AFTER type`);
+  }
+  if (!(await hasColumn('devices', 'compatible'))) {
+    await p.execute(
+      `ALTER TABLE devices ADD COLUMN compatible TINYINT(1) NOT NULL DEFAULT 0 AFTER os`
+    );
+  }
+  if (!(await hasColumn('devices', 'notes'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN notes JSON NULL AFTER compatible`);
+  }
+  if (!(await hasColumn('devices', 'manufacturer_url'))) {
+    await p.execute(
+      `ALTER TABLE devices ADD COLUMN manufacturer_url VARCHAR(512) NULL AFTER notes`
+    );
+  }
+  if (!(await hasColumn('devices', 'root_links'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN root_links JSON NULL AFTER manufacturer_url`);
+  }
+  if (!(await hasColumn('devices', 'price_range'))) {
+    await p.execute(
+      `ALTER TABLE devices ADD COLUMN price_range VARCHAR(100) NULL AFTER root_links`
+    );
+  }
+  if (!(await hasColumn('devices', 'pogo_comp'))) {
+    await p.execute(`ALTER TABLE devices ADD COLUMN pogo_comp VARCHAR(100) NULL AFTER price_range`);
+  }
+
+  // news extra columns to mirror JSON structure
+  if (!(await hasColumn('news', 'slug'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN slug VARCHAR(191) NULL UNIQUE AFTER id`);
+  }
+  if (!(await hasColumn('news', 'date'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN date DATE NULL AFTER slug`);
+  }
+  if (!(await hasColumn('news', 'excerpt'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN excerpt TEXT NULL AFTER title`);
+  }
+  if (!(await hasColumn('news', 'published_at'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN published_at DATETIME NULL AFTER excerpt`);
+  }
+  if (!(await hasColumn('news', 'updated_at_ext'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN updated_at_ext DATETIME NULL AFTER published_at`);
+  }
+  if (!(await hasColumn('news', 'tags'))) {
+    await p.execute(`ALTER TABLE news ADD COLUMN tags JSON NULL AFTER image_url`);
+  }
 }
 
 export async function seedAdminIfNeeded(logger) {

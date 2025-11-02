@@ -120,9 +120,16 @@
             <thead>
               <tr>
                 <th data-sort="id">ID</th>
-                <th data-sort="name">Name</th>
-                <th data-sort="status">Status</th>
-                <th>Bild</th>
+                <th data-sort="model">Model</th>
+                <th data-sort="brand">Brand</th>
+                <th data-sort="type">Type</th>
+                <th data-sort="os">OS</th>
+                <th data-sort="compatible">Compatible</th>
+                <th data-sort="price_range">PriceRange</th>
+                <th data-sort="pogo_comp">PoGoComp</th>
+                <th>Manufacturer</th>
+                <th>Notes</th>
+                <th>RootLinks</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
@@ -132,23 +139,39 @@
             <form id="devForm" method="dialog" class="form modal-form">
               <h3 id="devDialogTitle" class="modal-title">Device</h3>
               <input type="hidden" name="id" />
-              <label><span>Name</span><input name="name" required /></label>
-              <label
-                ><span>Status</span>
-                <select name="status">
-                  <option value="active">active</option>
-                  <option value="inactive">inactive</option>
-                  <option value="deprecated">deprecated</option>
+              <label><span>Model</span><input name="model" required /></label>
+              <label><span>Brand</span><input name="brand" /></label>
+              <label><span>Type</span><input name="type" /></label>
+              <label><span>OS</span><input name="os" placeholder="Android 13" /></label>
+              <label>
+                <span>Compatible</span>
+                <select name="compatible">
+                  <option value="1">Yes</option>
+                  <option value="0">No</option>
                 </select>
               </label>
-              <label><span>Bild-URL</span><input name="image_url" placeholder="https://…" /></label>
               <label
-                ><span>Beschreibung</span><textarea name="description" rows="5"></textarea>
+                ><span>PriceRange</span><input name="price_range" placeholder="Flagship"
+              /></label>
+              <label><span>PoGoComp</span><input name="pogo_comp" placeholder="Excellent" /></label>
+              <label
+                ><span>Manufacturer URL</span
+                ><input name="manufacturer_url" placeholder="https://…"
+              /></label>
+              <label
+                ><span>Notes (eine pro Zeile)</span
+                ><textarea name="notes" rows="4" placeholder="Note 1&#10;Note 2"></textarea>
+              </label>
+              <label
+                ><span>RootLinks (eine pro Zeile)</span
+                ><textarea
+                  name="root_links"
+                  rows="3"
+                  placeholder="https://…&#10;https://…"
+                ></textarea>
               </label>
               <menu class="modal-actions">
-                <button type="button" class="btn" onclick="this.closest('dialog').close()">
-                  Abbrechen
-                </button>
+                <button id="devCancel" type="button" class="btn">Abbrechen</button>
                 <button id="devSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>
@@ -167,10 +190,13 @@
           <table class="table" id="newsTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
+                <th data-sort="slug">ID</th>
+                <th data-sort="date">Datum</th>
                 <th data-sort="title">Titel</th>
-                <th data-sort="published">Publiziert</th>
-                <th>Bild</th>
+                <th data-sort="excerpt">Excerpt</th>
+                <th data-sort="published_at">PublishedAt</th>
+                <th data-sort="updated_at_ext">UpdatedAt</th>
+                <th>Tags</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
@@ -180,22 +206,24 @@
             <form id="newsForm" method="dialog" class="form modal-form">
               <h3 id="newsDialogTitle" class="modal-title">News</h3>
               <input type="hidden" name="id" />
+              <label><span>Slug (ID)</span><input name="slug" placeholder="pgsharp-1-47" /></label>
+              <label><span>Datum</span><input name="date" type="date" /></label>
               <label><span>Titel</span><input name="title" required /></label>
-              <label
-                ><span>Publiziert</span>
-                <select name="published">
-                  <option value="1">Ja</option>
-                  <option value="0">Nein</option>
-                </select>
-              </label>
-              <label><span>Bild-URL</span><input name="image_url" placeholder="https://…" /></label>
+              <label><span>Excerpt</span><textarea name="excerpt" rows="3"></textarea></label>
               <label
                 ><span>Inhalt</span><textarea name="content" rows="8" required></textarea>
               </label>
+              <label
+                ><span>Published At</span><input name="published_at" type="datetime-local"
+              /></label>
+              <label
+                ><span>Updated At</span><input name="updated_at_ext" type="datetime-local"
+              /></label>
+              <label
+                ><span>Tags (Komma-separiert)</span><input name="tags" placeholder="Update, Bugfix"
+              /></label>
               <menu class="modal-actions">
-                <button type="button" class="btn" onclick="this.closest('dialog').close()">
-                  Abbrechen
-                </button>
+                <button id="newsCancel" type="button" class="btn">Abbrechen</button>
                 <button id="newsSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>
@@ -251,9 +279,7 @@
                 ><span>Tags (Komma-separiert)</span><input name="tags" placeholder="park, top10"
               /></label>
               <menu class="modal-actions">
-                <button type="button" class="btn" onclick="this.closest('dialog').close()">
-                  Abbrechen
-                </button>
+                <button id="coordsCancel" type="button" class="btn">Abbrechen</button>
                 <button id="coordsSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>

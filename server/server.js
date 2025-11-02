@@ -598,10 +598,43 @@ export async function createServer() {
     }
   });
   app.post('/admin/api/devices', requireAuth, requireCsrf, async (req, res) => {
-    const { name, description, image_url, status } = req.body || {};
-    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
+    const {
+      name,
+      description,
+      image_url,
+      status,
+      model,
+      brand,
+      type,
+      os,
+      compatible,
+      notes,
+      manufacturer_url,
+      root_links,
+      price_range,
+      pogo_comp,
+    } = req.body || {};
+    // Require at least model (preferred) or name
+    const deviceName =
+      name && typeof name === 'string' ? name.trim() : model && String(model).trim();
+    if (!deviceName) return res.status(400).json({ error: 'model or name required' });
     try {
-      const created = await createDevice({ name: name.trim(), description, image_url, status });
+      const created = await createDevice({
+        name: deviceName,
+        description,
+        image_url,
+        status,
+        model,
+        brand,
+        type,
+        os,
+        compatible,
+        notes,
+        manufacturer_url,
+        root_links,
+        price_range,
+        pogo_comp,
+      });
       res.status(201).json(created);
     } catch (e) {
       console.error('[api] createDevice failed:', e && e.message ? e.message : e);
@@ -644,13 +677,36 @@ export async function createServer() {
     }
   });
   app.post('/admin/api/news', requireAuth, requireCsrf, async (req, res) => {
-    const { title, content, image_url, published } = req.body || {};
+    const {
+      id: slug,
+      slug: slugAlt,
+      date,
+      title,
+      excerpt,
+      content,
+      image_url,
+      published,
+      publishedAt,
+      updatedAt,
+      tags,
+    } = req.body || {};
     if (!title || typeof title !== 'string')
       return res.status(400).json({ error: 'title required' });
     if (!content || typeof content !== 'string')
       return res.status(400).json({ error: 'content required' });
     try {
-      const created = await createNews({ title: title.trim(), content, image_url, published });
+      const created = await createNews({
+        slug: slugAlt || slug || null,
+        date: date || null,
+        title: title.trim(),
+        excerpt: excerpt || null,
+        content,
+        image_url: image_url || null,
+        published,
+        published_at: publishedAt || null,
+        updated_at_ext: updatedAt || null,
+        tags,
+      });
       res.status(201).json(created);
     } catch (e) {
       console.error('[api] createNews failed:', e && e.message ? e.message : e);
@@ -661,7 +717,31 @@ export async function createServer() {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
     try {
-      const updated = await updateNews(id, req.body || {});
+      const {
+        id: slug,
+        slug: slugAlt,
+        date,
+        title,
+        excerpt,
+        content,
+        image_url,
+        published,
+        publishedAt,
+        updatedAt,
+        tags,
+      } = req.body || {};
+      const updated = await updateNews(id, {
+        slug: slugAlt || slug,
+        date,
+        title,
+        excerpt,
+        content,
+        image_url,
+        published,
+        published_at: publishedAt,
+        updated_at_ext: updatedAt,
+        tags,
+      });
       if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
     } catch (e) {
