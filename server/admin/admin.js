@@ -3,6 +3,63 @@
   const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
   const $toast = () => qs('#toast');
 
+  // --- Lightweight i18n for Admin UI (toasts/messages) ---
+  const ADMIN_I18N = {
+    de: {
+      toast_pulls_failed: 'Pull Requests laden fehlgeschlagen',
+      toast_archive_failed: 'Archiv laden fehlgeschlagen',
+      toast_devices_list_failed: 'Geräteliste fehlgeschlagen: {err}',
+      toast_devices_list_failed_generic: 'Geräteliste fehlgeschlagen',
+      toast_model_required: 'Model ist erforderlich',
+      toast_saved: 'Gespeichert',
+      toast_save_failed: 'Speichern fehlgeschlagen',
+      toast_deleted: 'Gelöscht',
+      toast_delete_failed: 'Löschen fehlgeschlagen',
+      toast_news_list_failed: 'News-Laden fehlgeschlagen: {err}',
+      toast_news_list_failed_generic: 'News-Laden fehlgeschlagen',
+      toast_news_required: 'Titel und Inhalt sind erforderlich',
+      toast_coords_list_failed: 'Coords-Laden fehlgeschlagen: {err}',
+      toast_coords_list_failed_generic: 'Coords-Laden fehlgeschlagen',
+      toast_proposal_accepted: 'Vorschlag angenommen',
+      toast_proposal_accepted_with_id: 'Vorschlag angenommen – Gerät ID: {id}',
+      toast_accept_failed: 'Annehmen fehlgeschlagen',
+      toast_reject_ok: 'Vorschlag abgelehnt',
+      toast_reject_failed: 'Ablehnen fehlgeschlagen',
+    },
+    en: {
+      toast_pulls_failed: 'Failed to load pull requests',
+      toast_archive_failed: 'Failed to load archive',
+      toast_devices_list_failed: 'Failed to load devices: {err}',
+      toast_devices_list_failed_generic: 'Failed to load devices',
+      toast_model_required: 'Model is required',
+      toast_saved: 'Saved',
+      toast_save_failed: 'Save failed',
+      toast_deleted: 'Deleted',
+      toast_delete_failed: 'Delete failed',
+      toast_news_list_failed: 'Failed to load news: {err}',
+      toast_news_list_failed_generic: 'Failed to load news',
+      toast_news_required: 'Title and content are required',
+      toast_coords_list_failed: 'Failed to load coords: {err}',
+      toast_coords_list_failed_generic: 'Failed to load coords',
+      toast_proposal_accepted: 'Proposal approved',
+      toast_proposal_accepted_with_id: 'Proposal approved – Device ID: {id}',
+      toast_accept_failed: 'Approve failed',
+      toast_reject_ok: 'Proposal rejected',
+      toast_reject_failed: 'Reject failed',
+    },
+  };
+  const adminLang = (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en';
+  function tAdmin(key, fallback, params = {}) {
+    const dict = ADMIN_I18N[adminLang] || ADMIN_I18N.en;
+    let out = (dict && dict[key]) || ADMIN_I18N.en[key] || fallback || key;
+    if (out && params && typeof params === 'object') {
+      for (const [k, v] of Object.entries(params)) {
+        out = out.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }
+    }
+    return out;
+  }
+
   function showToast(msg, type = 'info') {
     const t = $toast();
     if (!t) return;
@@ -95,6 +152,8 @@
     if (name === 'devices') loadDevices();
     if (name === 'news') loadNews();
     if (name === 'coords') loadCoords();
+    if (name === 'pulls') loadPulls();
+    if (name === 'archive') loadArchive();
   }
 
   // Sorting state and helpers
@@ -102,6 +161,8 @@
     devices: { key: 'id', dir: 'desc' },
     news: { key: 'id', dir: 'desc' },
     coords: { key: 'id', dir: 'desc' },
+    pulls: { key: 'id', dir: 'desc' },
+    archive: { key: 'id', dir: 'desc' },
   };
 
   function applySortIndicators(tableId, { key, dir }) {
@@ -122,6 +183,77 @@
     });
   }
 
+  // Pull Requests (Proposals)
+  async function loadPulls() {
+    const q = (qs('#pullsSearch')?.value || '').trim();
+    const url = new URL('/admin/api/proposals', location.origin);
+    url.searchParams.set('status', 'pending');
+    if (q) url.searchParams.set('q', q);
+    const res = await fetch(url);
+    if (res.status === 401) {
+      location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      showToast(tAdmin('toast_pulls_failed'), 'error');
+      return;
+    }
+    const json = await res.json();
+    const items = sortItems(json.items, sortState.pulls);
+    const tbody = qs('#pullsTable tbody');
+    tbody.innerHTML = '';
+    applySortIndicators('pullsTable', sortState.pulls);
+    for (const d of items) {
+      const notesCount = Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0;
+      const rootsCount = Array.isArray(d.root_links) ? d.root_links.length : d.root_links ? 1 : 0;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${d.id}</td>
+        <td>${escapeHtml(d.model || '')}</td>
+        <td>${escapeHtml(d.brand || '')}</td>
+        <td>${escapeHtml(d.type || '')}</td>
+        <td>${escapeHtml(d.os || '')}</td>
+        <td>${d.compatible ? 'Yes' : 'No'}</td>
+        <td>${notesCount}</td>
+        <td>${rootsCount}</td>
+        <td>
+          <button class="btn" data-approve="${d.id}">Annehmen</button>
+          <button class="btn danger" data-reject="${d.id}">Ablehnen</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  async function loadArchive() {
+    const q = (qs('#archiveSearch')?.value || '').trim();
+    const url = new URL('/admin/api/proposals', location.origin);
+    url.searchParams.set('status', 'rejected');
+    if (q) url.searchParams.set('q', q);
+    const res = await fetch(url);
+    if (res.status === 401) {
+      location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      showToast(tAdmin('toast_archive_failed'), 'error');
+      return;
+    }
+    const json = await res.json();
+    const items = sortItems(json.items, sortState.archive);
+    const tbody = qs('#archiveTable tbody');
+    tbody.innerHTML = '';
+    applySortIndicators('archiveTable', sortState.archive);
+    for (const d of items) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${d.id}</td>
+        <td>${escapeHtml(d.model || '')}</td>
+        <td>${escapeHtml(d.brand || '')}</td>
+        <td>${escapeHtml(d.type || '')}</td>
+        <td>${escapeHtml(d.os || '')}</td>
+        <td>${escapeHtml(d.rejected_at || '')}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
   // Devices
   async function loadDevices() {
     const q = (qs('#devSearch')?.value || '').trim();
@@ -135,9 +267,12 @@
     if (!res.ok) {
       try {
         const msg = await res.text();
-        showToast(`Geräteliste fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+        showToast(
+          tAdmin('toast_devices_list_failed', undefined, { err: msg.slice(0, 120) }),
+          'error'
+        );
       } catch {
-        showToast('Geräteliste fehlgeschlagen', 'error');
+        showToast(tAdmin('toast_devices_list_failed_generic'), 'error');
       }
       return;
     }
@@ -227,7 +362,7 @@
       name: form.model.value.trim(),
     };
     if (!payload.model) {
-      showToast('Model ist erforderlich', 'error');
+      showToast(tAdmin('toast_model_required'), 'error');
       return;
     }
     try {
@@ -237,10 +372,10 @@
         await postJson('/admin/api/devices', payload, { csrf: state.csrf });
       }
       qs('#devDialog').close();
-      showToast('Gespeichert');
+      showToast(tAdmin('toast_saved'));
       await loadDevices();
     } catch (e) {
-      showToast('Speichern fehlgeschlagen', 'error');
+      showToast(tAdmin('toast_save_failed'), 'error');
     }
   }
 
@@ -248,10 +383,10 @@
     if (!confirm('Wirklich löschen?')) return;
     try {
       await del(`/admin/api/devices/${id}`, { csrf: state.csrf });
-      showToast('Gelöscht');
+      showToast(tAdmin('toast_deleted'));
       await loadDevices();
     } catch (e) {
-      showToast('Löschen fehlgeschlagen', 'error');
+      showToast(tAdmin('toast_delete_failed'), 'error');
     }
   }
 
@@ -268,9 +403,9 @@
     if (!res.ok) {
       try {
         const msg = await res.text();
-        showToast(`News-Laden fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+        showToast(tAdmin('toast_news_list_failed', undefined, { err: msg.slice(0, 120) }), 'error');
       } catch {
-        showToast('News-Laden fehlgeschlagen', 'error');
+        showToast(tAdmin('toast_news_list_failed_generic'), 'error');
       }
       return;
     }
@@ -340,7 +475,7 @@
         .filter(Boolean),
     };
     if (!payload.title || !payload.content) {
-      showToast('Titel und Inhalt sind erforderlich', 'error');
+      showToast(tAdmin('toast_news_required'), 'error');
       return;
     }
     try {
@@ -350,10 +485,10 @@
         await postJson('/admin/api/news', payload, { csrf: state.csrf });
       }
       qs('#newsDialog').close();
-      showToast('Gespeichert');
+      showToast(tAdmin('toast_saved'));
       await loadNews();
     } catch (e) {
-      showToast('Speichern fehlgeschlagen', 'error');
+      showToast(tAdmin('toast_save_failed'), 'error');
     }
   }
 
@@ -361,10 +496,10 @@
     if (!confirm('Wirklich löschen?')) return;
     try {
       await del(`/admin/api/news/${id}`, { csrf: state.csrf });
-      showToast('Gelöscht');
+      showToast(tAdmin('toast_deleted'));
       await loadNews();
     } catch (e) {
-      showToast('Löschen fehlgeschlagen', 'error');
+      showToast(tAdmin('toast_delete_failed'), 'error');
     }
   }
 
@@ -556,6 +691,71 @@
       })
     );
 
+    // Pulls
+    qs('#pullsRefresh')?.addEventListener('click', loadPulls);
+    qs('#pullsSearch')?.addEventListener('change', loadPulls);
+    qs('#pullsTable')?.addEventListener('click', async (e) => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      if (t.dataset.approve) {
+        try {
+          const resp = await postJson(
+            `/admin/api/proposals/${Number(t.dataset.approve)}/approve`,
+            {},
+            { csrf: state.csrf }
+          );
+          const id = resp?.device_id || resp?.deviceId || resp?.device || null;
+          showToast(
+            id
+              ? tAdmin('toast_proposal_accepted_with_id', undefined, { id })
+              : tAdmin('toast_proposal_accepted')
+          );
+          await loadPulls();
+          // Nach dem Annehmen automatisch die Devices-Liste aktualisieren und zur Devices-Ansicht wechseln
+          switchTab('devices');
+          await loadDevices();
+        } catch (e) {
+          showToast(tAdmin('toast_accept_failed'), 'error');
+        }
+      }
+      if (t.dataset.reject) {
+        try {
+          await postJson(
+            `/admin/api/proposals/${Number(t.dataset.reject)}/reject`,
+            {},
+            { csrf: state.csrf }
+          );
+          showToast(tAdmin('toast_reject_ok'));
+          await loadPulls();
+        } catch (e) {
+          showToast(tAdmin('toast_reject_failed'), 'error');
+        }
+      }
+    });
+
+    qsa('#pullsTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.pulls;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadPulls();
+      })
+    );
+
+    // Archive
+    qs('#archiveRefresh')?.addEventListener('click', loadArchive);
+    qs('#archiveSearch')?.addEventListener('change', loadArchive);
+    qsa('#archiveTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.archive;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadArchive();
+      })
+    );
+
     // Overview events
     qs('#ovRefresh')?.addEventListener('click', loadOverview);
     qs('#ovRange')?.addEventListener('change', loadOverview);
@@ -598,9 +798,12 @@
     if (!res.ok) {
       try {
         const msg = await res.text();
-        showToast(`Coords-Laden fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+        showToast(
+          tAdmin('toast_coords_list_failed', undefined, { err: msg.slice(0, 120) }),
+          'error'
+        );
       } catch {
-        showToast('Coords-Laden fehlgeschlagen', 'error');
+        showToast(tAdmin('toast_coords_list_failed_generic'), 'error');
       }
       return;
     }

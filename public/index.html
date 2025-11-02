@@ -154,10 +154,10 @@
           <section class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 class="text-xl font-semibold" data-i18n="device_builder_title"> Prepare a new device entry </h3>
-                <p class="text-sm text-slate-300" data-i18n="device_builder_intro"> Fill out the form to generate a JSON snippet you can paste into data/devices.json. </p>
+                <h3 class="text-xl font-semibold" data-i18n="device_builder_title"> Vorschlag für neues Gerät einreichen </h3>
+                <p class="text-sm text-slate-300" data-i18n="device_builder_intro"> Fülle das Formular aus und reiche deinen Vorschlag ein. Er erscheint im Admin‑Bereich unter “Pull Requests” und wird geprüft. </p>
               </div>
-              <button id="deviceModalOpen" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_open_modal"> Open builder </button>
+              <button id="deviceModalOpen" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_open_modal"> Formular öffnen </button>
             </div>
           </section>
         </section>
@@ -293,12 +293,14 @@
           <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6" role="document" tabindex="-1">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_builder_title"> Prepare a new device entry </h3>
-                <p class="text-xs text-slate-400" data-i18n="device_builder_intro"> Fill out the form to generate a JSON snippet you can paste into data/devices.json. </p>
+                <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_builder_title"> Vorschlag für neues Gerät </h3>
+                <p class="text-xs text-slate-400" data-i18n="device_builder_intro"> Sende deinen Vorschlag direkt an das Team. Wir prüfen ihn und fügen das Gerät ggf. hinzu. </p>
               </div>
               <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close" aria-label="Close builder"> Close </button>
             </div>
             <form id="deviceBuilderForm" class="grid md:grid-cols-2 gap-3" autocomplete="off">
+              <!-- Honeypot Feld gegen Bots: bitte leer lassen -->
+              <input type="text" id="builderHP" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden" />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
@@ -311,16 +313,11 @@
               <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderNotes" placeholder="Notes (comma separated)" data-i18n-target="placeholder" data-i18n="placeholder_notes"></textarea>
               <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderRootLinks" placeholder="Root Links (comma separated URLs)" data-i18n-target="placeholder" data-i18n="placeholder_rootlinks"></textarea>
               <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
-                <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_clear"> Clear </button>
-                <a href="https://github.com/weIlThought/pogosdex-data/pulls" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition" data-i18n="device_builder_upload"> ↥ Upload (Pull Request) </a>
-                <button type="submit" class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_submit"> Generate JSON </button>
-                <button type="button" id="copyDeviceJson" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_copy"> Copy JSON </button>
+                <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_clear"> Zurücksetzen </button>
+                <button type="submit" class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_submit"> Vorschlag einreichen </button>
               </div>
             </form>
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-              <pre id="deviceJsonOutput" class="whitespace-pre-wrap text-xs text-slate-200"></pre>
-            </div>
-            <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_builder_empty"> Fill in the form to generate JSON. </p>
+            <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_builder_empty"> Fülle das Formular aus und sende deinen Vorschlag ab. </p>
           </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>

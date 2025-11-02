@@ -1363,14 +1363,14 @@ function bindNavigation() {
 
 async function loadDevices() {
   return performanceMonitor.measureAsyncFunction('loadDevices', async () => {
-    devices = await DataLoader.loadJSON('/data/devices.json', [], 'devices');
+    devices = await DataLoader.loadJSON('/api/devices', [], 'devices');
     deviceFilter.updateDevices(devices);
   });
 }
 
 async function loadNews() {
   return performanceMonitor.measureAsyncFunction('loadNews', async () => {
-    news = await DataLoader.loadJSON('/data/news.json', [], 'news');
+    news = await DataLoader.loadJSON('/api/news', [], 'news');
     populateNewsTagFilter(news);
     if (activeSection === 'news') renderNews(news);
   });
@@ -1604,8 +1604,6 @@ function hydrateTranslations() {
 }
 
 const deviceBuilderForm = qs('#deviceBuilderForm');
-const deviceJsonOutput = qs('#deviceJsonOutput');
-const copyDeviceJsonBtn = qs('#copyDeviceJson');
 const deviceBuilderStatus = qs('#deviceBuilderStatus');
 const deviceModal = qs('#deviceModal');
 const deviceModalOpenBtn = qs('#deviceModalOpen');
@@ -1620,16 +1618,11 @@ function setBuilderStatus(key) {
 
 function setupDeviceBuilder() {
   if (!deviceBuilderForm) return;
-  copyDeviceJsonBtn.disabled = true;
   setBuilderStatus('device_builder_empty');
-  deviceJsonOutput.textContent = '';
 
   deviceBuilderForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const entry = {
-      id: `${qs('#builderBrand').value}-${qs('#builderModel').value}`
-        .toLowerCase()
-        .replace(/\s+/g, '-'),
+    const payload = {
       brand: qs('#builderBrand').value.trim(),
       model: qs('#builderModel').value.trim(),
       os: qs('#builderOs').value.trim(),
@@ -1644,28 +1637,35 @@ function setupDeviceBuilder() {
         .value.split(',')
         .map((n) => n.trim())
         .filter(Boolean),
+      // honeypot field: should remain empty
+      hp: qs('#builderHP')?.value?.trim() || '',
     };
-    if (!entry.brand || !entry.model) {
+    if (!payload.model) {
       setBuilderStatus('device_builder_empty');
-      copyDeviceJsonBtn.disabled = true;
-      deviceJsonOutput.textContent = '';
       return;
     }
-    if (!entry.priceRange) delete entry.priceRange;
-    const jsonString = JSON.stringify(entry, null, 2);
-    deviceJsonOutput.textContent = jsonString;
-    copyDeviceJsonBtn.disabled = false;
-    setBuilderStatus('device_builder_result_hint');
-  });
-
-  copyDeviceJsonBtn?.addEventListener('click', async () => {
-    if (!deviceJsonOutput.textContent) return;
-    try {
-      await navigator.clipboard.writeText(deviceJsonOutput.textContent);
-      setBuilderStatus('device_builder_copied');
-    } catch (err) {
-      console.error('Clipboard copy failed', err);
-    }
+    (async () => {
+      try {
+        const res = await fetch('/api/device-proposals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        setBuilderStatus('device_builder_copied');
+        const el = domCache.query('#deviceBuilderStatus');
+        if (el)
+          el.textContent = t('device_builder_success', 'Danke! Dein Vorschlag wurde eingereicht.');
+        deviceBuilderForm.reset();
+      } catch (err) {
+        const el = domCache.query('#deviceBuilderStatus');
+        if (el)
+          el.textContent = t(
+            'device_builder_error',
+            'Leider fehlgeschlagen. Bitte später erneut versuchen.'
+          );
+      }
+    })();
   });
 
   deviceModalOpenBtn?.addEventListener('click', () => {
@@ -1687,11 +1687,10 @@ function setupDeviceBuilder() {
 
   deviceFormClearBtn?.addEventListener('click', () => {
     deviceBuilderForm?.reset();
-    if (deviceJsonOutput) deviceJsonOutput.textContent = '';
     if (deviceBuilderStatus)
       deviceBuilderStatus.textContent = t(
         'device_builder_empty',
-        'Fill in the form to generate JSON.'
+        'Fülle das Formular aus und sende deinen Vorschlag ab.'
       );
   });
 }
@@ -1743,9 +1742,9 @@ let coordsFilterTag = null;
 // `flattenCoords` was removed because it's not used — keep helper small and avoid unused-vars lint errors.
 
 async function loadCoords() {
-  debug('📡 Lade /data/coords.json ...');
+  debug('📡 Lade /api/coords ...');
   try {
-    const res = await fetch(`/data/coords.json?ts=${Date.now()}`, {
+    const res = await fetch(`/api/coords?ts=${Date.now()}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1753,13 +1752,7 @@ async function loadCoords() {
 
     clog('json empfangen:', json);
 
-    let coords = [];
-    if (Array.isArray(json)) {
-      coords = json;
-    } else if (json && typeof json === 'object') {
-      coords = Object.values(json).flat();
-    }
-
+    const coords = Array.isArray(json) ? json : [];
     if (!coords.length) {
       console.warn(t('coords_load_none', '⚠️ No coordinates found in coords.json.'));
       return;

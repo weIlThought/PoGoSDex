@@ -129,9 +129,11 @@ export async function createServer() {
     res.setHeader('Content-Security-Policy', cspDirectives);
     res.setHeader(
       'Report-To',
-      JSON.stringify({
-        group: 'csp-endpoint',
-        max_age: 10886400,
+      if (!isTest) {
+        // Missbrauchsschutz: strengeres Rate-Limit (IP-basiert)
+        const proposalLimiterShort = rateLimit({ windowMs: 10 * 60 * 1000, limit: 5 }); // 5 / 10min
+        const proposalLimiterDay = rateLimit({ windowMs: 24 * 60 * 60 * 1000, limit: 50 }); // 50 / Tag
+        app.post('/api/device-proposals', proposalLimiterShort, proposalLimiterDay, async (req, res) => {
         endpoints: [{ url: '/csp-report' }],
       })
     );
@@ -143,8 +145,41 @@ export async function createServer() {
     try {
       const result = await getPgsharpVersionCached();
       res.json(result);
-    } catch (e) {
+              rootLinks,
+              // optional anti-bot Felder
+              hp,
+              cfTurnstileToken,
       res.status(500).json({ ok: false, error: String(e) });
+            // Honeypot: falls Bots ein verstecktes Feld ausfüllen, brechen wir ab
+            if (typeof hp === 'string' && hp.trim() !== '') {
+              return res.status(200).json({ ok: true }); // ruhig bleiben, aber ignorieren
+            }
+            // Optional: Cloudflare Turnstile Validierung, falls konfiguriert
+            if (process.env.TURNSTILE_SECRET) {
+              if (!cfTurnstileToken || typeof cfTurnstileToken !== 'string') {
+                return res.status(400).json({ error: 'captcha required' });
+              }
+              try {
+                const verifyRes = await fetch(
+                  'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                      secret: process.env.TURNSTILE_SECRET,
+                      response: cfTurnstileToken,
+                      remoteip: req.ip || '',
+                    }),
+                  }
+                );
+                const verifyJson = await verifyRes.json();
+                if (!verifyJson.success) {
+                  return res.status(400).json({ error: 'captcha failed' });
+                }
+              } catch {
+                return res.status(400).json({ error: 'captcha verify error' });
+              }
+            }
     }
   });
 
@@ -461,42 +496,8 @@ export async function createServer() {
     }
   });
 
-  app.get('/data/coords.json', (req, res) => {
-    const coordsPath = path.join(__dirname, '..', 'data', 'coords.json');
-    res.type('application/json');
-    res.sendFile(coordsPath, (err) => {
-      if (err) {
-        logger && logger.error
-          ? logger.error(`❌ Fehler beim Senden der coords.json: ${String(err)}`)
-          : console.error('❌ Fehler beim Senden der coords.json:', err);
-        if (!res.headersSent) {
-          res.status(404).json({ error: 'coords.json not found' });
-        } else {
-          try {
-            res.end();
-          } catch (err) {
-            // ignore failed end calls
-            void err;
-          }
-        }
-      } else {
-        // Use the structured logger for startup/info messages
-        logger &&
-          typeof logger.info === 'function' &&
-          logger.info(`📡 Coords-Datei ausgeliefert: ${coordsPath}`);
-      }
-    });
-  });
-
-  app.use(
-    '/data',
-    express.static(path.resolve(__dirname, '..', 'data'), {
-      index: false,
-      setHeaders(res) {
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-      },
-    })
-  );
+  // Entfernt: Früherer statischer /data Endpunkt (Coords) wird nicht mehr benötigt,
+  // da Frontend ausschließlich DB-gestützte APIs unter /api nutzt.
 
   app.use(
     '/lang',
@@ -518,21 +519,7 @@ export async function createServer() {
     })
   );
 
-  app.use(
-    '/data',
-    express.static(path.resolve(__dirname, '..', 'data'), {
-      index: false,
-      maxAge: '1h',
-    })
-  );
-
-  app.use(
-    '/lang',
-    express.static(path.resolve(__dirname, '..', 'lang'), {
-      index: false,
-      maxAge: '1h',
-    })
-  );
+  // Hinweis: /lang wird bereits weiter oben ausgeliefert
 
   logger.info(`[startup] staticRoot=${staticRoot}`);
   try {
@@ -586,6 +573,151 @@ export async function createServer() {
   const { listCoords, getCoord, createCoord, updateCoord, deleteCoord } = await import(
     './repositories.js'
   );
+  const {
+    createDeviceProposal,
+    listDeviceProposals,
+    getDeviceProposal,
+    approveDeviceProposal,
+    rejectDeviceProposal,
+  } = await import('./repositories.js');
+
+  // --- Öffentliche API (read-only, keine Auth) ---
+  // Normalisiert Felder auf camelCase, filtert sensible/unveröffentlichte Inhalte heraus
+  app.get('/api/devices', async (req, res) => {
+    try {
+      const { q, limit, offset } = parsePagination(req);
+      const rows = await listDevices({ q, limit: Math.min(200, limit), offset });
+      const items = rows.map((r) => ({
+        id: r.id,
+        // bevorzugt Modellnamen, fällt auf name zurück
+        model: r.model || r.name || '',
+        brand: r.brand || '',
+        type: r.type || '',
+        os: r.os || '',
+        compatible: !!r.compatible,
+        notes: Array.isArray(r.notes) ? r.notes : r.notes ? [r.notes] : [],
+        rootLinks: Array.isArray(r.root_links) ? r.root_links : r.root_links ? [r.root_links] : [],
+        priceRange: r.price_range || null,
+        // Zusammenfassung, damit das Frontend weiterhin "PoGO Compatibility" darstellen kann
+        pogo: r.pogo_comp || null,
+        pgsharp: null,
+      }));
+      res.json(items);
+    } catch (e) {
+      console.error('[api] public devices failed:', e && e.message ? e.message : e);
+      res.status(500).json([]);
+    }
+  });
+
+  app.get('/api/news', async (req, res) => {
+    try {
+      const { q, limit, offset } = parsePagination(req);
+      const rows = await listNews({ q, limit: Math.min(200, limit), offset });
+      const published = rows.filter((n) => Number(n.published) === 1);
+      const items = published.map((n) => ({
+        id: n.id,
+        slug: n.slug || null,
+        date: n.date || null,
+        title: n.title,
+        excerpt: n.excerpt || null,
+        content: n.content || '',
+        tags: Array.isArray(n.tags) ? n.tags : n.tags ? [n.tags] : [],
+        publishedAt: n.published_at || null,
+        updatedAt: n.updated_at_ext || null,
+      }));
+      res.json(items);
+    } catch (e) {
+      console.error('[api] public news failed:', e && e.message ? e.message : e);
+      res.status(500).json([]);
+    }
+  });
+
+  app.get('/api/coords', async (req, res) => {
+    try {
+      const q = (req.query.q || '').toString().trim() || undefined;
+      const category = (req.query.category || '').toString().trim() || undefined;
+      const limit = Math.min(500, Math.max(1, Number(req.query.limit || 200)));
+      const offset = Math.max(0, Number(req.query.offset || 0));
+      const rows = await listCoords({ q, category, limit, offset });
+      const items = rows.map((r) => ({
+        id: r.id,
+        category: r.category,
+        name: r.name,
+        lat: r.lat,
+        lng: r.lng,
+        note: r.note || null,
+        tags: Array.isArray(r.tags) ? r.tags : r.tags ? [r.tags] : [],
+      }));
+      res.json(items);
+    } catch (e) {
+      console.error('[api] public coords failed:', e && e.message ? e.message : e);
+      res.status(500).json([]);
+    }
+  });
+
+  // Public: Neue Geräte-Vorschläge einreichen
+  if (!isTest) {
+    const proposalLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 20 });
+    app.post('/api/device-proposals', proposalLimiter, async (req, res) => {
+      try {
+        const {
+          brand,
+          model,
+          os,
+          type,
+          compatible,
+          priceRange,
+          pogo,
+          manufacturerUrl,
+          notes,
+          rootLinks,
+        } = req.body || {};
+        // Minimalvalidierung
+        if (!model || typeof model !== 'string' || model.trim().length < 2) {
+          return res.status(400).json({ error: 'model required' });
+        }
+        const created = await createDeviceProposal({
+          brand,
+          model: model.trim(),
+          os,
+          type,
+          compatible: !!compatible,
+          price_range: priceRange,
+          pogo_comp: pogo,
+          manufacturer_url: manufacturerUrl,
+          notes: Array.isArray(notes)
+            ? notes
+            : typeof notes === 'string'
+            ? notes
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [],
+          root_links: Array.isArray(rootLinks)
+            ? rootLinks
+            : typeof rootLinks === 'string'
+            ? rootLinks
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [],
+        });
+        res.status(201).json({ ok: true, id: created.id });
+      } catch (e) {
+        res.status(400).json({ error: 'invalid payload' });
+      }
+    });
+  } else {
+    // Tests: kein Ratelimit
+    app.post('/api/device-proposals', async (req, res) => {
+      try {
+        const created = await createDeviceProposal(req.body || {});
+        res.status(201).json({ ok: true, id: created.id });
+      } catch (e) {
+        res.status(400).json({ error: 'invalid payload' });
+      }
+    });
+  }
 
   // Devices
   app.get('/admin/api/devices', requireAuth, async (req, res) => {
@@ -854,16 +986,54 @@ export async function createServer() {
     }
   });
 
-  app.use((req, res, next) => {
-    if (req.path === '/data/coords.json') {
-      logger.info(
-        `[coords-request] ${req.ip} ${req.method} ${req.path} headers=${JSON.stringify(
-          req.headers && { accept: req.get('accept') }
-        )}`
-      );
+  // --- Admin: Device Proposals ---
+  app.get('/admin/api/proposals', requireAuth, async (req, res) => {
+    try {
+      const { q, limit, offset } = parsePagination(req);
+      const status = (req.query.status || '').toString().trim() || undefined;
+      const items = await listDeviceProposals({ status, q, limit, offset });
+      res.json({ items });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to list proposals' });
     }
-    next();
   });
+  app.get('/admin/api/proposals/:id', requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const row = await getDeviceProposal(id);
+      if (!row) return res.status(404).json({ error: 'not found' });
+      res.json(row);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to get proposal' });
+    }
+  });
+  app.post('/admin/api/proposals/:id/approve', requireAuth, requireCsrf, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      // Optional: user id aus me
+      // hier nicht notwendig, setzen null
+      const updated = await approveDeviceProposal(id, null);
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to approve proposal' });
+    }
+  });
+  app.post('/admin/api/proposals/:id/reject', requireAuth, requireCsrf, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const updated = await rejectDeviceProposal(id, null);
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to reject proposal' });
+    }
+  });
+
+  // Entfernt: Logging für /data/coords.json ist obsolet
   if (!isTest) {
     schedulePgsharpAutoRefresh(logger);
     schedulePokeminersAutoRefresh(logger);

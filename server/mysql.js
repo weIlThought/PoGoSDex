@@ -242,6 +242,30 @@ export async function migrate() {
   if (!(await hasColumn('news', 'tags'))) {
     await p.execute(`ALTER TABLE news ADD COLUMN tags JSON NULL AFTER image_url`);
   }
+
+  // device_proposals table (User-Einreichungen)
+  await p.execute(`CREATE TABLE IF NOT EXISTS device_proposals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    brand VARCHAR(191) NULL,
+    model VARCHAR(191) NOT NULL,
+    os VARCHAR(100) NULL,
+    type VARCHAR(50) NULL,
+    compatible TINYINT(1) NOT NULL DEFAULT 0,
+    price_range VARCHAR(100) NULL,
+    pogo_comp VARCHAR(100) NULL,
+    manufacturer_url VARCHAR(512) NULL,
+    notes JSON NULL,
+    root_links JSON NULL,
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    device_id INT NULL,
+    approved_by INT NULL,
+    approved_at DATETIME NULL,
+    rejected_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_dp_status (status),
+    INDEX idx_dp_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
 export async function seedAdminIfNeeded(logger) {

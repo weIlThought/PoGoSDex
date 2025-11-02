@@ -72,6 +72,8 @@
         </button>
         <button class="tab" role="tab" aria-selected="false" data-tab="news">News</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="coords">Coords</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="pulls">Pull Requests</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="archive">Archiv</button>
       </aside>
       <section class="content">
         <div id="toast" class="toast" hidden></div>
@@ -301,6 +303,55 @@
               </menu>
             </form>
           </dialog>
+        </section>
+
+        <section id="panel-pulls" class="panel hidden" role="tabpanel">
+          <div class="panel-header">
+            <h2>Pull Requests</h2>
+            <div class="tools">
+              <input id="pullsSearch" type="search" placeholder="Suche…" />
+              <button id="pullsRefresh" class="btn">Neu laden</button>
+            </div>
+          </div>
+          <table class="table" id="pullsTable">
+            <thead>
+              <tr>
+                <th data-sort="id">ID</th>
+                <th data-sort="model">Model</th>
+                <th data-sort="brand">Brand</th>
+                <th data-sort="type">Type</th>
+                <th data-sort="os">OS</th>
+                <th data-sort="compatible">Compatible</th>
+                <th>Notes</th>
+                <th>RootLinks</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section id="panel-archive" class="panel hidden" role="tabpanel">
+          <div class="panel-header">
+            <h2>Archiv</h2>
+            <div class="tools">
+              <input id="archiveSearch" type="search" placeholder="Suche…" />
+              <button id="archiveRefresh" class="btn">Neu laden</button>
+            </div>
+          </div>
+          <table class="table" id="archiveTable">
+            <thead>
+              <tr>
+                <th data-sort="id">ID</th>
+                <th data-sort="model">Model</th>
+                <th data-sort="brand">Brand</th>
+                <th data-sort="type">Type</th>
+                <th data-sort="os">OS</th>
+                <th data-sort="rejected_at">RejectedAt</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </section>
       </section>
     </main>

@@ -44,7 +44,10 @@
             <input type="checkbox" id="togglePassword" />
             <span class="text-muted">Passwort anzeigen</span>
           </label>
-          <button type="submit" class="btn primary">Einloggen</button>
+          <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between">
+            <a href="/" class="btn" aria-label="Zur Website zurück">← Zur Übersicht</a>
+            <button type="submit" class="btn primary">Einloggen</button>
+          </div>
         </form>
         <p id="loginError" class="error" aria-live="polite" hidden></p>
         <p class="text-muted" style="margin-top: 8px">
