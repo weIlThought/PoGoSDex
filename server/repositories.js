@@ -139,7 +139,19 @@ export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
   sql += ' ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?';
   params.push(Number(limit), Number(offset));
   const [rows] = await p().execute(sql, params);
-  return rows.map((r) => ({ ...r, tags: r.tags ? JSON.parse(r.tags) : null }));
+  const parseTags = (t) => {
+    if (t == null) return null;
+    if (typeof t === 'string') {
+      try {
+        return JSON.parse(t);
+      } catch {
+        return null;
+      }
+    }
+    // already parsed JSON (object or array) from driver
+    return t;
+  };
+  return rows.map((r) => ({ ...r, tags: parseTags(r.tags) }));
 }
 
 export async function getCoord(id) {
@@ -148,11 +160,28 @@ export async function getCoord(id) {
     [id]
   );
   const r = rows[0];
-  return r ? { ...r, tags: r.tags ? JSON.parse(r.tags) : null } : null;
+  if (!r) return null;
+  let tags = null;
+  if (r.tags != null) {
+    if (typeof r.tags === 'string') {
+      try {
+        tags = JSON.parse(r.tags);
+      } catch {
+        tags = null;
+      }
+    } else {
+      tags = r.tags;
+    }
+  }
+  return { ...r, tags };
 }
 
 export async function createCoord({ category = 'top10', name, lat, lng, note, tags }) {
-  const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : tags || null;
+  const tagsJson = Array.isArray(tags)
+    ? JSON.stringify(tags)
+    : typeof tags === 'object' && tags !== null
+    ? JSON.stringify(tags)
+    : tags || null;
   const [res] = await p().execute(
     'INSERT INTO coords (category, name, lat, lng, note, tags) VALUES (?, ?, ?, ?, ?, ?)',
     [category, name, Number(lat), Number(lng), note || null, tagsJson]
@@ -185,7 +214,13 @@ export async function updateCoord(id, { category, name, lat, lng, note, tags }) 
   }
   if (tags !== undefined) {
     fields.push('tags = ?');
-    params.push(Array.isArray(tags) ? JSON.stringify(tags) : tags || null);
+    params.push(
+      Array.isArray(tags)
+        ? JSON.stringify(tags)
+        : typeof tags === 'object' && tags !== null
+        ? JSON.stringify(tags)
+        : tags || null
+    );
   }
   if (!fields.length) return await getCoord(id);
   params.push(id);

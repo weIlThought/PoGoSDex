@@ -106,6 +106,15 @@
       location.href = '/login.html';
       return;
     }
+    if (!res.ok) {
+      try {
+        const msg = await res.text();
+        showToast(`Geräteliste fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+      } catch {
+        showToast('Geräteliste fehlgeschlagen', 'error');
+      }
+      return;
+    }
     const json = await res.json();
     const tbody = qs('#devTable tbody');
     tbody.innerHTML = '';
@@ -186,6 +195,15 @@
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      try {
+        const msg = await res.text();
+        showToast(`News-Laden fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+      } catch {
+        showToast('News-Laden fehlgeschlagen', 'error');
+      }
       return;
     }
     const json = await res.json();
@@ -389,6 +407,15 @@
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      try {
+        const msg = await res.text();
+        showToast(`Coords-Laden fehlgeschlagen: ${msg.slice(0, 120)}`, 'error');
+      } catch {
+        showToast('Coords-Laden fehlgeschlagen', 'error');
+      }
       return;
     }
     const json = await res.json();

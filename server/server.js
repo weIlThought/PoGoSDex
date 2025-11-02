@@ -573,6 +573,7 @@ export async function createServer() {
       const rows = await listDevices(parsePagination(req));
       res.json({ items: rows });
     } catch (e) {
+      console.error('[api] listDevices failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to list devices' });
     }
   });
@@ -583,6 +584,7 @@ export async function createServer() {
       const created = await createDevice({ name: name.trim(), description, image_url, status });
       res.status(201).json(created);
     } catch (e) {
+      console.error('[api] createDevice failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to create device' });
     }
   });
@@ -594,6 +596,7 @@ export async function createServer() {
       if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
     } catch (e) {
+      console.error('[api] updateDevice failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to update device' });
     }
   });
@@ -605,6 +608,7 @@ export async function createServer() {
       if (!ok) return res.status(404).json({ error: 'not found' });
       res.json({ ok: true });
     } catch (e) {
+      console.error('[api] deleteDevice failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to delete device' });
     }
   });
@@ -615,6 +619,7 @@ export async function createServer() {
       const rows = await listNews(parsePagination(req));
       res.json({ items: rows });
     } catch (e) {
+      console.error('[api] listNews failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to list news' });
     }
   });
@@ -628,6 +633,7 @@ export async function createServer() {
       const created = await createNews({ title: title.trim(), content, image_url, published });
       res.status(201).json(created);
     } catch (e) {
+      console.error('[api] createNews failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to create news' });
     }
   });
@@ -639,6 +645,7 @@ export async function createServer() {
       if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
     } catch (e) {
+      console.error('[api] updateNews failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to update news' });
     }
   });
@@ -650,6 +657,7 @@ export async function createServer() {
       if (!ok) return res.status(404).json({ error: 'not found' });
       res.json({ ok: true });
     } catch (e) {
+      console.error('[api] deleteNews failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to delete news' });
     }
   });
@@ -662,6 +670,7 @@ export async function createServer() {
       const rows = await listCoords({ q, category, limit, offset });
       res.json({ items: rows });
     } catch (e) {
+      console.error('[api] listCoords failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to list coords' });
     }
   });
@@ -676,6 +685,7 @@ export async function createServer() {
       const created = await createCoord({ category, name: name.trim(), lat, lng, note, tags });
       res.status(201).json(created);
     } catch (e) {
+      console.error('[api] createCoord failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to create coord' });
     }
   });
@@ -687,6 +697,7 @@ export async function createServer() {
       if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
     } catch (e) {
+      console.error('[api] updateCoord failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to update coord' });
     }
   });
@@ -698,6 +709,7 @@ export async function createServer() {
       if (!ok) return res.status(404).json({ error: 'not found' });
       res.json({ ok: true });
     } catch (e) {
+      console.error('[api] deleteCoord failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to delete coord' });
     }
   });
