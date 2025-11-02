@@ -323,8 +323,8 @@
       title: form.title.value.trim(),
       excerpt: form.excerpt.value.trim() || null,
       content: form.content.value.trim(),
-      published_at: form.published_at.value || null,
-      updated_at_ext: form.updated_at_ext.value || null,
+      publishedAt: form.published_at.value || null,
+      updatedAt: form.updated_at_ext.value || null,
       tags: (form.tags.value || '')
         .split(',')
         .map((s) => s.trim())
@@ -472,16 +472,46 @@
       if (!t) return;
       if (t.dataset.editCoord) {
         const id = Number(t.dataset.editCoord);
-        const row = t.closest('tr');
-        openCoordsDialog({
-          id,
-          category: row.children[1].textContent,
-          name: row.children[2].textContent,
-          lat: row.children[3].textContent,
-          lng: row.children[4].textContent,
-          note: '',
-          tags: [],
-        });
+        try {
+          // Hol vollständige Daten vom Server
+          const res = await fetch(`/admin/api/coords/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            openCoordsDialog(data);
+          } else {
+            // Fallback: aus Tabellenzeile lesen
+            const row = t.closest('tr');
+            const tagsTxt = row.children[5]?.textContent || '';
+            openCoordsDialog({
+              id,
+              category: row.children[1].textContent,
+              name: row.children[2].textContent,
+              lat: row.children[3].textContent,
+              lng: row.children[4].textContent,
+              note: '',
+              tags: tagsTxt
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
+            });
+          }
+        } catch {
+          // bei Fehlern ebenfalls Fallback aus Zeile
+          const row = t.closest('tr');
+          const tagsTxt = row.children[5]?.textContent || '';
+          openCoordsDialog({
+            id,
+            category: row.children[1].textContent,
+            name: row.children[2].textContent,
+            lat: row.children[3].textContent,
+            lng: row.children[4].textContent,
+            note: '',
+            tags: tagsTxt
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          });
+        }
       }
       if (t.dataset.delCoord) {
         await deleteCoord(Number(t.dataset.delCoord));

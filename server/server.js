@@ -774,6 +774,18 @@ export async function createServer() {
       res.status(500).json({ error: 'Failed to list coords' });
     }
   });
+  app.get('/admin/api/coords/:id', requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const row = await getCoord(id);
+      if (!row) return res.status(404).json({ error: 'not found' });
+      res.json(row);
+    } catch (e) {
+      console.error('[api] getCoord failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to get coord' });
+    }
+  });
 
   // --- Overview (admin) ---
   app.get('/admin/api/overview', requireAuth, async (req, res) => {
