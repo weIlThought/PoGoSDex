@@ -52,6 +52,12 @@
         font-size: 0.75rem;
         color: #94a3b8;
       }
+      .sidebar-sep {
+        height: 1px;
+        background: var(--border);
+        opacity: 0.8;
+        margin: 8px 0 12px;
+      }
     </style>
   </head>
   <body>
@@ -66,6 +72,8 @@
     </header>
     <main class="layout">
       <aside class="sidebar" role="tablist" aria-orientation="vertical">
+        <button class="tab" role="tab" aria-selected="false" data-tab="dashboard">Dashboard</button>
+        <div class="sidebar-sep" aria-hidden="true"></div>
         <button class="tab" role="tab" aria-selected="false" data-tab="issues">Issues</button>
         <button class="tab active" role="tab" aria-selected="true" data-tab="devices">
           Devices
@@ -81,6 +89,91 @@
         <section id="panel-issues" class="panel hidden" role="tabpanel">
           <div class="panel-header">
             <h2>Issues</h2>
+            <section id="panel-dashboard" class="panel hidden" role="tabpanel">
+              <div class="panel-header">
+                <h2>Dashboard</h2>
+                <div class="tools">
+                  <button id="dashRefresh" class="btn">Neu laden</button>
+                </div>
+              </div>
+              <div class="grid md:grid-cols-4 gap-4">
+                <div class="card">
+                  <h3>Devices</h3>
+                  <p id="dashDevices" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>News</h3>
+                  <p id="dashNews" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Coords</h3>
+                  <p id="dashCoords" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Issues</h3>
+                  <p id="dashIssues" class="text-3xl">–</p>
+                </div>
+              </div>
+              <div class="grid md:grid-cols-3 gap-4 mt-4">
+                <div class="card">
+                  <h3>Besucher Heute</h3>
+                  <p id="dashVisitorsToday" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Besucher 7 Tage</h3>
+                  <p id="dashVisitors7" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Besucher 30 Tage</h3>
+                  <p id="dashVisitors30" class="text-3xl">–</p>
+                </div>
+              </div>
+              <div class="grid md:grid-cols-3 gap-4 mt-4">
+                <div class="card">
+                  <h3>Unique Heute</h3>
+                  <p id="dashUniquesToday" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Unique 7 Tage</h3>
+                  <p id="dashUniques7" class="text-3xl">–</p>
+                </div>
+                <div class="card">
+                  <h3>Unique 30 Tage</h3>
+                  <p id="dashUniques30" class="text-3xl">–</p>
+                </div>
+              </div>
+              <div class="grid md:grid-cols-2 gap-4 mt-4">
+                <div class="card">
+                  <h3>Uptime</h3>
+                  <div class="mt-2">
+                    <div>Status: <span id="dashUptimeStatus">–</span></div>
+                    <div>Uptime (gesamt/30d): <span id="dashUptimeRatio">–</span></div>
+                  </div>
+                </div>
+                <div class="card">
+                  <h3>Besucher gesamt</h3>
+                  <div class="mt-2">
+                    <div>Hits gesamt: <span id="dashVisitorsTotal">–</span></div>
+                    <div>Tage erfasst: <span id="dashVisitorsDays">–</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="grid md:grid-cols-2 gap-4 mt-4">
+                <div class="card">
+                  <h3>Trend (7 Tage) – Hits</h3>
+                  <div id="dashSparkHits" class="mt-2"></div>
+                </div>
+                <div class="card">
+                  <h3>Trend (7 Tage) – Unique</h3>
+                  <div id="dashSparkUniques" class="mt-2"></div>
+                </div>
+              </div>
+              <p class="mt-3 text-sm" style="color: #94a3b8">
+                Hinweis: Aktuell werden Seitenaufrufe pro Tag erfasst. Echte eindeutige Besucher
+                erfordern IP/Session-Aggregation.
+              </p>
+            </section>
+
             <div class="tools">
               <select id="issuesStatus">
                 <option value="">Alle</option>

@@ -485,10 +485,26 @@ export async function createServer() {
 
       // Increment visitor counter for daily stats (best effort, non-blocking)
       try {
-        const p = getPool();
-        await p.execute(
-          'INSERT INTO visitors (day, hits) VALUES (CURRENT_DATE(), 1) ON DUPLICATE KEY UPDATE hits = hits + 1'
-        );
+        const dnt = (req.get('dnt') || req.get('DNT') || '').toString() === '1';
+        const cookiesHeader = req.get('cookie') || '';
+        const optout = /(^|;\s*)analytics_optout=(true|1)/i.test(cookiesHeader);
+        if (!dnt && !optout) {
+          const p = getPool();
+          await p.execute(
+            'INSERT INTO visitors (day, hits) VALUES (CURRENT_DATE(), 1) ON DUPLICATE KEY UPDATE hits = hits + 1'
+          );
+          // Unique session hash (privacy-friendly): salt + IP + UA + day
+          const ua = req.get('user-agent') || '';
+          const ip = req.ip || '';
+          const salt = process.env.ANALYTICS_SALT || process.env.SESSION_SALT || 'pgsdex';
+          const today = new Date().toISOString().slice(0, 10);
+          const raw = `${salt}|${ip}|${ua}|${today}`;
+          const h = crypto.createHash('sha256').update(raw).digest('hex');
+          await p.execute(
+            'INSERT IGNORE INTO visitor_sessions (day, hash) VALUES (CURRENT_DATE(), ?)',
+            [h]
+          );
+        }
       } catch (e) {
         // don't block page rendering on analytics failure
       }
@@ -968,6 +984,56 @@ export async function createServer() {
       res.status(500).json({ error: 'Failed to delete issue' });
     }
   });
+
+  // --- Dashboard (admin) ---
+  app.get('/admin/api/dashboard', requireAuth, async (_req, res) => {
+    try {
+      const p = getPool();
+      const [[devices], [news], [coords], [issues]] = await Promise.all([
+        p.execute('SELECT COUNT(*) AS c FROM devices').then(([r]) => r),
+        p.execute('SELECT COUNT(*) AS c FROM news').then(([r]) => r),
+        p.execute('SELECT COUNT(*) AS c FROM coords').then(([r]) => r),
+        p.execute('SELECT COUNT(*) AS c FROM issues').then(([r]) => r),
+      ]);
+      const [[visTodayRow], [vis7Row], [vis30Row], [visTotalRow], [visDaysRow]] = await Promise.all(
+        [
+          p
+            .execute('SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day = CURRENT_DATE()')
+            .then(([r]) => r),
+          p
+            .execute(
+              'SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY)'
+            )
+            .then(([r]) => r),
+          p
+            .execute(
+              'SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 29 DAY)'
+            )
+            .then(([r]) => r),
+          p.execute('SELECT COALESCE(SUM(hits),0) AS v FROM visitors').then(([r]) => r),
+          p.execute('SELECT COUNT(*) AS v FROM visitors').then(([r]) => r),
+        ]
+      );
+      res.json({
+        counts: {
+          devices: Number(devices.c || 0),
+          news: Number(news.c || 0),
+          coords: Number(coords.c || 0),
+          issues: Number(issues.c || 0),
+        },
+        visitors: {
+          today: Number(visTodayRow.v || 0),
+          last7d: Number(vis7Row.v || 0),
+          last30d: Number(vis30Row.v || 0),
+          totalHits: Number(visTotalRow.v || 0),
+          totalDays: Number(visDaysRow.v || 0),
+        },
+      });
+    } catch (e) {
+      console.error('[api] dashboard failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to load dashboard' });
+    }
+  });
   app.post('/admin/api/coords', requireAuth, requireCsrf, async (req, res) => {
     const { category = 'top10', name, lat, lng, note, tags } = req.body || {};
     if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
@@ -1022,13 +1088,24 @@ export async function createServer() {
   app.get('/admin/api/proposals/:id', requireAuth, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const [[devices], [news], [coords], [issues]] = await Promise.all([
       const row = await getDeviceProposal(id);
       if (!row) return res.status(404).json({ error: 'not found' });
       res.json(row);
     } catch (e) {
       res.status(500).json({ error: 'Failed to get proposal' });
-    }
+      const [
+        [visTodayRow],
+        [vis7Row],
+        [vis30Row],
+        [visTotalRow],
+        [visDaysRow],
+        [uniqTodayRow],
+        [uniq7Row],
+        [uniq30Row],
+        [series7Hits],
+        [series7Uniques],
+      ] = await Promise.all([
   });
   app.post('/admin/api/proposals/:id/approve', requireAuth, requireCsrf, async (req, res) => {
     try {
@@ -1037,7 +1114,20 @@ export async function createServer() {
       // Optional: user id aus me
       // hier nicht notwendig, setzen null
       const updated = await approveDeviceProposal(id, null);
-      if (!updated) return res.status(404).json({ error: 'not found' });
+        p.execute('SELECT COUNT(*) AS v FROM visitors').then(([r]) => r),
+        p.execute('SELECT COUNT(*) AS v FROM visitor_sessions WHERE day = CURRENT_DATE()').then(([r]) => r),
+        p.execute(
+          'SELECT COALESCE(SUM(v),0) AS v FROM (SELECT COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) GROUP BY day) t'
+        ).then(([r]) => r),
+        p.execute(
+          'SELECT COALESCE(SUM(v),0) AS v FROM (SELECT COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 29 DAY) GROUP BY day) t'
+        ).then(([r]) => r),
+        p.execute(
+          'SELECT day, hits AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) ORDER BY day ASC'
+        ).then(([r]) => r),
+        p.execute(
+          'SELECT day, COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) GROUP BY day ORDER BY day ASC'
+        ).then(([r]) => r),
       res.json(updated);
     } catch (e) {
       res.status(500).json({ error: 'Failed to approve proposal' });
@@ -1052,6 +1142,14 @@ export async function createServer() {
       res.json(updated);
     } catch (e) {
       res.status(500).json({ error: 'Failed to reject proposal' });
+          uniqueToday: Number(uniqTodayRow.v || 0),
+          unique7d: Number(uniq7Row.v || 0),
+          unique30d: Number(uniq30Row.v || 0),
+          series7: {
+            days: (series7Hits || []).map((r) => r.day),
+            hits: (series7Hits || []).map((r) => Number(r.v || 0)),
+            uniques: (series7Uniques || []).map((r) => Number(r.v || 0)),
+          },
     }
   });
 

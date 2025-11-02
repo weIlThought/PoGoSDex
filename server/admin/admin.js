@@ -148,6 +148,7 @@
     });
     qsa('.panel').forEach((p) => p.classList.add('hidden'));
     qs(`#panel-${name}`)?.classList.remove('hidden');
+    if (name === 'dashboard') loadDashboard();
     if (name === 'issues') loadIssues();
     if (name === 'devices') loadDevices();
     if (name === 'news') loadNews();
@@ -757,6 +758,9 @@
       })
     );
 
+    // Dashboard
+    qs('#dashRefresh')?.addEventListener('click', loadDashboard);
+
     // Issues
     qs('#issuesRefresh')?.addEventListener('click', loadIssues);
     qs('#issuesSearch')?.addEventListener('change', loadIssues);
@@ -860,6 +864,45 @@
     }
   }
 
+  // Dashboard
+  async function loadDashboard() {
+    try {
+      const res = await fetch('/admin/api/dashboard');
+      if (res.status === 401) {
+        location.href = '/login.html';
+        return;
+      }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      qs('#dashDevices') && (qs('#dashDevices').textContent = String(data.counts?.devices ?? '–'));
+      qs('#dashNews') && (qs('#dashNews').textContent = String(data.counts?.news ?? '–'));
+      qs('#dashCoords') && (qs('#dashCoords').textContent = String(data.counts?.coords ?? '–'));
+      qs('#dashIssues') && (qs('#dashIssues').textContent = String(data.counts?.issues ?? '–'));
+      qs('#dashVisitorsToday') &&
+        (qs('#dashVisitorsToday').textContent = String(data.visitors?.today ?? '–'));
+      qs('#dashVisitors7') &&
+        (qs('#dashVisitors7').textContent = String(data.visitors?.last7d ?? '–'));
+      qs('#dashVisitors30') &&
+        (qs('#dashVisitors30').textContent = String(data.visitors?.last30d ?? '–'));
+      qs('#dashVisitorsTotal') &&
+        (qs('#dashVisitorsTotal').textContent = String(data.visitors?.totalHits ?? '–'));
+      qs('#dashVisitorsDays') &&
+        (qs('#dashVisitorsDays').textContent = String(data.visitors?.totalDays ?? '–'));
+    } catch (e) {
+      showToast('Dashboard laden fehlgeschlagen', 'error');
+    }
+    try {
+      const up = await fetch('/status/uptime');
+      if (up.ok) {
+        const j = await up.json();
+        const state = j.state || 'unknown';
+        const ratio = Number.isFinite(j.uptimeRatio) ? `${j.uptimeRatio.toFixed(2)}%` : '–';
+        qs('#dashUptimeStatus') && (qs('#dashUptimeStatus').textContent = state);
+        qs('#dashUptimeRatio') && (qs('#dashUptimeRatio').textContent = ratio);
+      }
+    } catch {}
+  }
+
   // Issues
   async function loadIssues() {
     const q = (qs('#issuesSearch')?.value || '').trim();
@@ -937,6 +980,18 @@
     try {
       if (id) {
         await putJson(`/admin/api/issues/${id}`, payload, { csrf: state.csrf });
+        qs('#dashUniquesToday') &&
+          (qs('#dashUniquesToday').textContent = String(data.visitors?.uniqueToday ?? '–'));
+        qs('#dashUniques7') &&
+          (qs('#dashUniques7').textContent = String(data.visitors?.unique7d ?? '–'));
+        qs('#dashUniques30') &&
+          (qs('#dashUniques30').textContent = String(data.visitors?.unique30d ?? '–'));
+        // Sparklines
+        const days = data.visitors?.series7?.days || [];
+        const hits7 = data.visitors?.series7?.hits || [];
+        const uniq7 = data.visitors?.series7?.uniques || [];
+        drawSparkline('#dashSparkHits', hits7, { color: '#3b82f6', height: 40, days });
+        drawSparkline('#dashSparkUniques', uniq7, { color: '#22c55e', height: 40, days });
       } else {
         await postJson('/admin/api/issues', payload, { csrf: state.csrf });
       }
@@ -948,9 +1003,43 @@
     }
   }
 
+  // Farbmarkierung für Status
+  const el = qs('#dashUptimeStatus');
+  if (el) {
+    let color = '#94a3b8';
+    if (state === 'up') color = '#22c55e';
+    else if (state === 'degraded') color = '#f59e0b';
+    else if (state === 'down') color = '#ef4444';
+    el.style.color = color;
+  }
   async function deleteIssue(id) {
     if (!confirm('Wirklich löschen?')) return;
     try {
+      function drawSparkline(
+        sel,
+        values,
+        { width = 220, height = 40, color = '#3b82f6', days = [] } = {}
+      ) {
+        const mount = qs(sel);
+        if (!mount) return;
+        const vals = Array.isArray(values) ? values.map((v) => Number(v || 0)) : [];
+        if (!vals.length) {
+          mount.innerHTML = '';
+          return;
+        }
+        const max = Math.max(...vals, 1);
+        const stepX = width / Math.max(vals.length - 1, 1);
+        const points = vals.map((v, i) => {
+          const x = i * stepX;
+          const y = height - (v / max) * height;
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        const svg = `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sparkline">
+        <polyline fill="none" stroke="${color}" stroke-width="2" points="${points.join(' ')}" />
+      </svg>`;
+        mount.innerHTML = svg;
+      }
       await del(`/admin/api/issues/${id}`, { csrf: state.csrf });
       showToast(tAdmin('toast_deleted'));
       await loadIssues();

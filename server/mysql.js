@@ -188,6 +188,15 @@ export async function migrate() {
     PRIMARY KEY (day)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+  // visitor_sessions (unique visitors per day via salted hash)
+  await p.execute(`CREATE TABLE IF NOT EXISTS visitor_sessions (
+    day DATE NOT NULL,
+    hash CHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (day, hash),
+    INDEX idx_vs_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
   // --- Extend schema to match JSON structures (idempotent column adds) ---
   // Helper to check/add column
   const hasColumn = async (table, column) => {
