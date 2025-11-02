@@ -13,7 +13,6 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import winston from 'winston';
 import { fileURLToPath } from 'url';
-import { initDB } from './db.js';
 import { migrate, seedAdminIfNeeded, getPool } from './mysql.js';
 import {
   authMiddleware,
@@ -76,23 +75,6 @@ export async function createServer() {
     ),
     transports: [new winston.transports.Console()],
   });
-
-  // Skip heavy startup routines during tests
-  if (!isTest) {
-    await initDB();
-    // Initialize MySQL schema and seed admin if configured
-    try {
-      await migrate();
-    } catch (e) {
-      logger && logger.error && logger.error(`❌ MySQL migration failed: ${String(e)}`);
-    }
-    try {
-      await seedAdminIfNeeded(logger);
-    } catch (e) {
-      logger && logger.warn && logger.warn(`⚠️ Admin seed skipped: ${String(e)}`);
-    }
-    await validateData(logger);
-  }
 
   const app = express();
   // Auth cookie parser
