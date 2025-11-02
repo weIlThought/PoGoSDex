@@ -24,7 +24,7 @@
   "device_builder_success": "Danke! Dein Vorschlag wurde eingereicht.",
   "device_builder_error": "Leider fehlgeschlagen. Bitte später erneut versuchen.",
   "device_builder_submit": "JSON erzeugen",
-  "device_builder_title": "Neuen Geräteeintrag vorbereiten",
+  "device_builder_title": "Neues Gerät vorschlagen",
   "device_builder_upload": "Hochladen",
   "devices_section_heading": "Kompatible Geräte",
   "devices_section_intro": "Filtere den Katalog, lies Notizen und kopiere fertige JSON-Einträge für deine Datenbasis.",

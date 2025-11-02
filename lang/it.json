@@ -24,7 +24,7 @@
   "device_builder_success": "Grazie! La tua proposta è stata inviata.",
   "device_builder_error": "Invio non riuscito. Riprova più tardi.",
   "device_builder_submit": "Genera JSON",
-  "device_builder_title": "Prepara una nuova voce dispositivo",
+  "device_builder_title": "Proporre un nuovo dispositivo",
   "device_builder_upload": "Carica",
   "devices_section_heading": "Dispositivi compatibili",
   "devices_section_intro": "Filtra il catalogo, consulta le note e copia le voci JSON pronte per il tuo database.",

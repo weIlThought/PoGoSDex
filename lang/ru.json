@@ -24,7 +24,7 @@
   "device_builder_success": "Спасибо! Ваше предложение отправлено.",
   "device_builder_error": "Отправка не удалась. Повторите попытку позже.",
   "device_builder_submit": "Создать JSON",
-  "device_builder_title": "Подготовить новую запись устройства",
+  "device_builder_title": "Предложить новое устройство",
   "device_builder_upload": "Загрузить",
   "devices_section_heading": "Совместимые устройства",
   "devices_section_intro": "Фильтруйте каталог, изучайте заметки и копируйте готовые JSON-записи в свою базу.",

@@ -45,7 +45,7 @@
   "cookie_accept": "Accept",
   "cookie_decline": "Decline",
   "ad_placeholder": "Advertisement",
-  "device_builder_title": "Prepare a new device entry",
+  "device_builder_title": "Propose a new device",
   "device_builder_intro": "Submit your device suggestion. It will appear under \u201cPull Requests\u201d and be reviewed.",
   "device_builder_submit": "Generate JSON",
   "device_builder_copy": "Copy JSON",
