@@ -21,14 +21,33 @@ function resolveMysqlConfig(env = process.env) {
   const parsed = urlFromEnv ? parseMysqlUrl(urlFromEnv) : null;
   if (parsed) return parsed;
 
+  // Railway: Prefer the TCP proxy if available (publicly reachable) BEFORE private domain
+  const tcpProxyHost = env.RAILWAY_TCP_PROXY_DOMAIN || env.RAILWAY_TCP_PROXY_HOST;
+  const tcpProxyPort = env.RAILWAY_TCP_PROXY_PORT ? Number(env.RAILWAY_TCP_PROXY_PORT) : null;
+
   // Accept multiple naming styles (Railway + common variants)
-  const host =
-    env.MYSQL_HOST ||
-    env.MYSQLHOST ||
-    env.RAILWAY_PRIVATE_DOMAIN ||
-    env.RAILWAY_TCP_PROXY_DOMAIN ||
-    'localhost';
-  const port = Number(env.MYSQL_PORT || env.MYSQLPORT || env.RAILWAY_TCP_PROXY_PORT || 3306);
+  // Priority order:
+  // 1) Explicit MYSQL_HOST / MYSQL_PORT
+  // 2) Railway TCP proxy domain/port (if both present)
+  // 3) MYSQLHOST / MYSQLPORT (alt spellings)
+  // 4) Railway private domain (works only inside Railway private network)
+  // 5) localhost
+  let host = env.MYSQL_HOST || null;
+  let port = env.MYSQL_PORT ? Number(env.MYSQL_PORT) : null;
+
+  if (!host && tcpProxyHost && tcpProxyPort) {
+    host = tcpProxyHost;
+    port = tcpProxyPort;
+  }
+
+  if (!host) host = env.MYSQLHOST || null;
+  if (!port && env.MYSQLPORT) port = Number(env.MYSQLPORT);
+
+  if (!host) host = env.RAILWAY_PRIVATE_DOMAIN || null;
+  if (!port) port = 3306;
+
+  if (!host) host = 'localhost';
+
   const user = env.MYSQL_USER || env.MYSQLUSER || 'root';
   const password = env.MYSQL_PASSWORD || env.MYSQLPASSWORD || env.MYSQL_ROOT_PASSWORD || '';
   const database = env.MYSQL_DATABASE || env.MYSQLDATABASE || 'railway';

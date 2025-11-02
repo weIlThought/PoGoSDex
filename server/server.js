@@ -14,7 +14,7 @@ import rateLimit from 'express-rate-limit';
 import winston from 'winston';
 import { fileURLToPath } from 'url';
 import { initDB } from './db.js';
-import { migrate, seedAdminIfNeeded } from './mysql.js';
+import { migrate, seedAdminIfNeeded, getPool } from './mysql.js';
 import {
   authMiddleware,
   handleLogin,
@@ -262,6 +262,17 @@ export async function createServer() {
     }
   });
   app.get('/admin/me', requireAuth, meHandler);
+
+  // Lightweight health endpoint to check DB connectivity (no secrets)
+  app.get('/healthz', async (_req, res) => {
+    try {
+      const p = getPool();
+      await p.query('SELECT 1');
+      res.json({ ok: true, db: true });
+    } catch {
+      res.status(503).json({ ok: false, db: false });
+    }
+  });
 
   app.get('/status/uptime', async (_req, res) => {
     if (!uptimeApiKey) {
