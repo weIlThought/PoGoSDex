@@ -1088,46 +1088,21 @@ export async function createServer() {
   app.get('/admin/api/proposals/:id', requireAuth, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const [[devices], [news], [coords], [issues]] = await Promise.all([
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
       const row = await getDeviceProposal(id);
       if (!row) return res.status(404).json({ error: 'not found' });
       res.json(row);
     } catch (e) {
       res.status(500).json({ error: 'Failed to get proposal' });
-      const [
-        [visTodayRow],
-        [vis7Row],
-        [vis30Row],
-        [visTotalRow],
-        [visDaysRow],
-        [uniqTodayRow],
-        [uniq7Row],
-        [uniq30Row],
-        [series7Hits],
-        [series7Uniques],
-      ] = await Promise.all([
+    }
   });
   app.post('/admin/api/proposals/:id/approve', requireAuth, requireCsrf, async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      // Optional: user id aus me
-      // hier nicht notwendig, setzen null
+      // Optional: user id aus me (hier null)
       const updated = await approveDeviceProposal(id, null);
-        p.execute('SELECT COUNT(*) AS v FROM visitors').then(([r]) => r),
-        p.execute('SELECT COUNT(*) AS v FROM visitor_sessions WHERE day = CURRENT_DATE()').then(([r]) => r),
-        p.execute(
-          'SELECT COALESCE(SUM(v),0) AS v FROM (SELECT COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) GROUP BY day) t'
-        ).then(([r]) => r),
-        p.execute(
-          'SELECT COALESCE(SUM(v),0) AS v FROM (SELECT COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 29 DAY) GROUP BY day) t'
-        ).then(([r]) => r),
-        p.execute(
-          'SELECT day, hits AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) ORDER BY day ASC'
-        ).then(([r]) => r),
-        p.execute(
-          'SELECT day, COUNT(*) AS v FROM visitor_sessions WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY) GROUP BY day ORDER BY day ASC'
-        ).then(([r]) => r),
+      if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
     } catch (e) {
       res.status(500).json({ error: 'Failed to approve proposal' });
@@ -1142,14 +1117,6 @@ export async function createServer() {
       res.json(updated);
     } catch (e) {
       res.status(500).json({ error: 'Failed to reject proposal' });
-          uniqueToday: Number(uniqTodayRow.v || 0),
-          unique7d: Number(uniq7Row.v || 0),
-          unique30d: Number(uniq30Row.v || 0),
-          series7: {
-            days: (series7Hits || []).map((r) => r.day),
-            hits: (series7Hits || []).map((r) => Number(r.v || 0)),
-            uniques: (series7Uniques || []).map((r) => Number(r.v || 0)),
-          },
     }
   });
 
