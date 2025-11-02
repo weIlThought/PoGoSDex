@@ -8,20 +8,42 @@
   </head>
   <body>
     <main class="container">
-      <section class="card">
-        <h1>Admin Login</h1>
-        <form id="loginForm" class="form">
+      <section class="card" aria-labelledby="loginTitle">
+        <h1 id="loginTitle">Admin Login</h1>
+        <p class="text-muted" style="margin-top: 4px; margin-bottom: 12px">
+          Bitte melde dich mit deinem Admin-Account an.
+        </p>
+        <form id="loginForm" class="form" novalidate>
           <label>
             <span>Benutzername</span>
-            <input type="text" name="username" required autocomplete="username" />
+            <input
+              type="text"
+              name="username"
+              required
+              autocomplete="username"
+              placeholder="z. B. Anytnq"
+            />
           </label>
           <label>
             <span>Passwort</span>
-            <input type="password" name="password" required autocomplete="current-password" />
+            <input
+              type="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="Dein Passwort"
+            />
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; margin-top: 4px">
+            <input type="checkbox" id="togglePassword" />
+            <span class="text-muted">Passwort anzeigen</span>
           </label>
           <button type="submit" class="btn primary">Einloggen</button>
         </form>
         <p id="loginError" class="error" aria-live="polite" hidden></p>
+        <p class="text-muted" style="margin-top: 8px">
+          Probleme beim Login? Wende dich an den Betreiber.
+        </p>
       </section>
     </main>
     <script defer src="/login.js"></script>

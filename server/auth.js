@@ -78,9 +78,9 @@ export async function handleLogin(req, res) {
     [username]
   );
   const user = Array.isArray(rows) && rows[0];
-  if (!user) return res.status(401).json({ error: 'Invalid login' });
+  if (!user) return res.status(404).json({ error: 'Username not found', code: 'USER_NOT_FOUND' });
   const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: 'Invalid login' });
+  if (!ok) return res.status(401).json({ error: 'Invalid password', code: 'INVALID_PASSWORD' });
   const { csrf } = issueAuthCookies(res, { id: user.id, username: user.username });
   res.json({ ok: true, user: { id: user.id, username: user.username }, csrf });
 }
