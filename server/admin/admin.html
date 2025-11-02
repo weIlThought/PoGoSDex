@@ -6,6 +6,52 @@
     <title>Admin • PoGoSDex</title>
     <link rel="icon" href="/assets/favicon.ico" />
     <link rel="stylesheet" href="/admin.css" />
+    <style>
+      /* --- Custom admin polish --- */
+      .modal {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px #0006;
+        padding: 0;
+        background: var(--card);
+      }
+      .modal-form {
+        padding: 16px;
+      }
+      .modal-title {
+        font-size: 1.125rem;
+        margin-bottom: 8px;
+      }
+      .modal-actions {
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+        margin-top: 8px;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid #3b82f666;
+        border-color: #3b82f6;
+      }
+      th[data-sort] {
+        cursor: pointer;
+        position: relative;
+      }
+      th[data-sort].sorted-asc::after {
+        content: '▲';
+        position: absolute;
+        right: 8px;
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+      th[data-sort].sorted-desc::after {
+        content: '▼';
+        position: absolute;
+        right: 8px;
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+    </style>
   </head>
   <body>
     <header class="topbar">
@@ -19,6 +65,7 @@
     </header>
     <main class="layout">
       <aside class="sidebar" role="tablist" aria-orientation="vertical">
+        <button class="tab" role="tab" aria-selected="false" data-tab="overview">Overview</button>
         <button class="tab active" role="tab" aria-selected="true" data-tab="devices">
           Devices
         </button>
@@ -27,6 +74,38 @@
       </aside>
       <section class="content">
         <div id="toast" class="toast" hidden></div>
+
+        <section id="panel-overview" class="panel hidden" role="tabpanel">
+          <div class="panel-header">
+            <h2>Overview</h2>
+            <div class="tools">
+              <select id="ovRange">
+                <option value="1d">Heute</option>
+                <option value="7d" selected>7 Tage</option>
+                <option value="30d">30 Tage</option>
+              </select>
+              <button id="ovRefresh" class="btn">Neu laden</button>
+            </div>
+          </div>
+          <div id="ovCards" class="grid md:grid-cols-3 gap-4">
+            <div class="card">
+              <h3>Heute</h3>
+              <p id="ovToday" class="text-3xl">–</p>
+            </div>
+            <div class="card">
+              <h3>7 Tage</h3>
+              <p id="ov7" class="text-3xl">–</p>
+            </div>
+            <div class="card">
+              <h3>30 Tage</h3>
+              <p id="ov30" class="text-3xl">–</p>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3>Zeitraum</h3>
+            <div id="ovTotal" class="text-2xl mt-2">–</div>
+          </div>
+        </section>
 
         <section id="panel-devices" class="panel" role="tabpanel">
           <div class="panel-header">
@@ -40,18 +119,18 @@
           <table class="table" id="devTable">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Status</th>
+                <th data-sort="id">ID</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="status">Status</th>
                 <th>Bild</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
-          <dialog id="devDialog">
+          <dialog id="devDialog" class="modal">
             <form id="devForm" method="dialog" class="form modal-form">
-              <h3 id="devDialogTitle">Device</h3>
+              <h3 id="devDialogTitle" class="modal-title">Device</h3>
               <input type="hidden" name="id" />
               <label><span>Name</span><input name="name" required /></label>
               <label
@@ -66,8 +145,10 @@
               <label
                 ><span>Beschreibung</span><textarea name="description" rows="5"></textarea>
               </label>
-              <menu>
-                <button value="cancel" class="btn">Abbrechen</button>
+              <menu class="modal-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">
+                  Abbrechen
+                </button>
                 <button id="devSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>
@@ -86,18 +167,18 @@
           <table class="table" id="newsTable">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Titel</th>
-                <th>Publiziert</th>
+                <th data-sort="id">ID</th>
+                <th data-sort="title">Titel</th>
+                <th data-sort="published">Publiziert</th>
                 <th>Bild</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
-          <dialog id="newsDialog">
+          <dialog id="newsDialog" class="modal">
             <form id="newsForm" method="dialog" class="form modal-form">
-              <h3 id="newsDialogTitle">News</h3>
+              <h3 id="newsDialogTitle" class="modal-title">News</h3>
               <input type="hidden" name="id" />
               <label><span>Titel</span><input name="title" required /></label>
               <label
@@ -111,8 +192,10 @@
               <label
                 ><span>Inhalt</span><textarea name="content" rows="8" required></textarea>
               </label>
-              <menu>
-                <button value="cancel" class="btn">Abbrechen</button>
+              <menu class="modal-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">
+                  Abbrechen
+                </button>
                 <button id="newsSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>
@@ -137,19 +220,20 @@
           <table class="table" id="coordsTable">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Kategorie</th>
-                <th>Name</th>
-                <th>Lat</th>
-                <th>Lng</th>
+                <th data-sort="id">ID</th>
+                <th data-sort="category">Kategorie</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="lat">Lat</th>
+                <th data-sort="lng">Lng</th>
+                <th>Tags</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
-          <dialog id="coordsDialog">
+          <dialog id="coordsDialog" class="modal">
             <form id="coordsForm" method="dialog" class="form modal-form">
-              <h3 id="coordsDialogTitle">Coord</h3>
+              <h3 id="coordsDialogTitle" class="modal-title">Coord</h3>
               <input type="hidden" name="id" />
               <label>
                 <span>Kategorie</span>
@@ -166,8 +250,10 @@
               <label
                 ><span>Tags (Komma-separiert)</span><input name="tags" placeholder="park, top10"
               /></label>
-              <menu>
-                <button value="cancel" class="btn">Abbrechen</button>
+              <menu class="modal-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">
+                  Abbrechen
+                </button>
                 <button id="coordsSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>

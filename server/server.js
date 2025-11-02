@@ -543,10 +543,20 @@ export async function createServer() {
   }
 
   for (const { route, file } of htmlRoutes) {
-    app.get(route, (req, res) => {
+    app.get(route, async (req, res) => {
       const content = htmlCache.get(file);
       if (!content) {
         return res.status(404).send('Not found');
+      }
+
+      // Increment visitor counter for daily stats (best effort, non-blocking)
+      try {
+        const p = getPool();
+        await p.execute(
+          'INSERT INTO visitors (day, hits) VALUES (CURRENT_DATE(), 1) ON DUPLICATE KEY UPDATE hits = hits + 1'
+        );
+      } catch (e) {
+        // don't block page rendering on analytics failure
       }
 
       let out = content
@@ -682,6 +692,34 @@ export async function createServer() {
     } catch (e) {
       console.error('[api] listCoords failed:', e && e.message ? e.message : e);
       res.status(500).json({ error: 'Failed to list coords' });
+    }
+  });
+
+  // --- Overview (admin) ---
+  app.get('/admin/api/overview', requireAuth, async (req, res) => {
+    // range: 1d|7d|30d|custom, optional from,to (YYYY-MM-DD)
+    const range = (req.query.range || '7d').toString();
+    const today = new Date();
+    const to = req.query.to || today.toISOString().slice(0, 10);
+    let from = req.query.from || null;
+    if (!from) {
+      const match = range.match(/^(\d+)d$/);
+      const days = match ? Math.max(1, Math.min(365, Number(match[1]) || 7)) : 7;
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() - (days - 1));
+      from = d.toISOString().slice(0, 10);
+    }
+    try {
+      const p = getPool();
+      const [rows] = await p.execute(
+        'SELECT day, hits FROM visitors WHERE day BETWEEN ? AND ? ORDER BY day ASC',
+        [from, to]
+      );
+      const total = rows.reduce((s, r) => s + Number(r.hits || 0), 0);
+      res.json({ range: { from, to }, total, byDay: rows });
+    } catch (e) {
+      console.error('[api] overview failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to load overview' });
     }
   });
   app.post('/admin/api/coords', requireAuth, requireCsrf, async (req, res) => {

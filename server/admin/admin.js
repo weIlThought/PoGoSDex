@@ -91,9 +91,35 @@
     });
     qsa('.panel').forEach((p) => p.classList.add('hidden'));
     qs(`#panel-${name}`)?.classList.remove('hidden');
+    if (name === 'overview') loadOverview();
     if (name === 'devices') loadDevices();
     if (name === 'news') loadNews();
     if (name === 'coords') loadCoords();
+  }
+
+  // Sorting state and helpers
+  const sortState = {
+    devices: { key: 'id', dir: 'desc' },
+    news: { key: 'id', dir: 'desc' },
+    coords: { key: 'id', dir: 'desc' },
+  };
+
+  function applySortIndicators(tableId, { key, dir }) {
+    qsa(`#${tableId} thead th[data-sort]`).forEach((th) => {
+      th.classList.remove('sorted-asc', 'sorted-desc');
+      if (th.dataset.sort === key) th.classList.add(dir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+    });
+  }
+
+  function sortItems(items, { key, dir }) {
+    const copy = [...(items || [])];
+    const mul = dir === 'asc' ? 1 : -1;
+    return copy.sort((a, b) => {
+      const va = a?.[key];
+      const vb = b?.[key];
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * mul;
+      return String(va ?? '').localeCompare(String(vb ?? ''), 'de', { numeric: true }) * mul;
+    });
   }
 
   // Devices
@@ -116,9 +142,11 @@
       return;
     }
     const json = await res.json();
+    const items = sortItems(json.items, sortState.devices);
     const tbody = qs('#devTable tbody');
     tbody.innerHTML = '';
-    for (const d of json.items) {
+    applySortIndicators('devTable', sortState.devices);
+    for (const d of items) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${d.id}</td><td>${escapeHtml(d.name)}</td><td>${escapeHtml(
         d.status || ''
@@ -207,9 +235,11 @@
       return;
     }
     const json = await res.json();
+    const items = sortItems(json.items, sortState.news);
     const tbody = qs('#newsTable tbody');
     tbody.innerHTML = '';
-    for (const n of json.items) {
+    applySortIndicators('newsTable', sortState.news);
+    for (const n of items) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${n.id}</td><td>${escapeHtml(n.title)}</td><td>${
         n.published ? 'Ja' : 'Nein'
@@ -395,6 +425,39 @@
         await deleteCoord(Number(t.dataset.delCoord));
       }
     });
+
+    // Sort click handlers
+    qsa('#devTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.devices;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadDevices();
+      })
+    );
+    qsa('#newsTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.news;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadNews();
+      })
+    );
+    qsa('#coordsTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.coords;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadCoords();
+      })
+    );
+
+    // Overview events
+    qs('#ovRefresh')?.addEventListener('click', loadOverview);
+    qs('#ovRange')?.addEventListener('change', loadOverview);
   }
 
   // Coords
@@ -419,17 +482,49 @@
       return;
     }
     const json = await res.json();
+    const items = sortItems(json.items, sortState.coords);
     const tbody = qs('#coordsTable tbody');
     tbody.innerHTML = '';
-    for (const c of json.items) {
+    applySortIndicators('coordsTable', sortState.coords);
+    for (const c of items) {
       const tr = document.createElement('tr');
+      const tags = Array.isArray(c.tags) ? c.tags.join(', ') : c.tags || '';
       tr.innerHTML = `<td>${c.id}</td><td>${escapeHtml(c.category)}</td><td>${escapeHtml(
         c.name
-      )}</td><td>${c.lat}</td><td>${c.lng}</td><td>
+      )}</td><td>${c.lat}</td><td>${c.lng}</td><td>${escapeHtml(tags)}</td><td>
         <button class="btn" data-edit-coord="${c.id}">Bearbeiten</button>
         <button class="btn danger" data-del-coord="${c.id}">Löschen</button>
       </td>`;
       tbody.appendChild(tr);
+    }
+  }
+
+  // Overview
+  async function fetchOverview(range) {
+    const u = new URL('/admin/api/overview', location.origin);
+    if (range) u.searchParams.set('range', range);
+    const res = await fetch(u);
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+  async function loadOverview() {
+    try {
+      const range = qs('#ovRange')?.value || '7d';
+      const [r1, r7, r30, rSel] = await Promise.all([
+        fetchOverview('1d'),
+        fetchOverview('7d'),
+        fetchOverview('30d'),
+        fetchOverview(range),
+      ]);
+      qs('#ovToday') && (qs('#ovToday').textContent = String(r1.total ?? 0));
+      qs('#ov7') && (qs('#ov7').textContent = String(r7.total ?? 0));
+      qs('#ov30') && (qs('#ov30').textContent = String(r30.total ?? 0));
+      const total = rSel.total ?? 0;
+      const from = rSel.range?.from || '';
+      const to = rSel.range?.to || '';
+      qs('#ovTotal') && (qs('#ovTotal').textContent = `${total} Besucher von ${from} bis ${to}`);
+    } catch (e) {
+      showToast('Overview laden fehlgeschlagen', 'error');
     }
   }
 

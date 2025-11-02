@@ -167,6 +167,13 @@ export async function migrate() {
     INDEX idx_coords_category (category),
     INDEX idx_coords_updated (updated_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // visitors table (daily aggregated hits)
+  await p.execute(`CREATE TABLE IF NOT EXISTS visitors (
+    day DATE NOT NULL,
+    hits INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (day)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
 export async function seedAdminIfNeeded(logger) {
