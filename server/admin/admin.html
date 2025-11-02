@@ -36,18 +36,19 @@
       th[data-sort] {
         cursor: pointer;
         position: relative;
+        padding-right: 18px;
       }
       th[data-sort].sorted-asc::after {
         content: '▲';
         position: absolute;
-        right: 8px;
+        right: 12px;
         font-size: 0.75rem;
         color: #94a3b8;
       }
       th[data-sort].sorted-desc::after {
         content: '▼';
         position: absolute;
-        right: 8px;
+        right: 12px;
         font-size: 0.75rem;
         color: #94a3b8;
       }
@@ -127,7 +128,7 @@
                 <th data-sort="compatible">Compatible</th>
                 <th data-sort="price_range">PriceRange</th>
                 <th data-sort="pogo_comp">PoGoComp</th>
-                <th>Manufacturer</th>
+                <th data-sort="manufacturer_url">Manufacturer</th>
                 <th>Notes</th>
                 <th>RootLinks</th>
                 <th>Aktionen</th>
@@ -138,6 +139,11 @@
           <dialog id="devDialog" class="modal">
             <form id="devForm" method="dialog" class="form modal-form">
               <h3 id="devDialogTitle" class="modal-title">Device</h3>
+              <div
+                id="devDialogId"
+                class="text-sm"
+                style="color: #94a3b8; margin-bottom: 6px"
+              ></div>
               <input type="hidden" name="id" />
               <label><span>Model</span><input name="model" required /></label>
               <label><span>Brand</span><input name="brand" /></label>
@@ -190,7 +196,8 @@
           <table class="table" id="newsTable">
             <thead>
               <tr>
-                <th data-sort="slug">ID</th>
+                <th data-sort="id">ID</th>
+                <th data-sort="slug">Slug</th>
                 <th data-sort="date">Datum</th>
                 <th data-sort="title">Titel</th>
                 <th data-sort="excerpt">Excerpt</th>
@@ -205,6 +212,11 @@
           <dialog id="newsDialog" class="modal">
             <form id="newsForm" method="dialog" class="form modal-form">
               <h3 id="newsDialogTitle" class="modal-title">News</h3>
+              <div
+                id="newsDialogId"
+                class="text-sm"
+                style="color: #94a3b8; margin-bottom: 6px"
+              ></div>
               <input type="hidden" name="id" />
               <label><span>Slug (ID)</span><input name="slug" placeholder="pgsharp-1-47" /></label>
               <label><span>Datum</span><input name="date" type="date" /></label>
@@ -262,6 +274,11 @@
           <dialog id="coordsDialog" class="modal">
             <form id="coordsForm" method="dialog" class="form modal-form">
               <h3 id="coordsDialogTitle" class="modal-title">Coord</h3>
+              <div
+                id="coordsDialogId"
+                class="text-sm"
+                style="color: #94a3b8; margin-bottom: 6px"
+              ></div>
               <input type="hidden" name="id" />
               <label>
                 <span>Kategorie</span>

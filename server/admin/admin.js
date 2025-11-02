@@ -178,6 +178,8 @@
     form.reset();
     if (data) {
       form.id.value = data.id;
+      const $id = qs('#devDialogId');
+      if ($id) $id.textContent = data.id ? `ID: ${data.id}` : '';
       form.model.value = data.model || '';
       form.brand.value = data.brand || '';
       form.type.value = data.type || '';
@@ -193,6 +195,8 @@
       qs('#devDialogTitle').textContent = 'Device bearbeiten';
     } else {
       qs('#devDialogTitle').textContent = 'Device erstellen';
+      const $id = qs('#devDialogId');
+      if ($id) $id.textContent = '';
     }
     dlg.showModal();
   }
@@ -278,7 +282,8 @@
     for (const n of items) {
       const tr = document.createElement('tr');
       const tags = Array.isArray(n.tags) ? n.tags.join(', ') : n.tags || '';
-      tr.innerHTML = `<td>${escapeHtml(n.slug || '')}</td>
+      tr.innerHTML = `<td>${n.id}</td>
+        <td>${escapeHtml(n.slug || '')}</td>
         <td>${escapeHtml(n.date || '')}</td>
         <td>${escapeHtml(n.title)}</td>
         <td>${escapeHtml(n.excerpt || '')}</td>
@@ -299,6 +304,8 @@
     form.reset();
     if (data) {
       form.id.value = data.id;
+      const $id = qs('#newsDialogId');
+      if ($id) $id.textContent = data.id ? `ID: ${data.id}` : '';
       form.slug.value = data.slug || '';
       form.date.value = data.date || '';
       form.title.value = data.title || '';
@@ -310,6 +317,8 @@
       qs('#newsDialogTitle').textContent = 'News bearbeiten';
     } else {
       qs('#newsDialogTitle').textContent = 'News erstellen';
+      const $id = qs('#newsDialogId');
+      if ($id) $id.textContent = '';
     }
     dlg.showModal();
   }
@@ -439,13 +448,13 @@
         const row = t.closest('tr');
         openNewsDialog({
           id,
-          slug: row.children[0]?.textContent || '',
-          date: row.children[1]?.textContent || '',
-          title: row.children[2]?.textContent || '',
-          excerpt: row.children[3]?.textContent || '',
-          published_at: row.children[4]?.textContent || '',
-          updated_at_ext: row.children[5]?.textContent || '',
-          tags: (row.children[6]?.textContent || '')
+          slug: row.children[1]?.textContent || '',
+          date: row.children[2]?.textContent || '',
+          title: row.children[3]?.textContent || '',
+          excerpt: row.children[4]?.textContent || '',
+          published_at: row.children[5]?.textContent || '',
+          updated_at_ext: row.children[6]?.textContent || '',
+          tags: (row.children[7]?.textContent || '')
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean),
@@ -648,6 +657,8 @@
     form.reset();
     if (data) {
       form.id.value = data.id;
+      const $id = qs('#coordsDialogId');
+      if ($id) $id.textContent = data.id ? `ID: ${data.id}` : '';
       form.category.value = data.category || 'top10';
       form.name.value = data.name || '';
       form.lat.value = data.lat ?? '';
@@ -657,6 +668,8 @@
       qs('#coordsDialogTitle').textContent = 'Coord bearbeiten';
     } else {
       qs('#coordsDialogTitle').textContent = 'Coord erstellen';
+      const $id = qs('#coordsDialogId');
+      if ($id) $id.textContent = '';
     }
     dlg.showModal();
   }
