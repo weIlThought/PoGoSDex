@@ -129,11 +129,9 @@ export async function createServer() {
     res.setHeader('Content-Security-Policy', cspDirectives);
     res.setHeader(
       'Report-To',
-      if (!isTest) {
-        // Missbrauchsschutz: strengeres Rate-Limit (IP-basiert)
-        const proposalLimiterShort = rateLimit({ windowMs: 10 * 60 * 1000, limit: 5 }); // 5 / 10min
-        const proposalLimiterDay = rateLimit({ windowMs: 24 * 60 * 60 * 1000, limit: 50 }); // 50 / Tag
-        app.post('/api/device-proposals', proposalLimiterShort, proposalLimiterDay, async (req, res) => {
+      JSON.stringify({
+        group: 'csp-endpoint',
+        max_age: 10886400,
         endpoints: [{ url: '/csp-report' }],
       })
     );
@@ -145,41 +143,8 @@ export async function createServer() {
     try {
       const result = await getPgsharpVersionCached();
       res.json(result);
-              rootLinks,
-              // optional anti-bot Felder
-              hp,
-              cfTurnstileToken,
+    } catch (e) {
       res.status(500).json({ ok: false, error: String(e) });
-            // Honeypot: falls Bots ein verstecktes Feld ausfüllen, brechen wir ab
-            if (typeof hp === 'string' && hp.trim() !== '') {
-              return res.status(200).json({ ok: true }); // ruhig bleiben, aber ignorieren
-            }
-            // Optional: Cloudflare Turnstile Validierung, falls konfiguriert
-            if (process.env.TURNSTILE_SECRET) {
-              if (!cfTurnstileToken || typeof cfTurnstileToken !== 'string') {
-                return res.status(400).json({ error: 'captcha required' });
-              }
-              try {
-                const verifyRes = await fetch(
-                  'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-                  {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                      secret: process.env.TURNSTILE_SECRET,
-                      response: cfTurnstileToken,
-                      remoteip: req.ip || '',
-                    }),
-                  }
-                );
-                const verifyJson = await verifyRes.json();
-                if (!verifyJson.success) {
-                  return res.status(400).json({ error: 'captcha failed' });
-                }
-              } catch {
-                return res.status(400).json({ error: 'captcha verify error' });
-              }
-            }
     }
   });
 
@@ -655,58 +620,94 @@ export async function createServer() {
     }
   });
 
-  // Public: Neue Geräte-Vorschläge einreichen
+  // Public: Neue Geräte-Vorschläge einreichen (mit Rate-Limits, Honeypot, optional Captcha)
   if (!isTest) {
-    const proposalLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 20 });
-    app.post('/api/device-proposals', proposalLimiter, async (req, res) => {
-      try {
-        const {
-          brand,
-          model,
-          os,
-          type,
-          compatible,
-          priceRange,
-          pogo,
-          manufacturerUrl,
-          notes,
-          rootLinks,
-        } = req.body || {};
-        // Minimalvalidierung
-        if (!model || typeof model !== 'string' || model.trim().length < 2) {
-          return res.status(400).json({ error: 'model required' });
+    const proposalLimiterShort = rateLimit({ windowMs: 10 * 60 * 1000, limit: 5 }); // 5 / 10min
+    const proposalLimiterDay = rateLimit({ windowMs: 24 * 60 * 60 * 1000, limit: 50 }); // 50 / Tag
+    app.post(
+      '/api/device-proposals',
+      proposalLimiterShort,
+      proposalLimiterDay,
+      async (req, res) => {
+        try {
+          const {
+            brand,
+            model,
+            os,
+            type,
+            compatible,
+            priceRange,
+            pogo,
+            manufacturerUrl,
+            notes,
+            rootLinks,
+            hp,
+            cfTurnstileToken,
+          } = req.body || {};
+          // Honeypot: ruhig ignorieren, wenn gefüllt
+          if (typeof hp === 'string' && hp.trim() !== '') {
+            return res.status(200).json({ ok: true });
+          }
+          // Optional: Cloudflare Turnstile
+          if (process.env.TURNSTILE_SECRET) {
+            if (!cfTurnstileToken || typeof cfTurnstileToken !== 'string') {
+              return res.status(400).json({ error: 'captcha required' });
+            }
+            try {
+              const verifyRes = await fetch(
+                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                  body: new URLSearchParams({
+                    secret: process.env.TURNSTILE_SECRET,
+                    response: cfTurnstileToken,
+                    remoteip: req.ip || '',
+                  }),
+                }
+              );
+              const verifyJson = await verifyRes.json();
+              if (!verifyJson.success) return res.status(400).json({ error: 'captcha failed' });
+            } catch {
+              return res.status(400).json({ error: 'captcha verify error' });
+            }
+          }
+          // Minimalvalidierung
+          if (!model || typeof model !== 'string' || model.trim().length < 2) {
+            return res.status(400).json({ error: 'model required' });
+          }
+          const created = await createDeviceProposal({
+            brand,
+            model: model.trim(),
+            os,
+            type,
+            compatible: !!compatible,
+            price_range: priceRange,
+            pogo_comp: pogo,
+            manufacturer_url: manufacturerUrl,
+            notes: Array.isArray(notes)
+              ? notes
+              : typeof notes === 'string'
+              ? notes
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : [],
+            root_links: Array.isArray(rootLinks)
+              ? rootLinks
+              : typeof rootLinks === 'string'
+              ? rootLinks
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : [],
+          });
+          res.status(201).json({ ok: true, id: created.id });
+        } catch (e) {
+          res.status(400).json({ error: 'invalid payload' });
         }
-        const created = await createDeviceProposal({
-          brand,
-          model: model.trim(),
-          os,
-          type,
-          compatible: !!compatible,
-          price_range: priceRange,
-          pogo_comp: pogo,
-          manufacturer_url: manufacturerUrl,
-          notes: Array.isArray(notes)
-            ? notes
-            : typeof notes === 'string'
-            ? notes
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
-          root_links: Array.isArray(rootLinks)
-            ? rootLinks
-            : typeof rootLinks === 'string'
-            ? rootLinks
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
-        });
-        res.status(201).json({ ok: true, id: created.id });
-      } catch (e) {
-        res.status(400).json({ error: 'invalid payload' });
       }
-    });
+    );
   } else {
     // Tests: kein Ratelimit
     app.post('/api/device-proposals', async (req, res) => {
