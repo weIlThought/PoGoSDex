@@ -72,17 +72,37 @@ export function requireCsrf(req, res, next) {
 export async function handleLogin(req, res) {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
-  const p = getPool();
-  const [rows] = await p.execute(
-    'SELECT id, username, password_hash FROM users WHERE username = ?',
-    [username]
-  );
-  const user = Array.isArray(rows) && rows[0];
-  if (!user) return res.status(404).json({ error: 'Username not found', code: 'USER_NOT_FOUND' });
-  const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: 'Invalid password', code: 'INVALID_PASSWORD' });
-  const { csrf } = issueAuthCookies(res, { id: user.id, username: user.username });
-  res.json({ ok: true, user: { id: user.id, username: user.username }, csrf });
+  try {
+    const p = getPool();
+    const [rows] = await p.execute(
+      'SELECT id, username, password_hash FROM users WHERE username = ?',
+      [username]
+    );
+    const user = Array.isArray(rows) && rows[0];
+    if (!user) return res.status(404).json({ error: 'Username not found', code: 'USER_NOT_FOUND' });
+
+    const hash = user.password_hash;
+    if (!hash || typeof hash !== 'string') {
+      console.error('[auth] Missing password hash for user', username);
+      return res.status(500).json({ error: 'Login failed', code: 'PASSWORD_HASH_INVALID' });
+    }
+
+    let ok = false;
+    try {
+      ok = await bcrypt.compare(password, hash);
+    } catch (e) {
+      console.error('[auth] bcrypt.compare failed:', e);
+      return res.status(500).json({ error: 'Login failed', code: 'PASSWORD_HASH_INVALID' });
+    }
+    if (!ok) return res.status(401).json({ error: 'Invalid password', code: 'INVALID_PASSWORD' });
+
+    const { csrf } = issueAuthCookies(res, { id: user.id, username: user.username });
+    res.json({ ok: true, user: { id: user.id, username: user.username }, csrf });
+  } catch (e) {
+    console.error('[auth] handleLogin error:', e);
+    // likely DB connectivity or query error
+    return res.status(503).json({ error: 'Login temporarily unavailable', code: 'DB_UNAVAILABLE' });
+  }
 }
 
 export function handleLogout(req, res) {

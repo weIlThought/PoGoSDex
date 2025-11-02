@@ -47,6 +47,11 @@
           err.hidden = false;
           if (e.code === 'USER_NOT_FOUND') err.textContent = 'Benutzername existiert nicht.';
           else if (e.code === 'INVALID_PASSWORD') err.textContent = 'Passwort ist falsch.';
+          else if (e.code === 'DB_UNAVAILABLE')
+            err.textContent =
+              'Login derzeit nicht möglich (Datenbank). Bitte später erneut versuchen.';
+          else if (e.code === 'PASSWORD_HASH_INVALID')
+            err.textContent = 'Login-Konfiguration fehlerhaft. Bitte den Betreiber kontaktieren.';
           else err.textContent = 'Login fehlgeschlagen. Bitte später erneut versuchen.';
         }
       } finally {
