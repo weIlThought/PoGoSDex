@@ -153,6 +153,19 @@ export async function migrate() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+  // issues table (replaces "Overview" with a DB-backed tracker)
+  await p.execute(`CREATE TABLE IF NOT EXISTS issues (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    status ENUM('open','in_progress','closed') NOT NULL DEFAULT 'open',
+    tags JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_issues_status (status),
+    INDEX idx_issues_updated (updated_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
   // coords table
   await p.execute(`CREATE TABLE IF NOT EXISTS coords (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -241,6 +254,11 @@ export async function migrate() {
   }
   if (!(await hasColumn('news', 'tags'))) {
     await p.execute(`ALTER TABLE news ADD COLUMN tags JSON NULL AFTER image_url`);
+  }
+
+  // issues: ensure tags column exists (idempotent)
+  if (!(await hasColumn('issues', 'tags'))) {
+    await p.execute(`ALTER TABLE issues ADD COLUMN tags JSON NULL AFTER status`);
   }
 
   // device_proposals table (User-Einreichungen)

@@ -148,7 +148,7 @@
     });
     qsa('.panel').forEach((p) => p.classList.add('hidden'));
     qs(`#panel-${name}`)?.classList.remove('hidden');
-    if (name === 'overview') loadOverview();
+    if (name === 'issues') loadIssues();
     if (name === 'devices') loadDevices();
     if (name === 'news') loadNews();
     if (name === 'coords') loadCoords();
@@ -158,6 +158,7 @@
 
   // Sorting state and helpers
   const sortState = {
+    issues: { key: 'id', dir: 'desc' },
     devices: { key: 'id', dir: 'desc' },
     news: { key: 'id', dir: 'desc' },
     coords: { key: 'id', dir: 'desc' },
@@ -756,9 +757,42 @@
       })
     );
 
-    // Overview events
-    qs('#ovRefresh')?.addEventListener('click', loadOverview);
-    qs('#ovRange')?.addEventListener('change', loadOverview);
+    // Issues
+    qs('#issuesRefresh')?.addEventListener('click', loadIssues);
+    qs('#issuesSearch')?.addEventListener('change', loadIssues);
+    qs('#issuesStatus')?.addEventListener('change', loadIssues);
+    qs('#issuesNew')?.addEventListener('click', () => openIssuesDialog(null));
+    qs('#issuesCancel')?.addEventListener('click', () => qs('#issuesDialog')?.close());
+    qs('#issuesSave')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      saveIssue();
+    });
+    qs('#issuesTable')?.addEventListener('click', async (e) => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      if (t.dataset.editIssue) {
+        const id = Number(t.dataset.editIssue);
+        try {
+          const res = await fetch(`/admin/api/issues/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            openIssuesDialog(data);
+          }
+        } catch {}
+      }
+      if (t.dataset.delIssue) {
+        await deleteIssue(Number(t.dataset.delIssue));
+      }
+    });
+    qsa('#issuesTable thead th[data-sort]').forEach((th) =>
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const st = sortState.issues;
+        st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
+        st.key = key;
+        loadIssues();
+      })
+    );
 
     // Close dialogs on backdrop click (CSP-safe, no inline handlers)
     const initDialogClose = (dlg) => {
@@ -781,6 +815,7 @@
     initDialogClose(qs('#devDialog'));
     initDialogClose(qs('#newsDialog'));
     initDialogClose(qs('#coordsDialog'));
+    initDialogClose(qs('#issuesDialog'));
   }
 
   // Coords
@@ -825,32 +860,102 @@
     }
   }
 
-  // Overview
-  async function fetchOverview(range) {
-    const u = new URL('/admin/api/overview', location.origin);
-    if (range) u.searchParams.set('range', range);
-    const res = await fetch(u);
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+  // Issues
+  async function loadIssues() {
+    const q = (qs('#issuesSearch')?.value || '').trim();
+    const status = (qs('#issuesStatus')?.value || '').trim();
+    const url = new URL('/admin/api/issues', location.origin);
+    if (q) url.searchParams.set('q', q);
+    if (status) url.searchParams.set('status', status);
+    const res = await fetch(url);
+    if (res.status === 401) {
+      location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      showToast('Issues laden fehlgeschlagen', 'error');
+      return;
+    }
+    const json = await res.json();
+    const items = sortItems(json.items, sortState.issues);
+    const tbody = qs('#issuesTable tbody');
+    tbody.innerHTML = '';
+    applySortIndicators('issuesTable', sortState.issues);
+    for (const it of items) {
+      const tr = document.createElement('tr');
+      const tags = Array.isArray(it.tags) ? it.tags.join(', ') : it.tags || '';
+      tr.innerHTML = `<td>${it.id}</td>
+        <td>${escapeHtml(it.title || '')}</td>
+        <td>${escapeHtml(it.status || '')}</td>
+        <td>${escapeHtml(tags)}</td>
+        <td>${escapeHtml(it.updated_at || '')}</td>
+        <td>
+          <button class="btn" data-edit-issue="${it.id}">Bearbeiten</button>
+          <button class="btn danger" data-del-issue="${it.id}">Löschen</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
   }
-  async function loadOverview() {
+
+  function openIssuesDialog(data) {
+    const dlg = qs('#issuesDialog');
+    const form = qs('#issuesForm');
+    form.reset();
+    if (data) {
+      form.id.value = data.id;
+      const $id = qs('#issuesDialogId');
+      if ($id) $id.textContent = data.id ? `ID: ${data.id}` : '';
+      form.title.value = data.title || '';
+      form.status.value = data.status || 'open';
+      form.tags.value = Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || '';
+      form.content.value = data.content || '';
+      qs('#issuesDialogTitle').textContent = 'Issue bearbeiten';
+    } else {
+      qs('#issuesDialogTitle').textContent = 'Issue erstellen';
+      const $id = qs('#issuesDialogId');
+      if ($id) $id.textContent = '';
+    }
+    dlg.showModal();
+  }
+
+  async function saveIssue() {
+    const form = qs('#issuesForm');
+    const id = form.id.value ? Number(form.id.value) : null;
+    const payload = {
+      title: form.title.value.trim(),
+      content: form.content.value.trim(),
+      status: form.status.value,
+      tags: (form.tags.value || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
+    if (!payload.title || !payload.content) {
+      showToast('Titel und Inhalt sind erforderlich', 'error');
+      return;
+    }
     try {
-      const range = qs('#ovRange')?.value || '7d';
-      const [r1, r7, r30, rSel] = await Promise.all([
-        fetchOverview('1d'),
-        fetchOverview('7d'),
-        fetchOverview('30d'),
-        fetchOverview(range),
-      ]);
-      qs('#ovToday') && (qs('#ovToday').textContent = String(r1.total ?? 0));
-      qs('#ov7') && (qs('#ov7').textContent = String(r7.total ?? 0));
-      qs('#ov30') && (qs('#ov30').textContent = String(r30.total ?? 0));
-      const total = rSel.total ?? 0;
-      const from = rSel.range?.from || '';
-      const to = rSel.range?.to || '';
-      qs('#ovTotal') && (qs('#ovTotal').textContent = `${total} Besucher von ${from} bis ${to}`);
+      if (id) {
+        await putJson(`/admin/api/issues/${id}`, payload, { csrf: state.csrf });
+      } else {
+        await postJson('/admin/api/issues', payload, { csrf: state.csrf });
+      }
+      qs('#issuesDialog').close();
+      showToast(tAdmin('toast_saved'));
+      await loadIssues();
     } catch (e) {
-      showToast('Overview laden fehlgeschlagen', 'error');
+      showToast(tAdmin('toast_save_failed'), 'error');
+    }
+  }
+
+  async function deleteIssue(id) {
+    if (!confirm('Wirklich löschen?')) return;
+    try {
+      await del(`/admin/api/issues/${id}`, { csrf: state.csrf });
+      showToast(tAdmin('toast_deleted'));
+      await loadIssues();
+    } catch (e) {
+      showToast(tAdmin('toast_delete_failed'), 'error');
     }
   }
 

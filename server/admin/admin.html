@@ -66,7 +66,7 @@
     </header>
     <main class="layout">
       <aside class="sidebar" role="tablist" aria-orientation="vertical">
-        <button class="tab" role="tab" aria-selected="false" data-tab="overview">Overview</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="issues">Issues</button>
         <button class="tab active" role="tab" aria-selected="true" data-tab="devices">
           Devices
         </button>
@@ -78,36 +78,64 @@
       <section class="content">
         <div id="toast" class="toast" hidden></div>
 
-        <section id="panel-overview" class="panel hidden" role="tabpanel">
+        <section id="panel-issues" class="panel hidden" role="tabpanel">
           <div class="panel-header">
-            <h2>Overview</h2>
+            <h2>Issues</h2>
             <div class="tools">
-              <select id="ovRange">
-                <option value="1d">Heute</option>
-                <option value="7d" selected>7 Tage</option>
-                <option value="30d">30 Tage</option>
+              <select id="issuesStatus">
+                <option value="">Alle</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="closed">Closed</option>
               </select>
-              <button id="ovRefresh" class="btn">Neu laden</button>
+              <input id="issuesSearch" type="search" placeholder="Suche…" />
+              <button id="issuesRefresh" class="btn">Neu laden</button>
+              <button id="issuesNew" class="btn primary">Neu</button>
             </div>
           </div>
-          <div id="ovCards" class="grid md:grid-cols-3 gap-4">
-            <div class="card">
-              <h3>Heute</h3>
-              <p id="ovToday" class="text-3xl">–</p>
-            </div>
-            <div class="card">
-              <h3>7 Tage</h3>
-              <p id="ov7" class="text-3xl">–</p>
-            </div>
-            <div class="card">
-              <h3>30 Tage</h3>
-              <p id="ov30" class="text-3xl">–</p>
-            </div>
-          </div>
-          <div class="mt-4">
-            <h3>Zeitraum</h3>
-            <div id="ovTotal" class="text-2xl mt-2">–</div>
-          </div>
+          <table class="table" id="issuesTable">
+            <thead>
+              <tr>
+                <th data-sort="id">ID</th>
+                <th data-sort="title">Titel</th>
+                <th data-sort="status">Status</th>
+                <th>Tags</th>
+                <th data-sort="updated_at">UpdatedAt</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <dialog id="issuesDialog" class="modal">
+            <form id="issuesForm" method="dialog" class="form modal-form">
+              <h3 id="issuesDialogTitle" class="modal-title">Issue</h3>
+              <div
+                id="issuesDialogId"
+                class="text-sm"
+                style="color: #94a3b8; margin-bottom: 6px"
+              ></div>
+              <input type="hidden" name="id" />
+              <label><span>Titel</span><input name="title" required /></label>
+              <label>
+                <span>Status</span>
+                <select name="status">
+                  <option value="open">Open</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </label>
+              <label
+                ><span>Tags (Komma-separiert)</span><input name="tags" placeholder="ui, bug"
+              /></label>
+              <label
+                ><span>Inhalt</span><textarea name="content" rows="8" required></textarea>
+              </label>
+              <menu class="modal-actions">
+                <button id="issuesCancel" type="button" class="btn">Abbrechen</button>
+                <button id="issuesSave" value="confirm" class="btn primary">Speichern</button>
+              </menu>
+            </form>
+          </dialog>
         </section>
 
         <section id="panel-devices" class="panel" role="tabpanel">

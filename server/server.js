@@ -520,6 +520,9 @@ export async function createServer() {
   const { listCoords, getCoord, createCoord, updateCoord, deleteCoord } = await import(
     './repositories.js'
   );
+  const { listIssues, getIssue, createIssue, updateIssue, deleteIssue } = await import(
+    './repositories.js'
+  );
   const {
     createDeviceProposal,
     listDeviceProposals,
@@ -902,31 +905,67 @@ export async function createServer() {
     }
   });
 
-  // --- Overview (admin) ---
-  app.get('/admin/api/overview', requireAuth, async (req, res) => {
-    // range: 1d|7d|30d|custom, optional from,to (YYYY-MM-DD)
-    const range = (req.query.range || '7d').toString();
-    const today = new Date();
-    const to = req.query.to || today.toISOString().slice(0, 10);
-    let from = req.query.from || null;
-    if (!from) {
-      const match = range.match(/^(\d+)d$/);
-      const days = match ? Math.max(1, Math.min(365, Number(match[1]) || 7)) : 7;
-      const d = new Date(today);
-      d.setUTCDate(d.getUTCDate() - (days - 1));
-      from = d.toISOString().slice(0, 10);
-    }
+  // --- Issues (admin) ---
+  app.get('/admin/api/issues', requireAuth, async (req, res) => {
     try {
-      const p = getPool();
-      const [rows] = await p.execute(
-        'SELECT day, hits FROM visitors WHERE day BETWEEN ? AND ? ORDER BY day ASC',
-        [from, to]
-      );
-      const total = rows.reduce((s, r) => s + Number(r.hits || 0), 0);
-      res.json({ range: { from, to }, total, byDay: rows });
+      const { q, limit, offset } = parsePagination(req);
+      const status = (req.query.status || '').toString().trim() || undefined;
+      const items = await listIssues({ q, status, limit, offset });
+      res.json({ items });
     } catch (e) {
-      console.error('[api] overview failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to load overview' });
+      console.error('[api] listIssues failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to list issues' });
+    }
+  });
+  app.get('/admin/api/issues/:id', requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const row = await getIssue(id);
+      if (!row) return res.status(404).json({ error: 'not found' });
+      res.json(row);
+    } catch (e) {
+      console.error('[api] getIssue failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to get issue' });
+    }
+  });
+  app.post('/admin/api/issues', requireAuth, requireCsrf, async (req, res) => {
+    try {
+      const { title, content, status, tags } = req.body || {};
+      if (!title || typeof title !== 'string')
+        return res.status(400).json({ error: 'title required' });
+      if (!content || typeof content !== 'string')
+        return res.status(400).json({ error: 'content required' });
+      const created = await createIssue({ title: title.trim(), content, status, tags });
+      res.status(201).json(created);
+    } catch (e) {
+      console.error('[api] createIssue failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to create issue' });
+    }
+  });
+  app.put('/admin/api/issues/:id', requireAuth, requireCsrf, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const { title, content, status, tags } = req.body || {};
+      const updated = await updateIssue(id, { title, content, status, tags });
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      console.error('[api] updateIssue failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to update issue' });
+    }
+  });
+  app.delete('/admin/api/issues/:id', requireAuth, requireCsrf, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+      const ok = await deleteIssue(id);
+      if (!ok) return res.status(404).json({ error: 'not found' });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error('[api] deleteIssue failed:', e && e.message ? e.message : e);
+      res.status(500).json({ error: 'Failed to delete issue' });
     }
   });
   app.post('/admin/api/coords', requireAuth, requireCsrf, async (req, res) => {
