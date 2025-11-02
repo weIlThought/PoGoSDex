@@ -120,6 +120,21 @@ export async function migrate() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // coords table
+  await p.execute(`CREATE TABLE IF NOT EXISTS coords (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category ENUM('top10','notable','raid_spots') NOT NULL DEFAULT 'top10',
+    name VARCHAR(255) NOT NULL,
+    lat DOUBLE NOT NULL,
+    lng DOUBLE NOT NULL,
+    note TEXT NULL,
+    tags JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_coords_category (category),
+    INDEX idx_coords_updated (updated_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
 export async function seedAdminIfNeeded(logger) {

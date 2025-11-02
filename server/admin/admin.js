@@ -91,6 +91,9 @@
     });
     qsa('.panel').forEach((p) => p.classList.add('hidden'));
     qs(`#panel-${name}`)?.classList.remove('hidden');
+    if (name === 'devices') loadDevices();
+    if (name === 'news') loadNews();
+    if (name === 'coords') loadCoords();
   }
 
   // Devices
@@ -344,6 +347,125 @@
         await deleteNews(Number(t.dataset.delNews));
       }
     });
+
+    // Coords
+    qs('#coordsRefresh')?.addEventListener('click', loadCoords);
+    qs('#coordsSearch')?.addEventListener('change', loadCoords);
+    qs('#coordsCategory')?.addEventListener('change', loadCoords);
+    qs('#coordsNew')?.addEventListener('click', () => openCoordsDialog(null));
+    qs('#coordsSave')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      saveCoord();
+    });
+    qs('#coordsTable')?.addEventListener('click', async (e) => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      if (t.dataset.editCoord) {
+        const id = Number(t.dataset.editCoord);
+        const row = t.closest('tr');
+        openCoordsDialog({
+          id,
+          category: row.children[1].textContent,
+          name: row.children[2].textContent,
+          lat: row.children[3].textContent,
+          lng: row.children[4].textContent,
+          note: '',
+          tags: [],
+        });
+      }
+      if (t.dataset.delCoord) {
+        await deleteCoord(Number(t.dataset.delCoord));
+      }
+    });
+  }
+
+  // Coords
+  async function loadCoords() {
+    const q = (qs('#coordsSearch')?.value || '').trim();
+    const category = (qs('#coordsCategory')?.value || '').trim();
+    const url = new URL('/admin/api/coords', location.origin);
+    if (q) url.searchParams.set('q', q);
+    if (category) url.searchParams.set('category', category);
+    const res = await fetch(url);
+    if (res.status === 401) {
+      location.href = '/login.html';
+      return;
+    }
+    const json = await res.json();
+    const tbody = qs('#coordsTable tbody');
+    tbody.innerHTML = '';
+    for (const c of json.items) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${c.id}</td><td>${escapeHtml(c.category)}</td><td>${escapeHtml(
+        c.name
+      )}</td><td>${c.lat}</td><td>${c.lng}</td><td>
+        <button class="btn" data-edit-coord="${c.id}">Bearbeiten</button>
+        <button class="btn danger" data-del-coord="${c.id}">Löschen</button>
+      </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function openCoordsDialog(data) {
+    const dlg = qs('#coordsDialog');
+    const form = qs('#coordsForm');
+    form.reset();
+    if (data) {
+      form.id.value = data.id;
+      form.category.value = data.category || 'top10';
+      form.name.value = data.name || '';
+      form.lat.value = data.lat ?? '';
+      form.lng.value = data.lng ?? '';
+      form.note.value = data.note || '';
+      form.tags.value = Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || '';
+      qs('#coordsDialogTitle').textContent = 'Coord bearbeiten';
+    } else {
+      qs('#coordsDialogTitle').textContent = 'Coord erstellen';
+    }
+    dlg.showModal();
+  }
+
+  async function saveCoord() {
+    const form = qs('#coordsForm');
+    const id = form.id.value ? Number(form.id.value) : null;
+    const payload = {
+      category: form.category.value,
+      name: form.name.value.trim(),
+      lat: parseFloat(form.lat.value),
+      lng: parseFloat(form.lng.value),
+      note: form.note.value.trim() || null,
+      tags: (form.tags.value || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
+    if (!payload.name || !Number.isFinite(payload.lat) || !Number.isFinite(payload.lng)) {
+      showToast('Name und gültige Koordinaten sind erforderlich', 'error');
+      return;
+    }
+    try {
+      if (id) {
+        await putJson(`/admin/api/coords/${id}`, payload, { csrf: state.csrf });
+      } else {
+        await postJson('/admin/api/coords', payload, { csrf: state.csrf });
+      }
+      qs('#coordsDialog').close();
+      showToast('Gespeichert');
+      await loadCoords();
+    } catch (e) {
+      showToast('Speichern fehlgeschlagen', 'error');
+    }
+  }
+
+  async function deleteCoord(id) {
+    if (!confirm('Wirklich löschen?')) return;
+    try {
+      await del(`/admin/api/coords/${id}`, { csrf: state.csrf });
+      showToast('Gelöscht');
+      await loadCoords();
+    } catch (e) {
+      showToast('Löschen fehlgeschlagen', 'error');
+    }
   }
 
   window.addEventListener('DOMContentLoaded', async () => {

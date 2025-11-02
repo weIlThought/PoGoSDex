@@ -4,11 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Admin • PoGoSDex</title>
+    <link rel="icon" href="/assets/favicon.ico" />
     <link rel="stylesheet" href="/admin.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="brand">PoGoSDex Admin</div>
+      <div class="brand" style="display: inline-flex; align-items: center; gap: 8px">
+        <img src="/assets/logo.png" alt="PoGoSDex" style="height: 24px; width: auto" />
+        <span>PoGoSDex Admin</span>
+      </div>
       <nav class="actions">
         <button id="logoutBtn" class="btn">Logout</button>
       </nav>
@@ -19,6 +23,7 @@
           Devices
         </button>
         <button class="tab" role="tab" aria-selected="false" data-tab="news">News</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="coords">Coords</button>
       </aside>
       <section class="content">
         <div id="toast" class="toast" hidden></div>
@@ -109,6 +114,61 @@
               <menu>
                 <button value="cancel" class="btn">Abbrechen</button>
                 <button id="newsSave" value="confirm" class="btn primary">Speichern</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="panel-coords" class="panel hidden" role="tabpanel">
+          <div class="panel-header">
+            <h2>Coords</h2>
+            <div class="tools">
+              <select id="coordsCategory">
+                <option value="">Alle Kategorien</option>
+                <option value="top10">Top 10</option>
+                <option value="notable">Notable</option>
+                <option value="raid_spots">Raid Spots</option>
+              </select>
+              <input id="coordsSearch" type="search" placeholder="Suche…" />
+              <button id="coordsRefresh" class="btn">Neu laden</button>
+              <button id="coordsNew" class="btn primary">Neu</button>
+            </div>
+          </div>
+          <table class="table" id="coordsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Kategorie</th>
+                <th>Name</th>
+                <th>Lat</th>
+                <th>Lng</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <dialog id="coordsDialog">
+            <form id="coordsForm" method="dialog" class="form modal-form">
+              <h3 id="coordsDialogTitle">Coord</h3>
+              <input type="hidden" name="id" />
+              <label>
+                <span>Kategorie</span>
+                <select name="category">
+                  <option value="top10">Top 10</option>
+                  <option value="notable">Notable</option>
+                  <option value="raid_spots">Raid Spots</option>
+                </select>
+              </label>
+              <label><span>Name</span><input name="name" required /></label>
+              <label><span>Lat</span><input name="lat" type="number" step="any" required /></label>
+              <label><span>Lng</span><input name="lng" type="number" step="any" required /></label>
+              <label><span>Notiz</span><textarea name="note" rows="4"></textarea></label>
+              <label
+                ><span>Tags (Komma-separiert)</span><input name="tags" placeholder="park, top10"
+              /></label>
+              <menu>
+                <button value="cancel" class="btn">Abbrechen</button>
+                <button id="coordsSave" value="confirm" class="btn primary">Speichern</button>
               </menu>
             </form>
           </dialog>

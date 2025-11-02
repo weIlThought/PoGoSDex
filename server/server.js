@@ -563,6 +563,9 @@ export async function createServer() {
   const { listNews, getNews, createNews, updateNews, deleteNews } = await import(
     './repositories.js'
   );
+  const { listCoords, getCoord, createCoord, updateCoord, deleteCoord } = await import(
+    './repositories.js'
+  );
 
   // Devices
   app.get('/admin/api/devices', requireAuth, async (req, res) => {
@@ -648,6 +651,54 @@ export async function createServer() {
       res.json({ ok: true });
     } catch (e) {
       res.status(500).json({ error: 'Failed to delete news' });
+    }
+  });
+
+  // Coords
+  app.get('/admin/api/coords', requireAuth, async (req, res) => {
+    try {
+      const { q, limit, offset } = parsePagination(req);
+      const category = (req.query.category || '').toString().trim() || undefined;
+      const rows = await listCoords({ q, category, limit, offset });
+      res.json({ items: rows });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to list coords' });
+    }
+  });
+  app.post('/admin/api/coords', requireAuth, requireCsrf, async (req, res) => {
+    const { category = 'top10', name, lat, lng, note, tags } = req.body || {};
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
+    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng)))
+      return res.status(400).json({ error: 'lat/lng required' });
+    if (!['top10', 'notable', 'raid_spots'].includes(category))
+      return res.status(400).json({ error: 'invalid category' });
+    try {
+      const created = await createCoord({ category, name: name.trim(), lat, lng, note, tags });
+      res.status(201).json(created);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to create coord' });
+    }
+  });
+  app.put('/admin/api/coords/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const updated = await updateCoord(id, req.body || {});
+      if (!updated) return res.status(404).json({ error: 'not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to update coord' });
+    }
+  });
+  app.delete('/admin/api/coords/:id', requireAuth, requireCsrf, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const ok = await deleteCoord(id);
+      if (!ok) return res.status(404).json({ error: 'not found' });
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to delete coord' });
     }
   });
 

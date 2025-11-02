@@ -121,3 +121,79 @@ export async function deleteNews(id) {
   const [res] = await p().execute('DELETE FROM news WHERE id = ?', [id]);
   return res.affectedRows > 0;
 }
+
+// Coords
+export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
+  const params = [];
+  let sql = 'SELECT id, category, name, lat, lng, note, tags, created_at, updated_at FROM coords';
+  const where = [];
+  if (category) {
+    where.push('category = ?');
+    params.push(category);
+  }
+  if (q) {
+    where.push('(name LIKE ? OR note LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?';
+  params.push(Number(limit), Number(offset));
+  const [rows] = await p().execute(sql, params);
+  return rows.map((r) => ({ ...r, tags: r.tags ? JSON.parse(r.tags) : null }));
+}
+
+export async function getCoord(id) {
+  const [rows] = await p().execute(
+    'SELECT id, category, name, lat, lng, note, tags, created_at, updated_at FROM coords WHERE id = ?',
+    [id]
+  );
+  const r = rows[0];
+  return r ? { ...r, tags: r.tags ? JSON.parse(r.tags) : null } : null;
+}
+
+export async function createCoord({ category = 'top10', name, lat, lng, note, tags }) {
+  const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : tags || null;
+  const [res] = await p().execute(
+    'INSERT INTO coords (category, name, lat, lng, note, tags) VALUES (?, ?, ?, ?, ?, ?)',
+    [category, name, Number(lat), Number(lng), note || null, tagsJson]
+  );
+  return await getCoord(res.insertId);
+}
+
+export async function updateCoord(id, { category, name, lat, lng, note, tags }) {
+  const fields = [];
+  const params = [];
+  if (category !== undefined) {
+    fields.push('category = ?');
+    params.push(category);
+  }
+  if (name !== undefined) {
+    fields.push('name = ?');
+    params.push(name);
+  }
+  if (lat !== undefined) {
+    fields.push('lat = ?');
+    params.push(Number(lat));
+  }
+  if (lng !== undefined) {
+    fields.push('lng = ?');
+    params.push(Number(lng));
+  }
+  if (note !== undefined) {
+    fields.push('note = ?');
+    params.push(note);
+  }
+  if (tags !== undefined) {
+    fields.push('tags = ?');
+    params.push(Array.isArray(tags) ? JSON.stringify(tags) : tags || null);
+  }
+  if (!fields.length) return await getCoord(id);
+  params.push(id);
+  await p().execute(`UPDATE coords SET ${fields.join(', ')} WHERE id = ?`, params);
+  return await getCoord(id);
+}
+
+export async function deleteCoord(id) {
+  const [res] = await p().execute('DELETE FROM coords WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+}
