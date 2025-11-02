@@ -154,10 +154,10 @@
           <section class="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 class="text-xl font-semibold" data-i18n="device_builder_title"> Vorschlag für neues Gerät einreichen </h3>
-                <p class="text-sm text-slate-300" data-i18n="device_builder_intro"> Fülle das Formular aus und reiche deinen Vorschlag ein. Er erscheint im Admin‑Bereich unter “Pull Requests” und wird geprüft. </p>
+                <h3 class="text-xl font-semibold" data-i18n="device_proposal_title"> Vorschlag für neues Gerät einreichen </h3>
+                <p class="text-sm text-slate-300" data-i18n="device_proposal_intro"> Fülle das Formular aus und reiche deinen Vorschlag ein. Er erscheint im Admin‑Bereich unter “Pull Requests” und wird geprüft. </p>
               </div>
-              <button id="deviceModalOpen" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_open_modal"> Formular öffnen </button>
+              <button id="deviceModalOpen" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_proposal_open_modal"> Formular öffnen </button>
             </div>
           </section>
         </section>
@@ -293,8 +293,8 @@
           <div class="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6" role="document" tabindex="-1">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_builder_title"> Vorschlag für neues Gerät </h3>
-                <p class="text-xs text-slate-400" data-i18n="device_builder_intro"> Sende deinen Vorschlag direkt an das Team. Wir prüfen ihn und fügen das Gerät ggf. hinzu. </p>
+                <h3 class="text-lg font-semibold text-slate-100" data-i18n="device_proposal_title"> Vorschlag für neues Gerät </h3>
+                <p class="text-xs text-slate-400" data-i18n="device_proposal_intro"> Sende deinen Vorschlag direkt an das Team. Wir prüfen ihn und fügen das Gerät ggf. hinzu. </p>
               </div>
               <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close" aria-label="Close builder"> Close </button>
             </div>
@@ -305,7 +305,7 @@
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderType" placeholder="Type (Phone/Tablet)" data-i18n-target="placeholder" data-i18n="placeholder_type" />
-              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderPrice" placeholder="Price range (optional)" data-i18n-target="placeholder" data-i18n="device_builder_price_placeholder" />
+              <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderPrice" placeholder="Price range (optional)" data-i18n-target="placeholder" data-i18n="device_proposal_price_placeholder" />
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="builderCompatible" />
                 <label for="builderCompatible" class="text-sm" data-i18n="table_compatible">Compatible</label>
@@ -313,11 +313,11 @@
               <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderNotes" placeholder="Notes (comma separated)" data-i18n-target="placeholder" data-i18n="placeholder_notes"></textarea>
               <textarea class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100 md:col-span-2" id="builderRootLinks" placeholder="Root Links (comma separated URLs)" data-i18n-target="placeholder" data-i18n="placeholder_rootlinks"></textarea>
               <div class="md:col-span-2 flex flex-wrap justify-end gap-3">
-                <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_builder_clear"> Zurücksetzen </button>
-                <button type="submit" class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_builder_submit"> Vorschlag einreichen </button>
+                <button type="button" id="deviceFormClear" class="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition" data-i18n="device_proposal_clear"> Zurücksetzen </button>
+                <button type="submit" class="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition" data-i18n="device_proposal_submit"> Vorschlag einreichen </button>
               </div>
             </form>
-            <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_builder_empty"> Fülle das Formular aus und sende deinen Vorschlag ab. </p>
+            <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_proposal_empty"> Fülle das Formular aus und sende deinen Vorschlag ab. </p>
           </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>

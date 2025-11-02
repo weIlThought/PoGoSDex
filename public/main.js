@@ -1618,7 +1618,7 @@ function setBuilderStatus(key) {
 
 function setupDeviceBuilder() {
   if (!deviceBuilderForm) return;
-  setBuilderStatus('device_builder_empty');
+  setBuilderStatus('device_proposal_empty');
 
   deviceBuilderForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1641,7 +1641,7 @@ function setupDeviceBuilder() {
       hp: qs('#builderHP')?.value?.trim() || '',
     };
     if (!payload.model) {
-      setBuilderStatus('device_builder_empty');
+      setBuilderStatus('device_proposal_empty');
       return;
     }
     (async () => {
@@ -1652,16 +1652,16 @@ function setupDeviceBuilder() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        setBuilderStatus('device_builder_copied');
+        setBuilderStatus('device_proposal_copied');
         const el = domCache.query('#deviceBuilderStatus');
         if (el)
-          el.textContent = t('device_builder_success', 'Danke! Dein Vorschlag wurde eingereicht.');
+          el.textContent = t('device_proposal_success', 'Danke! Dein Vorschlag wurde eingereicht.');
         deviceBuilderForm.reset();
       } catch (err) {
         const el = domCache.query('#deviceBuilderStatus');
         if (el)
           el.textContent = t(
-            'device_builder_error',
+            'device_proposal_error',
             'Leider fehlgeschlagen. Bitte später erneut versuchen.'
           );
       }
@@ -1689,7 +1689,7 @@ function setupDeviceBuilder() {
     deviceBuilderForm?.reset();
     if (deviceBuilderStatus)
       deviceBuilderStatus.textContent = t(
-        'device_builder_empty',
+        'device_proposal_empty',
         'Fülle das Formular aus und sende deinen Vorschlag ab.'
       );
   });
