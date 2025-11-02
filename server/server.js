@@ -398,6 +398,17 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
+  // Public login JS (no auth required)
+  app.get('/login.js', async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'login.js');
+      res.type('application/javascript');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
   app.get('/admin.html', requireAuth, async (req, res) => {
     try {
       const file = path.join(adminDir, 'admin.html');
@@ -417,7 +428,8 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
-  app.get('/admin.css', requireAuth, async (req, res) => {
+  // CSS kann öffentlich ausgeliefert werden (enthält keine geheimen Daten)
+  app.get('/admin.css', async (req, res) => {
     try {
       const file = path.join(adminDir, 'admin.css');
       res.type('text/css');
