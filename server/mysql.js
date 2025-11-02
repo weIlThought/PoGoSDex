@@ -19,7 +19,18 @@ function resolveMysqlConfig(env = process.env) {
   // Prefer full URLs if provided
   const urlFromEnv = env.MYSQL_URL || env.MYSQL_PUBLIC_URL;
   const parsed = urlFromEnv ? parseMysqlUrl(urlFromEnv) : null;
-  if (parsed) return parsed;
+  if (parsed) {
+    // If URL points to Railway private domain but a TCP proxy is available, prefer the proxy
+    const proxyHost = env.RAILWAY_TCP_PROXY_DOMAIN || env.RAILWAY_TCP_PROXY_HOST;
+    const proxyPort = env.RAILWAY_TCP_PROXY_PORT ? Number(env.RAILWAY_TCP_PROXY_PORT) : null;
+    const privateDomain = env.RAILWAY_PRIVATE_DOMAIN || '';
+    const isPrivateDomain = privateDomain && parsed.host === privateDomain;
+    const isPrivateV6 = typeof parsed.host === 'string' && /^fd[0-9a-f]{2}:/i.test(parsed.host);
+    if (proxyHost && proxyPort && (isPrivateDomain || isPrivateV6)) {
+      return { ...parsed, host: proxyHost, port: proxyPort };
+    }
+    return parsed;
+  }
 
   // Railway: Prefer the TCP proxy if available (publicly reachable) BEFORE private domain
   const tcpProxyHost = env.RAILWAY_TCP_PROXY_DOMAIN || env.RAILWAY_TCP_PROXY_HOST;
