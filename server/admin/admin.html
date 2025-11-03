@@ -40,79 +40,99 @@
               <button id="dashRefresh" class="btn">Neu laden</button>
             </div>
           </div>
-          <div class="cards-grid">
-            <div class="metric-card">
-              <h3>Devices</h3>
-              <div id="dashDevices" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>News</h3>
-              <div id="dashNews" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Coords</h3>
-              <div id="dashCoords" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Issues</h3>
-              <div id="dashIssues" class="stat">–</div>
-            </div>
-          </div>
-          <div class="cards-grid mt-4">
-            <div class="metric-card">
-              <h3>Besucher Heute</h3>
-              <div id="dashVisitorsToday" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Besucher 7 Tage</h3>
-              <div id="dashVisitors7" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Besucher 30 Tage</h3>
-              <div id="dashVisitors30" class="stat">–</div>
-            </div>
-          </div>
-          <div class="cards-grid mt-4">
-            <div class="metric-card">
-              <h3>Unique Heute</h3>
-              <div id="dashUniquesToday" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Unique 7 Tage</h3>
-              <div id="dashUniques7" class="stat">–</div>
-            </div>
-            <div class="metric-card">
-              <h3>Unique 30 Tage</h3>
-              <div id="dashUniques30" class="stat">–</div>
-            </div>
-          </div>
-          <div class="grid md:grid-cols-2 gap-4 mt-4">
-            <div class="metric-card">
-              <h3>Uptime</h3>
-              <div class="mt-2">
-                <div>Status: <span id="dashUptimeStatus" class="pill">–</span></div>
-                <div>Uptime (gesamt/30d): <span id="dashUptimeRatio">–</span></div>
+          <div class="section">
+            <h4 class="section-title">Kennzahlen</h4>
+            <div class="cards-grid">
+              <div class="metric-card">
+                <h3>Devices</h3>
+                <div id="dashDevices" class="stat">–</div>
               </div>
-            </div>
-            <div class="metric-card">
-              <h3>Besucher gesamt</h3>
-              <div class="mt-2">
-                <div>Hits gesamt: <span id="dashVisitorsTotal">–</span></div>
-                <div>Tage erfasst: <span id="dashVisitorsDays">–</span></div>
+              <div class="metric-card">
+                <h3>News</h3>
+                <div id="dashNews" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>Coords</h3>
+                <div id="dashCoords" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>Issues</h3>
+                <div id="dashIssues" class="stat">–</div>
               </div>
             </div>
           </div>
-          <div class="grid md:grid-cols-2 gap-4 mt-4">
-            <div class="metric-card">
-              <h3>Trend (7 Tage) – Hits</h3>
-              <div id="dashSparkHits" class="mt-2 spark"></div>
-            </div>
-            <div class="metric-card">
-              <h3>Trend (7 Tage) – Unique</h3>
-              <div id="dashSparkUniques" class="mt-2 spark"></div>
+
+          <div class="section">
+            <h4 class="section-title">Besucher</h4>
+            <div class="cards-grid">
+              <div class="metric-card">
+                <h3>Heute</h3>
+                <div id="dashVisitorsToday" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>7 Tage</h3>
+                <div id="dashVisitors7" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>30 Tage</h3>
+                <div id="dashVisitors30" class="stat">–</div>
+              </div>
             </div>
           </div>
-          <p class="mt-3 text-sm" style="color: #94a3b8">
+
+          <div class="section">
+            <h4 class="section-title">Eindeutige Besucher</h4>
+            <div class="cards-grid">
+              <div class="metric-card">
+                <h3>Heute</h3>
+                <div id="dashUniquesToday" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>7 Tage</h3>
+                <div id="dashUniques7" class="stat">–</div>
+              </div>
+              <div class="metric-card">
+                <h3>30 Tage</h3>
+                <div id="dashUniques30" class="stat">–</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h4 class="section-title">System</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="metric-card">
+                <h3>Uptime</h3>
+                <div class="mt-2">
+                  <div>Status: <span id="dashUptimeStatus" class="pill">–</span></div>
+                  <div>Uptime (gesamt/30d): <span id="dashUptimeRatio">–</span></div>
+                </div>
+              </div>
+              <div class="metric-card">
+                <h3>Besucher gesamt</h3>
+                <div class="mt-2">
+                  <div>Hits gesamt: <span id="dashVisitorsTotal">–</span></div>
+                  <div>Tage erfasst: <span id="dashVisitorsDays">–</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h4 class="section-title">Trends</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="metric-card">
+                <h3>Trend (7 Tage) – Hits</h3>
+                <div id="dashSparkHits" class="mt-2 spark"></div>
+              </div>
+              <div class="metric-card">
+                <h3>Trend (7 Tage) – Unique</h3>
+                <div id="dashSparkUniques" class="mt-2 spark"></div>
+              </div>
+            </div>
+          </div>
+
+          <p class="note">
             Hinweis: Unique-Zahlen basieren auf täglich neu erzeugten, gehashten Sitzungskennungen
             (IP + User-Agent + Tag, mit Salt). "Do Not Track" und Opt-out werden respektiert.
           </p>
