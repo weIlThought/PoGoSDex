@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Admin spezifische Styles (aus admin.css) */
+
 :root{--bg:#0b1020;--fg:#e6ecff;--muted:#94a3b8;--card:#151b2e;--primary:#3b82f6;--danger:#ef4444;--border:#25304d}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;color:var(--fg);background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}

@@ -2,7 +2,7 @@ import { getPool } from './mysql.js';
 
 const p = () => getPool();
 
-// Devices
+
 export async function listDevices({ q, limit = 50, offset = 0 } = {}) {
   const params = [];
   let sql = `SELECT id, name, description, image_url, status,
@@ -138,7 +138,7 @@ export async function deleteDevice(id) {
   return res.affectedRows > 0;
 }
 
-// News
+
 export async function listNews({ q, limit = 50, offset = 0 } = {}) {
   const params = [];
   let sql = `SELECT id, slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags,
@@ -198,10 +198,10 @@ export async function createNews(payload) {
     excerpt,
     content,
     image_url,
-    // keep legacy published but prefer published_at presence for UI
+    
     published = 0,
     published_at,
-    updated_at, // may be mapped from updatedAt
+    updated_at, 
     updated_at_ext,
     tags,
   } = payload || {};
@@ -255,7 +255,7 @@ export async function deleteNews(id) {
   return res.affectedRows > 0;
 }
 
-// Coords
+
 export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
   const params = [];
   let sql = 'SELECT id, category, name, lat, lng, note, tags, created_at, updated_at FROM coords';
@@ -282,7 +282,7 @@ export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
         return null;
       }
     }
-    // already parsed JSON (object or array) from driver
+    
     return t;
   };
   return rows.map((r) => ({ ...r, tags: parseTags(r.tags) }));
@@ -367,7 +367,7 @@ export async function deleteCoord(id) {
   return res.affectedRows > 0;
 }
 
-// Issues (Admin-only; replaces Overview)
+
 export async function listIssues({ q, status, limit = 50, offset = 0 } = {}) {
   const params = [];
   let sql = 'SELECT id, title, content, status, tags, created_at, updated_at FROM issues';
@@ -470,7 +470,7 @@ export async function deleteIssue(id) {
   return res.affectedRows > 0;
 }
 
-// Device Proposals (Pull Requests)
+
 export async function createDeviceProposal(payload = {}) {
   const {
     brand,
@@ -562,8 +562,8 @@ export async function listDeviceProposals({ status, q, limit = 50, offset = 0 } 
 export async function approveDeviceProposal(id, approvedByUserId = null) {
   const prop = await getDeviceProposal(id);
   if (!prop) return null;
-  if (prop.status !== 'pending') return prop; // nichts tun, wenn bereits verarbeitet
-  // In devices einfügen
+  if (prop.status !== 'pending') return prop; 
+  
   const [ins] = await p().execute(
     `INSERT INTO devices (name, model, brand, type, os, compatible, notes, manufacturer_url, root_links, price_range, pogo_comp, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,

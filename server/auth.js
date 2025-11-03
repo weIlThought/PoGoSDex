@@ -10,7 +10,7 @@ const COOKIE_NAME = 'admintoken';
 const CSRF_COOKIE = 'csrf_token';
 
 export function authMiddleware(app) {
-  // Attach cookie parser
+  
   app.use(cookieParser());
 }
 
@@ -40,10 +40,10 @@ export function issueAuthCookies(res, user) {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 12, // 12h
+    maxAge: 1000 * 60 * 60 * 12, 
     path: '/',
   });
-  // CSRF token (double submit cookie pattern)
+  
   const csrf = crypto.randomBytes(16).toString('hex');
   res.cookie(CSRF_COOKIE, csrf, {
     httpOnly: false,
@@ -100,7 +100,7 @@ export async function handleLogin(req, res) {
     res.json({ ok: true, user: { id: user.id, username: user.username }, csrf });
   } catch (e) {
     console.error('[auth] handleLogin error:', e);
-    // likely DB connectivity or query error
+    
     return res.status(503).json({ error: 'Login temporarily unavailable', code: 'DB_UNAVAILABLE' });
   }
 }
@@ -111,7 +111,7 @@ export function handleLogout(req, res) {
 }
 
 export function meHandler(req, res) {
-  // Regenerate CSRF on /admin/me for convenience
+  
   const { csrf } = issueAuthCookies(res, { id: req.user.id, username: req.user.username });
   res.json({ user: req.user, csrf });
 }

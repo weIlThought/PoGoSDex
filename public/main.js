@@ -4,7 +4,7 @@ function qs(s) {
 function qsa(s) {
   return Array.from(document.querySelectorAll(s));
 }
-// Unified HTML escaping and sanitization utility
+
 function sanitizeAndEscape(input, options = {}) {
   if (typeof input !== 'string') {
     input = String(input || '');
@@ -20,11 +20,11 @@ function sanitizeAndEscape(input, options = {}) {
       .replace(/'/g, '&#039;');
   }
 
-  // Use existing sanitizeHtml for complex HTML content
+  
   return sanitizeHtml(input);
 }
 
-// Backward compatibility aliases
+
 function esc(t) {
   return sanitizeAndEscape(t);
 }
@@ -33,26 +33,26 @@ function escapeHtml(s) {
   return sanitizeAndEscape(s);
 }
 
-// Application Configuration - centralized constants
+
 const CONFIG = {
-  // Timing constants
-  FOCUS_DELAY: 0, // setTimeout delay for focus management
-  CLOCK_UPDATE_INTERVAL: 1000, // 1 second for time updates
-  API_REFRESH_INTERVAL: 30 * 60 * 1000, // 30 minutes for version checks
-  TIMEZONE_OFFSET_MS: 60 * 60 * 1000, // 1 hour in milliseconds
+  
+  FOCUS_DELAY: 0, 
+  CLOCK_UPDATE_INTERVAL: 1000, 
+  API_REFRESH_INTERVAL: 30 * 60 * 1000, 
+  TIMEZONE_OFFSET_MS: 60 * 60 * 1000, 
 
-  // UI constants
-  HEADER_SHRINK_THRESHOLD: 64, // Scroll Y position for header shrinking
+  
+  HEADER_SHRINK_THRESHOLD: 64, 
 
-  // Feature flags
+  
   DEBUG: false,
-  LANG_LOCK: true, // Temporarily lock language to English
+  LANG_LOCK: true, 
 
-  // Supported languages
+  
   SUPPORTED_LANGS: ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru'],
 };
 
-// Generic DataLoader - eliminates repetitive async patterns
+
 class DataLoader {
   static async loadJSON(url, fallbackValue = null, errorContext = 'data') {
     try {
@@ -82,7 +82,7 @@ class DataLoader {
   }
 }
 
-// DOM Element Cache - reduces repeated querySelector calls
+
 class DOMCache {
   constructor() {
     this.cache = new Map();
@@ -92,15 +92,15 @@ class DOMCache {
   init() {
     if (this.initialized) return;
 
-    // Cache frequently used elements
+    
     const elements = {
-      // Sections
+      
       overviewSection: '#overviewSection',
       devicesSection: '#devicesSection',
       newsSection: '#newsSection',
       pgsharpSection: '#pgsharpSection',
 
-      // Modals
+      
       modalBackdrop: '#modalBackdrop',
       coordsModalBackdrop: '#coordsModalBackdrop',
       newsModalBackdrop: '#newsModalBackdrop',
@@ -108,7 +108,7 @@ class DOMCache {
       coordsModalClose: '#coordsModalClose',
       closeNewsModal: '#closeNewsModal',
 
-      // Modal content
+      
       modalTitle: '#modalTitle',
       modalMeta: '#modalMeta',
       modalDesc: '#modalDesc',
@@ -117,27 +117,27 @@ class DOMCache {
       modalPriceRange: '#modalPriceRange',
       modalPoGoComp: '#modalPoGoComp',
 
-      // Coords modal
+      
       coordsModalTitle: '#coordsModalTitle',
       coordsModalMeta: '#coordsModalMeta',
       coordsModalNote: '#coordsModalNote',
       coordsModalTags: '#coordsModalTags',
       coordsModalMaps: '#coordsModalMaps',
 
-      // News modal
+      
       newsModalTitle: '#newsModalTitle',
       newsModalMeta: '#newsModalMeta',
       newsModalBody: '#newsModalBody',
       newsModalTagsWrap: '#newsModalTagsWrap',
       newsModalTags: '#newsModalTags',
 
-      // Search and filters
+      
       searchInput: '#searchInput',
       newsSearchInput: '#newsSearchInput',
       newsTagFilter: '#newsTagFilter',
       newsWrap: '#newsWrap',
 
-      // Other frequently used
+      
       coordsTime: '#coords-time',
     };
 
@@ -154,16 +154,16 @@ class DOMCache {
     return this.cache.get(key);
   }
 
-  // Fallback for non-cached selectors
+  
   query(selector) {
     return document.querySelector(selector);
   }
 }
 
-// Global DOM cache instance
+
 const domCache = new DOMCache();
 
-// Device Filter System - manages complex device filtering logic
+
 class DeviceFilter {
   constructor() {
     this.devices = [];
@@ -287,34 +287,34 @@ class EventManager {
   }
 
   setupGlobalDelegation() {
-    // Single click handler for the entire document
+    
     document.addEventListener('click', (e) => {
       this.handleGlobalClick(e);
     });
 
-    // Single change handler for forms
+    
     document.addEventListener('change', (e) => {
       this.handleGlobalChange(e);
     });
 
-    // Single input handler for search fields
+    
     document.addEventListener('input', (e) => {
       this.handleGlobalInput(e);
     });
 
-    // Single keydown handler for interactive elements
+    
     document.addEventListener('keydown', (e) => {
       this.handleGlobalKeydown(e);
     });
 
-    // Single submit handler for forms
+    
     document.addEventListener('submit', (e) => {
       this.handleGlobalSubmit(e);
     });
   }
 
   setupGlobalKeyboardHandlers() {
-    // Global ESC key handler
+    
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.handleEscapeKey(e);
@@ -374,7 +374,7 @@ class EventManager {
   handleGlobalKeydown(e) {
     const target = e.target;
 
-    // Handle Enter/Space on interactive elements
+    
     if ((e.key === 'Enter' || e.key === ' ') && target.matches('[role="button"]')) {
       e.preventDefault();
       target.click();
@@ -392,13 +392,13 @@ class EventManager {
   }
 
   handleEscapeKey(e) {
-    // Close all modals on ESC
+    
     coordsModalManager.close();
     newsModalManager.close();
     if (typeof closeModal === 'function') closeModal();
   }
 
-  // Specific action handlers
+  
   handleCloseModal(target, param) {
     if (param === 'coords') coordsModalManager.close();
     else if (param === 'news') newsModalManager.close();
@@ -406,7 +406,7 @@ class EventManager {
   }
 
   handleOpenModal(target, param) {
-    // Implementation depends on modal type and data
+    
     debug('Open modal:', param);
   }
 
@@ -415,7 +415,7 @@ class EventManager {
   }
 
   handleCopyJson(target, param) {
-    // Copy device JSON implementation
+    
     debug('Copy JSON for:', param);
   }
 
@@ -1009,7 +1009,7 @@ class PerformanceMonitor {
     const avgUsed =
       memoryEntries.reduce((sum, entry) => sum + entry.used, 0) / memoryEntries.length;
     return {
-      averageUsed: Math.round(avgUsed / 1024 / 1024), // MB
+      averageUsed: Math.round(avgUsed / 1024 / 1024), 
       entries: memoryEntries.length,
     };
   }
@@ -1023,7 +1023,7 @@ class PerformanceMonitor {
   }
 
   logPerformanceReport() {
-    // Only log in debug mode to reduce console noise in production
+    
     if (!CONFIG.DEBUG) return;
 
     const summary = this.getPerformanceSummary();
@@ -1072,23 +1072,23 @@ class PerformanceMonitor {
   }
 }
 
-// Global performance monitor instance
+
 const performanceMonitor = new PerformanceMonitor();
 
-// Add global performance measurement helpers
+
 window.measurePerformance = (name, fn) => performanceMonitor.measureFunction(name, fn);
 window.measureAsyncPerformance = (name, fn) => performanceMonitor.measureAsyncFunction(name, fn);
 window.getPerformanceMetrics = () => performanceMonitor.getMetrics();
 window.exportPerformanceReport = () => performanceMonitor.exportMetrics();
 
-// Debug wrapper - gate console output behind a flag
+
 function debug(...args) {
   if (CONFIG.DEBUG) console.log(...args);
 }
 
-// Lightweight HTML sanitizer (fallback) — removes script/style and on* attributes
+
 function sanitizeHtml(html) {
-  // Prefer DOMPurify when available (loaded from CDN in index.html). Falls back to a lightweight sanitizer.
+  
   try {
     if (
       typeof window !== 'undefined' &&
@@ -1098,7 +1098,7 @@ function sanitizeHtml(html) {
       try {
         return window.DOMPurify.sanitize(html);
       } catch (e) {
-        // fallthrough to internal sanitizer
+        
       }
     }
 
@@ -1139,7 +1139,7 @@ let issues = [];
 const newsSearchInput = qs('#newsSearchInput');
 const newsTagFilterWrap = qs('#newsTagFilter');
 
-// Generic Modal Manager - eliminates code duplication
+
 class ModalManager {
   constructor(backdropId, closeButtonId, focusElementId = null) {
     this.backdrop = qs(backdropId);
@@ -1176,8 +1176,8 @@ class ModalManager {
 
   close() {
     if (!this.backdrop) return;
-    // Move focus away from elements inside the modal BEFORE hiding it,
-    // to avoid focusing a descendant of an aria-hidden container.
+    
+    
     try {
       const restore =
         this.lastFocus ||
@@ -1189,15 +1189,15 @@ class ModalManager {
       } else if (restore && typeof restore.focus === 'function') {
         restore.focus();
       }
-      // Clean up temporary tabindex later
+      
       if (restore === document.body) {
         setTimeout(() => document.body.removeAttribute('tabindex'), 0);
       }
     } catch (e) {
-      // ignore focus errors
+      
     }
 
-    // Now hide and mark aria-hidden
+    
     this.backdrop.setAttribute('aria-hidden', 'true');
     this.backdrop.classList.add('hidden');
     this.backdrop.classList.remove('flex');
@@ -1221,7 +1221,7 @@ function t(key, fallback) {
   return (i18n && i18n[key]) || fallback || key;
 }
 
-// News filtering logic - separated for better maintainability
+
 function filterNews(items) {
   return items.filter((item) => {
     const title = item.title?.toLowerCase() || '';
@@ -1296,7 +1296,7 @@ function bindNewsCardEvents(article, item, content) {
   });
 }
 
-// Main news rendering function - now much cleaner and focused
+
 function renderNews(items) {
   return performanceMonitor.measureFunction('renderNews', () => {
     const wrap = domCache.get('newsWrap');
@@ -1350,7 +1350,7 @@ let activeSection = 'overview';
 let navButtons = [];
 
 function showSection(name = 'overview') {
-  // Delegate to the unified handler which manages visibility, history and lazy loads
+  
   showSectionByName(name);
 }
 function bindNavigation() {
@@ -1377,7 +1377,7 @@ async function loadNews() {
   });
 }
 
-// -------- Issues (Overview) --------
+
 function generateIssueItem(item) {
   const li = document.createElement('li');
   li.innerHTML = sanitizeHtml(`
@@ -2042,7 +2042,7 @@ function openCoordsModal(item) {
     return;
   }
 
-  // Populate modal content
+  
   qs('#coordsModalTitle').textContent = item.name || '—';
   qs('#coordsModalMeta').textContent = `Lat: ${item.lat ?? '—'} • Lng: ${item.lng ?? '—'}`;
   qs('#coordsModalNote').textContent = item.note || '';
@@ -2075,9 +2075,9 @@ function openCoordsModal(item) {
   coordsModalManager.open();
 }
 
-// closeCoordsModal function removed - now handled by coordsModalManager.close()
 
-// Initialize Modal Managers
+
+
 const coordsModalManager = new ModalManager('#coordsModalBackdrop', '#coordsModalClose');
 const newsModalManager = new ModalManager('#newsModalBackdrop', '#closeNewsModal');
 
@@ -2086,7 +2086,7 @@ function updateCoordsTime() {
   if (!el) return;
   function tick() {
     const now = new Date();
-    // Use i18n keys for the coords time label so translations work
+    
     const label = t('coords_time_label', 'Current time');
     const suffix = t('coords_time_user_suffix', 'Local time');
     el.textContent = `${label}: ${now.toLocaleTimeString()} (${suffix})`;
@@ -2095,7 +2095,7 @@ function updateCoordsTime() {
   if (!updateCoordsTime._interval)
     updateCoordsTime._interval = setInterval(tick, CONFIG.CLOCK_UPDATE_INTERVAL);
 }
-// News Modal DOM References - using cache for better performance
+
 const newsModalTitle = () => domCache.get('newsModalTitle');
 const newsModalMeta = () => domCache.get('newsModalMeta');
 const newsModalBody = () => domCache.get('newsModalBody');
@@ -2114,7 +2114,7 @@ function openNewsModal(original, translated = {}) {
     tags: original.tags || [],
   };
 
-  // Populate modal content
+  
   newsModalTitle().textContent = merged.title;
 
   const pub = merged.publishedAt ? dateFormatter.format(new Date(merged.publishedAt)) : dash();
@@ -2251,14 +2251,14 @@ function showSectionByName(name) {
   }
   if (plain === 'news' && typeof window.initNewsFilters === 'function') {
     try {
-      // Some pages may add an optional initNewsFilters hook; call it if available.
+      
       window.initNewsFilters();
     } catch (e) {
       console.warn('initNewsFilters', e);
     }
   }
 
-  // Ensure news are rendered when the News section becomes active
+  
   if (plain === 'news' && Array.isArray(news)) {
     try {
       renderNews(news);
@@ -2267,7 +2267,7 @@ function showSectionByName(name) {
     }
   }
 
-  // Update nav button state (ARIA + styles)
+  
   const buttons = document.querySelectorAll('[data-section]');
   buttons.forEach((btn) => {
     const isActive = btn.getAttribute('data-section') === plain;
@@ -2280,7 +2280,7 @@ function showSectionByName(name) {
 
   activeSection = plain;
 
-  // Show legal and status ONLY on overview section
+  
   const overviewActive = plain === 'overview';
   const legal = document.getElementById('legalSection');
   const status = document.getElementById('statusSection');
@@ -2314,7 +2314,7 @@ window.addEventListener('load', () => {
   else showSectionByName('overview');
 });
 
-// Header shrink on scroll for better focus (compact header)
+
 (function setupHeaderShrink() {
   const header = document.querySelector('header');
   if (!header) return;
@@ -2342,11 +2342,11 @@ window.addEventListener('load', () => {
     }
   }
   window.addEventListener('scroll', update, { passive: true });
-  // initial
+  
   update();
 })();
 
-// escapeHtml function removed - now using unified sanitizeAndEscape()
+
 
 async function loadPokeminersVersion() {
   const pkApkEl = document.getElementById('pk-apk');
@@ -2368,7 +2368,7 @@ async function loadPokeminersVersion() {
 }
 
 async function loadPgsharpVersion() {
-  // Run only on pages that contain the PGSharp section
+  
   const pgRoot = document.getElementById('pgsharpSection');
   if (!pgRoot) return;
   const pgPageEl = document.getElementById('pg-page');
@@ -2428,7 +2428,7 @@ async function loadPgsharpVersion() {
 window.loadCoords = loadCoords;
 
 setupDeviceBuilder();
-// Only perform section switching on pages that contain the overview
+
 if (document.getElementById('overviewSection')) {
   showSectionByName(activeSection);
 }
@@ -2440,20 +2440,20 @@ loadLang(currentLang).then(() => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize core systems first for better performance
+  
   domCache.init();
   eventManager.init();
 
-  // Enhance DataLoader with error handling
+  
   ErrorHandler.enhanceDataLoader();
 
-  // Initialize device filter system
+  
   deviceFilter.init(devices);
 
   hydrateTranslations();
   hydrateGrid();
 
-  // Page type detection
+  
   const hasOverview = !!document.getElementById('overviewSection');
   const hasPgsharp = !!document.getElementById('pgsharpSection');
   const hasStatus = !!document.getElementById('statusCard');
@@ -2467,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCoords();
   }
   if (hasStatus) {
-    // Initialize live service status from backend
+    
     initServiceStatus();
   }
 
@@ -2574,18 +2574,18 @@ async function fetchServiceStatus() {
       throw new Error('Invalid payload');
     setStatusUI({ state: data.state || 'unknown', uptimeRatio: data.uptimeRatio ?? null });
   } catch (err) {
-    // Leave previous UI, but ensure we don't show endless loading
+    
     setStatusUI({ state: 'unknown', uptimeRatio: null });
     debug('Service status fetch failed:', err);
   }
 }
 
 function initServiceStatus() {
-  // Show loading pulse until first update happens
+  
   const indicator = document.getElementById('statusIndicator');
   if (indicator) indicator.classList.add('animate-pulse');
   fetchServiceStatus();
-  // Server caches for 3 minutes; poll accordingly
+  
   if (!initServiceStatus._interval) {
     initServiceStatus._interval = setInterval(fetchServiceStatus, 3 * 60 * 1000);
   }

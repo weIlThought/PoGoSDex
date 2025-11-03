@@ -59,7 +59,7 @@
       }
     });
 
-    // Passwort anzeigen Umschalter
+    
     const pwd = form.querySelector('input[name="password"]');
     const toggle = qs('#togglePassword');
     if (pwd && toggle) {

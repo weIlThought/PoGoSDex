@@ -1,12 +1,10 @@
 @import 'tailwindcss';
 
-/* ========================================
-   DESIGN SYSTEM FOUNDATION
-   ======================================== */
 
-/* Design Tokens */
+
+
 :root {
-  /* Colors */
+  
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-success: #10b981;
@@ -14,31 +12,31 @@
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   
-  /* Backgrounds */
+  
   --bg-primary: rgba(11, 18, 32, 0.95);
   --bg-secondary: linear-gradient(140deg, rgba(22, 31, 52, 0.92), rgba(28, 38, 63, 0.9));
   --bg-tertiary: rgba(22, 31, 52, 0.7);
   
-  /* Borders */
+  
   --border-primary: rgba(148, 191, 255, 0.4);
   --border-secondary: rgba(148, 163, 184, 0.08);
   
-  /* Shadows */
+  
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   
-  /* Z-Index Scale */
+  
   --z-header: 1000;
   --z-nav: 999;
   --z-modal: 50;
   --z-tooltip: 60;
   
-  /* Transitions */
+  
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.2s ease-in-out;
   --transition-slow: 0.3s ease-in-out;
   
-  /* Focus */
+  
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -67,7 +65,7 @@
 }
 
 @layer components {
-  /* Modal System */
+  
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -88,7 +86,7 @@
     animation: fadeIn var(--transition-normal);
   }
   
-  /* Card System */
+  
   .card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
@@ -121,7 +119,7 @@
     box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
   }
   
-  /* Button System */
+  
   .btn {
     display: inline-flex;
     align-items: center;
@@ -205,7 +203,7 @@
     color: white;
   }
   
-  /* Focus Management */
+  
   .focus-visible:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -395,7 +393,7 @@
   }
 }
 
-/* Layout System */
+
 header {
   position: sticky;
   top: 0;
@@ -413,7 +411,7 @@ main {
   z-index: 1;
 }
 
-/* Navigation Components - using design system */
+
 .nav-btn {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
@@ -437,7 +435,7 @@ main {
   box-shadow: var(--focus-ring);
 }
 
-/* Specialized buttons using design system */
+
 .report-btn {
   background: linear-gradient(135deg, var(--color-success), #22c55e);
   color: #0f172a;

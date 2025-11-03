@@ -3,7 +3,7 @@
   const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
   const $toast = () => qs('#toast');
 
-  // --- Lightweight i18n for Admin UI (toasts/messages) ---
+  
   const ADMIN_I18N = {
     de: {
       toast_pulls_failed: 'Pull Requests laden fehlgeschlagen',
@@ -126,7 +126,7 @@
     return;
   }
 
-  // Admin page
+  
   const state = { csrf: null };
 
   async function ensureMe() {
@@ -157,7 +157,7 @@
     if (name === 'archive') loadArchive();
   }
 
-  // Sorting state and helpers
+  
   const sortState = {
     issues: { key: 'id', dir: 'desc' },
     devices: { key: 'id', dir: 'desc' },
@@ -185,7 +185,7 @@
     });
   }
 
-  // Pull Requests (Proposals)
+  
   async function loadPulls() {
     const q = (qs('#pullsSearch')?.value || '').trim();
     const url = new URL('/admin/api/proposals', location.origin);
@@ -256,7 +256,7 @@
     }
   }
 
-  // Devices
+  
   async function loadDevices() {
     const q = (qs('#devSearch')?.value || '').trim();
     const url = new URL('/admin/api/devices', location.origin);
@@ -360,7 +360,7 @@
       manufacturer_url: form.manufacturer_url.value.trim() || null,
       notes,
       root_links: rootLinks,
-      // legacy: backend falls back to name if provided
+      
       name: form.model.value.trim(),
     };
     if (!payload.model) {
@@ -392,7 +392,7 @@
     }
   }
 
-  // News
+  
   async function loadNews() {
     const q = (qs('#newsSearch')?.value || '').trim();
     const url = new URL('/admin/api/news', location.origin);
@@ -713,7 +713,7 @@
               : tAdmin('toast_proposal_accepted')
           );
           await loadPulls();
-          // Nach dem Annehmen automatisch die Devices-Liste aktualisieren und zur Devices-Ansicht wechseln
+          
           switchTab('devices');
           await loadDevices();
         } catch (e) {
@@ -745,7 +745,7 @@
       })
     );
 
-    // Archive
+    
     qs('#archiveRefresh')?.addEventListener('click', loadArchive);
     qs('#archiveSearch')?.addEventListener('change', loadArchive);
     qsa('#archiveTable thead th[data-sort]').forEach((th) =>
@@ -758,10 +758,10 @@
       })
     );
 
-    // Dashboard
+    
     qs('#dashRefresh')?.addEventListener('click', loadDashboard);
 
-    // Issues
+    
     qs('#issuesRefresh')?.addEventListener('click', loadIssues);
     qs('#issuesSearch')?.addEventListener('change', loadIssues);
     qs('#issuesStatus')?.addEventListener('change', loadIssues);
@@ -798,14 +798,14 @@
       })
     );
 
-    // Close dialogs on backdrop click (CSP-safe, no inline handlers)
+    
     const initDialogClose = (dlg) => {
       if (!dlg) return;
-      // Some browsers fire click on <dialog> when clicking backdrop
+      
       dlg.addEventListener('click', (e) => {
         if (e.target === dlg) dlg.close();
       });
-      // Fallback: check bounds on mousedown
+      
       dlg.addEventListener('mousedown', (e) => {
         const rect = dlg.getBoundingClientRect();
         const inside =
@@ -822,7 +822,7 @@
     initDialogClose(qs('#issuesDialog'));
   }
 
-  // Coords
+  
   async function loadCoords() {
     const q = (qs('#coordsSearch')?.value || '').trim();
     const category = (qs('#coordsCategory')?.value || '').trim();
@@ -903,7 +903,7 @@
     } catch {}
   }
 
-  // Issues
+  
   async function loadIssues() {
     const q = (qs('#issuesSearch')?.value || '').trim();
     const status = (qs('#issuesStatus')?.value || '').trim();
@@ -986,7 +986,7 @@
           (qs('#dashUniques7').textContent = String(data.visitors?.unique7d ?? '–'));
         qs('#dashUniques30') &&
           (qs('#dashUniques30').textContent = String(data.visitors?.unique30d ?? '–'));
-        // Sparklines
+        
         const days = data.visitors?.series7?.days || [];
         const hits7 = data.visitors?.series7?.hits || [];
         const uniq7 = data.visitors?.series7?.uniques || [];
@@ -1003,7 +1003,7 @@
     }
   }
 
-  // Farbmarkierung für Status
+  
   const el = qs('#dashUptimeStatus');
   if (el) {
     let color = '#94a3b8';
@@ -1119,7 +1119,7 @@
       const u = await ensureMe();
       if (!u) return;
       attachEvents();
-      // Standard-Ansicht: Dashboard zuerst anzeigen
+      
       switchTab('dashboard');
     }
   });

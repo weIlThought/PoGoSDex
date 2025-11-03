@@ -21,17 +21,7 @@
         </div>
       </div>
       <div class="flex items-center space-x-3">
-        <!-- i18n: Language selector temporarily disabled. Keep markup for quick re-enable.
-        <select id="langSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-          <option value="en">EN</option>
-          <option value="de">DE</option>
-          <option value="es">ES</option>
-          <option value="fr">FR</option>
-          <option value="it">IT</option>
-          <option value="pt">PT</option>
-          <option value="ru">RU</option>
-        </select>
-        -->
+        
         <div class="relative group select-none">
           <span class="inline-flex items-center gap-1 text-xs text-slate-200 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
             EN
@@ -308,7 +298,7 @@
               <button id="deviceModalClose" class="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800 transition" data-i18n="modal_close" aria-label="Close builder"> Close </button>
             </div>
             <form id="deviceBuilderForm" class="grid md:grid-cols-2 gap-3" autocomplete="off">
-              <!-- Honeypot Feld gegen Bots: bitte leer lassen -->
+              
               <input type="text" id="builderHP" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden" />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />

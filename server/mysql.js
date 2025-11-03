@@ -27,7 +27,7 @@ function parseMysqlUrl(urlStr) {
 }
 
 function resolveMysqlConfig(env = process.env) {
-  // Prefer full URLs if provided
+  
   const urlFromEnv =
     env.MYSQL_URL ||
     env.MYSQL_PUBLIC_URL ||
@@ -36,7 +36,7 @@ function resolveMysqlConfig(env = process.env) {
     env.JAWSDB_URL;
   const parsed = urlFromEnv ? parseMysqlUrl(urlFromEnv) : null;
   if (parsed) {
-    // If URL points to Railway private domain but a TCP proxy is available, prefer the proxy
+    
     const proxyHost = env.RAILWAY_TCP_PROXY_DOMAIN || env.RAILWAY_TCP_PROXY_HOST;
     const proxyPort = env.RAILWAY_TCP_PROXY_PORT ? Number(env.RAILWAY_TCP_PROXY_PORT) : null;
     const privateDomain = env.RAILWAY_PRIVATE_DOMAIN || '';
@@ -48,17 +48,17 @@ function resolveMysqlConfig(env = process.env) {
     return parsed;
   }
 
-  // Railway: Prefer the TCP proxy if available (publicly reachable) BEFORE private domain
+  
   const tcpProxyHost = env.RAILWAY_TCP_PROXY_DOMAIN || env.RAILWAY_TCP_PROXY_HOST;
   const tcpProxyPort = env.RAILWAY_TCP_PROXY_PORT ? Number(env.RAILWAY_TCP_PROXY_PORT) : null;
 
-  // Accept multiple naming styles (Railway + common variants)
-  // Priority order:
-  // 1) Explicit MYSQL_HOST / MYSQL_PORT
-  // 2) Railway TCP proxy domain/port (if both present)
-  // 3) MYSQLHOST / MYSQLPORT (alt spellings)
-  // 4) Railway private domain (works only inside Railway private network)
-  // 5) localhost
+  
+  
+  
+  
+  
+  
+  
   let host = env.MYSQL_HOST || null;
   let port = env.MYSQL_PORT ? Number(env.MYSQL_PORT) : null;
 
@@ -78,7 +78,7 @@ function resolveMysqlConfig(env = process.env) {
   const user = env.MYSQL_USER || env.MYSQLUSER || 'root';
   const password = env.MYSQL_PASSWORD || env.MYSQLPASSWORD || env.MYSQL_ROOT_PASSWORD || '';
   const database = env.MYSQL_DATABASE || env.MYSQLDATABASE || 'railway';
-  // Optional SSL toggle via env
+  
   const sslEnv = (env.MYSQL_SSL || '').toString().toLowerCase();
   const ssl = sslEnv === 'true' || sslEnv === '1' || sslEnv === 'required' || sslEnv === 'on';
   const sslSkipVerify = sslEnv === 'skip-verify' || sslEnv === 'allow' || sslEnv === 'insecure';
@@ -91,7 +91,7 @@ let pool;
 export function getPool() {
   if (!pool) {
     const cfg = resolveMysqlConfig();
-    // Safe one-line log to help diagnose prod connectivity
+    
     try {
       const mode = cfg.sslSkipVerify ? 'skip-verify' : cfg.ssl ? 'on' : 'off';
       console.info(
@@ -120,7 +120,7 @@ export function getPool() {
 
 export async function migrate() {
   const p = getPool();
-  // users table
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
@@ -131,7 +131,7 @@ export async function migrate() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // devices table
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS devices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(191) NOT NULL,
@@ -142,7 +142,7 @@ export async function migrate() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // news table
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS news (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -153,7 +153,7 @@ export async function migrate() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // issues table (replaces "Overview" with a DB-backed tracker)
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS issues (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -166,7 +166,7 @@ export async function migrate() {
     INDEX idx_issues_updated (updated_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // coords table
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS coords (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category ENUM('top10','notable','raid_spots') NOT NULL DEFAULT 'top10',
@@ -181,14 +181,14 @@ export async function migrate() {
     INDEX idx_coords_updated (updated_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // visitors table (daily aggregated hits)
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS visitors (
     day DATE NOT NULL,
     hits INT NOT NULL DEFAULT 0,
     PRIMARY KEY (day)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // visitor_sessions (unique visitors per day via salted hash)
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS visitor_sessions (
     day DATE NOT NULL,
     hash CHAR(64) NOT NULL,
@@ -197,8 +197,8 @@ export async function migrate() {
     INDEX idx_vs_created (created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-  // --- Extend schema to match JSON structures (idempotent column adds) ---
-  // Helper to check/add column
+  
+  
   const hasColumn = async (table, column) => {
     const [rows] = await p.execute(
       `SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
@@ -207,7 +207,7 @@ export async function migrate() {
     return Number(rows?.[0]?.c || 0) > 0;
   };
 
-  // devices extra columns
+  
   if (!(await hasColumn('devices', 'model'))) {
     await p.execute(`ALTER TABLE devices ADD COLUMN model VARCHAR(191) NULL AFTER name`);
   }
@@ -245,7 +245,7 @@ export async function migrate() {
     await p.execute(`ALTER TABLE devices ADD COLUMN pogo_comp VARCHAR(100) NULL AFTER price_range`);
   }
 
-  // news extra columns to mirror JSON structure
+  
   if (!(await hasColumn('news', 'slug'))) {
     await p.execute(`ALTER TABLE news ADD COLUMN slug VARCHAR(191) NULL UNIQUE AFTER id`);
   }
@@ -265,12 +265,12 @@ export async function migrate() {
     await p.execute(`ALTER TABLE news ADD COLUMN tags JSON NULL AFTER image_url`);
   }
 
-  // issues: ensure tags column exists (idempotent)
+  
   if (!(await hasColumn('issues', 'tags'))) {
     await p.execute(`ALTER TABLE issues ADD COLUMN tags JSON NULL AFTER status`);
   }
 
-  // device_proposals table (User-Einreichungen)
+  
   await p.execute(`CREATE TABLE IF NOT EXISTS device_proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     brand VARCHAR(191) NULL,
@@ -297,8 +297,8 @@ export async function migrate() {
 
 export async function seedAdminIfNeeded(logger) {
   const username = process.env.ADMIN_USERNAME;
-  const passwordHash = process.env.ADMIN_PASSWORD_HASH; // bcrypt hash
-  if (!username || !passwordHash) return; // optional seeding
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH; 
+  if (!username || !passwordHash) return; 
 
   const p = getPool();
   const [rows] = await p.execute('SELECT id FROM users WHERE username = ?', [username]);

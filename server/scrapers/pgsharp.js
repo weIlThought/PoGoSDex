@@ -1,4 +1,4 @@
-// scrapers/pgsharp.js
+
 import axios from "axios";
 import { load } from "cheerio";
 
@@ -7,7 +7,7 @@ const DEFAULT_USER_AGENT =
   "PoGoSDex-Scraper/1.3 (+https://github.com/weIlThought/PoGoSDex)";
 
 let cache = { data: null, timestamp: 0 };
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 Stunde Cache
+const CACHE_TTL_MS = 60 * 60 * 1000; 
 
 async function getPgsharpVersion() {
   const fetchedAt = new Date().toISOString();

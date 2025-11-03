@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { jest } from '@jest/globals';
 
-// Helper to spin up the app with a mocked fetch and optional API key
+
 async function makeServerWithMock({ mockResponses = [], apiKey = 'test-key' } = {}) {
-  // Each call resets module registry and env
+  
   jest.resetModules();
 
-  // Prepare a fetch mock which consumes mockResponses in order
+  
   const fetchMock = jest.fn(async () => {
     if (mockResponses.length === 0) {
       throw new Error('No mockResponses left for fetch');
@@ -16,16 +16,16 @@ async function makeServerWithMock({ mockResponses = [], apiKey = 'test-key' } = 
     return next;
   });
 
-  // Mock node-fetch before importing server
+  
   const { default: mockedFetch } = await jest.unstable_mockModule('node-fetch', () => ({
     default: fetchMock,
   }));
-  // Silence unused var lint
+  
   void mockedFetch;
 
-  // Configure env
+  
   if (apiKey === null) {
-    // Ensure dotenv does not repopulate from .env by keeping the var defined
+    
     process.env.UPTIMEROBOT_API_KEY = '';
   } else {
     process.env.UPTIMEROBOT_API_KEY = apiKey;
@@ -86,7 +86,7 @@ describe('GET /status/uptime', () => {
 
     const second = await request(app).get('/status/uptime');
     expect(second.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledTimes(1); // served from cache
+    expect(fetchMock).toHaveBeenCalledTimes(1); 
   });
 
   test('maps status 9 -> degraded, 0/1/8 -> down', async () => {
@@ -102,7 +102,7 @@ describe('GET /status/uptime', () => {
     expect(res1.status).toBe(200);
     expect(res1.body.state).toBe('degraded');
 
-    // New server instance for next mapping
+    
     const { app: app2 } = await makeServerWithMock({
       mockResponses: [
         mkOkResponse({

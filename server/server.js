@@ -77,7 +77,7 @@ export async function createServer() {
   });
 
   const app = express();
-  // Auth cookie parser
+  
   authMiddleware(app);
 
   app.set('trust proxy', trustProxy || 1);
@@ -92,15 +92,15 @@ export async function createServer() {
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
-      // Allow scripts from self and jsDelivr CDN (for DOMPurify)
+      
       "script-src 'self' https://cdn.jsdelivr.net",
-      // Allow API calls to self and UptimeRobot; include jsDelivr for optional sourcemap requests in DevTools
+      
       "connect-src 'self' data: https://api.uptimerobot.com https://cdn.jsdelivr.net",
-      // Allow images from self and data URLs
+      
       "img-src 'self' data:",
-      // Allow styles from self and HTTPS (includes Google Fonts CSS); keep inline styles for minimal runtime style injection
+      
       "style-src 'self' 'unsafe-inline' https:",
-      // Explicitly allow font files from Google Fonts CDN
+      
       "font-src 'self' https://fonts.gstatic.com data:",
       "frame-ancestors 'none'",
       "object-src 'none'",
@@ -158,7 +158,7 @@ export async function createServer() {
       stream: {
         write: (message) => logger.info(message.trim()),
       },
-      skip: () => isTest, // keep test output clean
+      skip: () => isTest, 
     })
   );
 
@@ -222,7 +222,7 @@ export async function createServer() {
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // --- Auth routes ---
+  
   const loginLimiter = rateLimit({
     windowMs: 10 * 60 * 1000,
     limit: 20,
@@ -245,7 +245,7 @@ export async function createServer() {
   });
   app.get('/admin/me', requireAuth, meHandler);
 
-  // Lightweight health endpoint to check DB connectivity (no secrets)
+  
   app.get('/healthz', async (_req, res) => {
     try {
       const p = getPool();
@@ -255,7 +255,7 @@ export async function createServer() {
       res.status(503).json({ ok: false, db: false });
     }
   });
-  // Public alias for healthcheck under /api as well (some proxies whitelist /api/*)
+  
   app.get('/api/health', async (_req, res) => {
     try {
       const p = getPool();
@@ -283,7 +283,7 @@ export async function createServer() {
       params.append('logs', '0');
       params.append('custom_uptime_ratios', '1-7-30');
       if (uptimeMonitorId) {
-        // If a specific monitor is configured, request only that monitor
+        
         params.append('monitors', uptimeMonitorId);
       }
 
@@ -303,7 +303,7 @@ export async function createServer() {
       }
 
       if (!json.monitors.length) {
-        // No monitor found (e.g., wrong monitor ID). Return graceful unknown state.
+        
         const payload = { state: 'unknown', statusCode: null, uptimeRatio: null, checkedAt: null };
         uptimeCache.payload = payload;
         uptimeCache.timestamp = now;
@@ -312,7 +312,7 @@ export async function createServer() {
 
       const monitor = json.monitors[0];
       const statusCode = Number(monitor.status);
-      // Prefer all-time uptime; fallback to custom ratios (we requested 1-7-30, last is 30d)
+      
       let uptimeRatio = Number(monitor.all_time_uptime_ratio);
       if (!Number.isFinite(uptimeRatio) && typeof monitor.custom_uptime_ratio === 'string') {
         const parts = monitor.custom_uptime_ratio
@@ -325,7 +325,7 @@ export async function createServer() {
       }
 
       let state = 'unknown';
-      // Mapping gemäß Tests: 2 -> up, 9 -> degraded, 0/1/8 -> down
+      
       if (statusCode === 2) state = 'up';
       else if (statusCode === 9) state = 'degraded';
       else if ([0, 1, 8].includes(statusCode)) state = 'down';
@@ -390,7 +390,7 @@ export async function createServer() {
     })
   );
 
-  // --- Admin frontend (served from private folder, auth required) ---
+  
   const adminDir = path.join(__dirname, 'admin');
   app.get('/login.html', async (req, res) => {
     try {
@@ -401,7 +401,7 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
-  // Public login JS (no auth required)
+  
   app.get('/login.js', async (req, res) => {
     try {
       const file = path.join(adminDir, 'login.js');
@@ -431,7 +431,7 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
-  // CSS kann öffentlich ausgeliefert werden (enthält keine geheimen Daten)
+  
   app.get('/admin.css', async (req, res) => {
     try {
       const file = path.join(adminDir, 'admin.css');
@@ -443,8 +443,8 @@ export async function createServer() {
     }
   });
 
-  // Entfernt: Früherer statischer /data Endpunkt (Coords) wird nicht mehr benötigt,
-  // da Frontend ausschließlich DB-gestützte APIs unter /api nutzt.
+  
+  
 
   app.use(
     '/lang',
@@ -466,7 +466,7 @@ export async function createServer() {
     })
   );
 
-  // Hinweis: /lang wird bereits weiter oben ausgeliefert
+  
 
   logger.info(`[startup] staticRoot=${staticRoot}`);
   try {
@@ -483,7 +483,7 @@ export async function createServer() {
         return res.status(404).send('Not found');
       }
 
-      // Increment visitor counter for daily stats (best effort, non-blocking)
+      
       try {
         const dnt = (req.get('dnt') || req.get('DNT') || '').toString() === '1';
         const cookiesHeader = req.get('cookie') || '';
@@ -493,7 +493,7 @@ export async function createServer() {
           await p.execute(
             'INSERT INTO visitors (day, hits) VALUES (CURRENT_DATE(), 1) ON DUPLICATE KEY UPDATE hits = hits + 1'
           );
-          // Unique session hash (privacy-friendly): salt + IP + UA + day
+          
           const ua = req.get('user-agent') || '';
           const ip = req.ip || '';
           const salt = process.env.ANALYTICS_SALT || process.env.SESSION_SALT || 'pgsdex';
@@ -506,20 +506,20 @@ export async function createServer() {
           );
         }
       } catch (e) {
-        // don't block page rendering on analytics failure
+        
       }
 
       let out = content
         .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || '')
         .replace(/{{ASSET_VERSION}}/g, assetVersion);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      // Prevent caching of HTML documents to ensure fresh template placeholders and assets
+      
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.send(out);
     });
   }
 
-  // --- Admin API (protected, JSON) ---
+  
   const parsePagination = (req) => {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)));
     const offset = Math.max(0, Number(req.query.offset || 0));
@@ -547,15 +547,15 @@ export async function createServer() {
     rejectDeviceProposal,
   } = await import('./repositories.js');
 
-  // --- Öffentliche API (read-only, keine Auth) ---
-  // Normalisiert Felder auf camelCase, filtert sensible/unveröffentlichte Inhalte heraus
+  
+  
   app.get('/api/devices', async (req, res) => {
     try {
       const { q, limit, offset } = parsePagination(req);
       const rows = await listDevices({ q, limit: Math.min(200, limit), offset });
       const items = rows.map((r) => ({
         id: r.id,
-        // bevorzugt Modellnamen, fällt auf name zurück
+        
         model: r.model || r.name || '',
         brand: r.brand || '',
         type: r.type || '',
@@ -677,7 +677,7 @@ export async function createServer() {
             hp,
             cfTurnstileToken,
           } = req.body || {};
-          // Honeypot: ruhig ignorieren, wenn gefüllt
+          
           if (typeof hp === 'string' && hp.trim() !== '') {
             return res.status(200).json({ ok: true });
           }
@@ -705,7 +705,7 @@ export async function createServer() {
               return res.status(400).json({ error: 'captcha verify error' });
             }
           }
-          // Minimalvalidierung
+          
           if (!model || typeof model !== 'string' || model.trim().length < 2) {
             return res.status(400).json({ error: 'model required' });
           }
@@ -742,7 +742,7 @@ export async function createServer() {
       }
     );
   } else {
-    // Tests: kein Ratelimit
+    
     app.post('/api/device-proposals', async (req, res) => {
       try {
         const created = await createDeviceProposal(req.body || {});
@@ -753,7 +753,7 @@ export async function createServer() {
     });
   }
 
-  // Devices
+  
   app.get('/admin/api/devices', requireAuth, async (req, res) => {
     try {
       const rows = await listDevices(parsePagination(req));
@@ -780,7 +780,7 @@ export async function createServer() {
       price_range,
       pogo_comp,
     } = req.body || {};
-    // Require at least model (preferred) or name
+    
     const deviceName =
       name && typeof name === 'string' ? name.trim() : model && String(model).trim();
     if (!deviceName) return res.status(400).json({ error: 'model or name required' });
@@ -832,7 +832,7 @@ export async function createServer() {
     }
   });
 
-  // News
+  
   app.get('/admin/api/news', requireAuth, async (req, res) => {
     try {
       const rows = await listNews(parsePagination(req));
@@ -928,7 +928,7 @@ export async function createServer() {
     }
   });
 
-  // Coords
+  
   app.get('/admin/api/coords', requireAuth, async (req, res) => {
     try {
       const { q, limit, offset } = parsePagination(req);
@@ -953,7 +953,7 @@ export async function createServer() {
     }
   });
 
-  // --- Issues (admin) ---
+  
   app.get('/admin/api/issues', requireAuth, async (req, res) => {
     try {
       const { q, limit, offset } = parsePagination(req);
@@ -1017,7 +1017,7 @@ export async function createServer() {
     }
   });
 
-  // --- Dashboard (admin) ---
+  
   app.get('/admin/api/dashboard', requireAuth, async (_req, res) => {
     try {
       const p = getPool();
@@ -1106,7 +1106,7 @@ export async function createServer() {
     }
   });
 
-  // --- Admin: Device Proposals ---
+  
   app.get('/admin/api/proposals', requireAuth, async (req, res) => {
     try {
       const { q, limit, offset } = parsePagination(req);
@@ -1132,7 +1132,7 @@ export async function createServer() {
     try {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      // Optional: user id aus me (hier null)
+      
       const updated = await approveDeviceProposal(id, null);
       if (!updated) return res.status(404).json({ error: 'not found' });
       res.json(updated);
@@ -1152,7 +1152,7 @@ export async function createServer() {
     }
   });
 
-  // Entfernt: Logging für /data/coords.json ist obsolet
+  
   if (!isTest) {
     schedulePgsharpAutoRefresh(logger);
     schedulePokeminersAutoRefresh(logger);

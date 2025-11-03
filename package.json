@@ -17,6 +17,7 @@
     "lint": "eslint . --ext .js --ignore-path .gitignore",
     "lint:fix": "eslint . --ext .js --fix --ignore-path .gitignore",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
+    "remove:comments": "node scripts/remove-comments.cjs --backup --pattern=**/*.{js,jsx,ts,tsx,mjs,cjs,css,scss,html,htm}",
     "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
   "devDependencies": {
