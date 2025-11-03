@@ -46,7 +46,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/server ./server
 # COPY --from=build /app/data ./data
 COPY --from=build /app/lang ./lang
-COPY --from=build /app/external ./external
+# COPY --from=build /app/external ./external
 
 # Runtime config
 ENV NODE_ENV=production
