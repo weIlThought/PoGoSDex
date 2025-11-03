@@ -1134,6 +1134,7 @@ let devices = [];
 let news = [];
 let newsSearch = '';
 let newsSelectedTags = new Set();
+let issues = [];
 
 const newsSearchInput = qs('#newsSearchInput');
 const newsTagFilterWrap = qs('#newsTagFilter');
@@ -1374,6 +1375,150 @@ async function loadNews() {
     populateNewsTagFilter(news);
     if (activeSection === 'news') renderNews(news);
   });
+}
+
+// -------- Issues (Overview) --------
+function generateIssueItem(item) {
+  const li = document.createElement('li');
+  li.innerHTML = sanitizeHtml(`
+    <strong>${esc(item.title || '')}</strong>
+    ${
+      item.content
+        ? `<p class="text-slate-400">${esc(item.content.slice(0, 180))}${
+            item.content.length > 180 ? '…' : ''
+          }</p>`
+        : ''
+    }
+    <div class="mt-1 text-xs text-slate-500">${esc(item.status || 'open')}</div>
+  `);
+  li.tabIndex = 0;
+  li.setAttribute('role', 'button');
+  li.classList.add('cursor-pointer');
+  const open = () => openIssueModal(item);
+  li.addEventListener('click', open);
+  li.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Enter' || evt.key === ' ') {
+      evt.preventDefault();
+      open();
+    }
+  });
+  return li;
+}
+
+function renderIssues(items) {
+  const list = document.getElementById('issuesList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!Array.isArray(items) || items.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'text-slate-400';
+    li.textContent = t('issues_empty', 'No known issues at the moment.');
+    list.appendChild(li);
+    return;
+  }
+  // Show up to 5 most recent items
+  items.slice(0, 5).forEach((it) => list.appendChild(generateIssueItem(it)));
+}
+
+async function loadIssues() {
+  return performanceMonitor.measureAsyncFunction('loadIssues', async () => {
+    try {
+      // Default to open issues
+      const res = await fetch('/api/issues?status=open', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      issues = await res.json();
+    } catch (e) {
+      console.warn('Failed to load issues:', e);
+      issues = [];
+    }
+    renderIssues(issues);
+  });
+}
+
+// -------- Issues Modal --------
+const issuesModalTitle = () => qs('#issuesModalTitle');
+const issuesModalMeta = () => qs('#issuesModalMeta');
+const issuesModalBody = () => qs('#issuesModalBody');
+const issuesModalTagsWrap = () => qs('#issuesModalTagsWrap');
+const issuesModalTags = () => qs('#issuesModalTags');
+
+const issuesModalManager = new ModalManager('#issuesModalBackdrop', '#closeIssuesModal');
+
+function issueStatusBadgeClass(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'open') return 'bg-amber-100 text-amber-800 border-amber-200';
+  if (s === 'in_progress' || s === 'in-progress') return 'bg-sky-100 text-sky-800 border-sky-200';
+  if (s === 'resolved') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (s === 'closed') return 'bg-slate-200 text-slate-800 border-slate-300';
+  if (s === 'blocked') return 'bg-red-100 text-red-800 border-red-200';
+  return 'bg-slate-200 text-slate-800 border-slate-300';
+}
+
+function openIssueModal(item) {
+  if (!issuesModalManager.backdrop) {
+    console.error('openIssueModal: modal backdrop not found');
+    return;
+  }
+
+  issuesModalTitle().textContent = item.title || '—';
+
+  const pub = item.createdAt ? dateFormatter.format(new Date(item.createdAt)) : dash();
+  const upd =
+    item.updatedAt && item.updatedAt !== item.createdAt
+      ? dateFormatter.format(new Date(item.updatedAt))
+      : null;
+  const statusText = item.status ? String(item.status) : 'open';
+
+  const createdLabel = t('issues_created', 'Created');
+  const updatedLabel = t('issues_updated', 'Updated');
+  const statusLabel = t('issues_status', 'Status');
+  const badgeClass = issueStatusBadgeClass(statusText);
+  issuesModalMeta().innerHTML = sanitizeHtml(`
+    <span>${createdLabel}: ${esc(pub)}</span>
+    ${upd ? `<span class="ml-3">${updatedLabel}: ${esc(upd)}</span>` : ''}
+    <span class="ml-3">${statusLabel}: 
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${badgeClass}">
+        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+        <span class="uppercase tracking-wide">${esc(statusText)}</span>
+      </span>
+    </span>
+  `);
+
+  const body = item.content || '';
+  if (body) {
+    issuesModalBody().innerHTML = sanitizeHtml(
+      body
+        .split(/\n{2,}/)
+        .map(
+          (block) => `<p>${esc(block).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;')}</p>`
+        )
+        .join('')
+    );
+  } else {
+    issuesModalBody().innerHTML = sanitizeHtml(
+      `<p>${esc(t('issues_no_details', 'No additional details provided.'))}</p>`
+    );
+  }
+
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  if (tags.length) {
+    issuesModalTags().innerHTML = sanitizeHtml(
+      tags
+        .map(
+          (tag) =>
+            `<span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs">${esc(
+              tag
+            )}</span>`
+        )
+        .join('')
+    );
+    issuesModalTagsWrap().classList.remove('hidden');
+  } else {
+    issuesModalTagsWrap().classList.add('hidden');
+    issuesModalTags().innerHTML = '';
+  }
+
+  issuesModalManager.open();
 }
 
 function populateNewsTagFilter(items) {
@@ -2290,6 +2435,7 @@ if (document.getElementById('overviewSection')) {
 loadLang(currentLang).then(() => {
   loadDevices();
   loadNews();
+  loadIssues();
   init();
 });
 

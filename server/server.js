@@ -598,6 +598,38 @@ export async function createServer() {
     }
   });
 
+  // Public Issues for Overview
+  app.get('/api/issues', async (req, res) => {
+    try {
+      const q = (req.query.q || '').toString().trim() || undefined;
+      // Allow optional status filter; if not provided, default to open + in_progress
+      const statusQuery = (req.query.status || '').toString().trim();
+      let statuses = undefined;
+      if (statusQuery) {
+        statuses = statusQuery;
+      }
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
+      const offset = Math.max(0, Number(req.query.offset || 0));
+
+      // If multiple statuses needed, we simply filter after fetch for now
+      const items = await listIssues({ q, status: statuses, limit, offset });
+      // Map to public-safe shape
+      const out = items.map((it) => ({
+        id: it.id,
+        title: it.title,
+        content: it.content || '',
+        status: it.status || 'open',
+        tags: Array.isArray(it.tags) ? it.tags : it.tags ? [it.tags] : [],
+        createdAt: it.created_at || null,
+        updatedAt: it.updated_at || null,
+      }));
+      res.json(out);
+    } catch (e) {
+      console.error('[api] public issues failed:', e && e.message ? e.message : e);
+      res.status(500).json([]);
+    }
+  });
+
   app.get('/api/coords', async (req, res) => {
     try {
       const q = (req.query.q || '').toString().trim() || undefined;
