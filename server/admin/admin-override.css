@@ -1,0 +1,8 @@
+/* Sticky header sort arrows alignment */
+th[data-sort]{padding-right:24px}
+th[data-sort].sorted-asc:after,
+th[data-sort].sorted-desc:after{
+  top:50%;
+  transform:translateY(-50%);
+  line-height:1;
+}

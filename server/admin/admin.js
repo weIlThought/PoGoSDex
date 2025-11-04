@@ -3,7 +3,6 @@
   const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
   const $toast = () => qs('#toast');
 
-  
   const ADMIN_I18N = {
     de: {
       toast_pulls_failed: 'Pull Requests laden fehlgeschlagen',
@@ -47,6 +46,7 @@
       toast_reject_ok: 'Proposal rejected',
       toast_reject_failed: 'Reject failed',
     },
+    current: { devices: [], news: [], coords: [], issues: [], pulls: [], archive: [] },
   };
   const adminLang = (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en';
   function tAdmin(key, fallback, params = {}) {
@@ -65,7 +65,11 @@
     if (!t) return;
     t.textContent = msg;
     t.hidden = false;
-    t.style.borderColor = type === 'error' ? '#ef4444' : '#3b82f6';
+    // Toggle border color classes instead of inline styles for CSP compliance
+    t.classList.remove('border-red-500', 'border-sky-500', 'border-emerald-500');
+    if (type === 'error') t.classList.add('border-red-500');
+    else if (type === 'success') t.classList.add('border-emerald-500');
+    else t.classList.add('border-sky-500');
     clearTimeout(showToast._tid);
     showToast._tid = setTimeout(() => {
       t.hidden = true;
@@ -126,8 +130,56 @@
     return;
   }
 
-  
-  const state = { csrf: null };
+  function loadSavedPageSize(key, def = 25) {
+    try {
+      const v = Number(localStorage.getItem(`adminPS_${key}`) || def);
+      return Math.max(1, Math.min(100, Number.isFinite(v) ? v : def));
+    } catch {
+      return def;
+    }
+  }
+
+  const state = {
+    csrf: null,
+    paging: {
+      devices: {
+        limit: loadSavedPageSize('devices'),
+        offset: 0,
+        lastCount: 0,
+        hasMore: false,
+        total: 0,
+      },
+      news: { limit: loadSavedPageSize('news'), offset: 0, lastCount: 0, hasMore: false, total: 0 },
+      coords: {
+        limit: loadSavedPageSize('coords'),
+        offset: 0,
+        lastCount: 0,
+        hasMore: false,
+        total: 0,
+      },
+      issues: {
+        limit: loadSavedPageSize('issues'),
+        offset: 0,
+        lastCount: 0,
+        hasMore: false,
+        total: 0,
+      },
+      pulls: {
+        limit: loadSavedPageSize('pulls'),
+        offset: 0,
+        lastCount: 0,
+        hasMore: false,
+        total: 0,
+      },
+      archive: {
+        limit: loadSavedPageSize('archive'),
+        offset: 0,
+        lastCount: 0,
+        hasMore: false,
+        total: 0,
+      },
+    },
+  };
 
   async function ensureMe() {
     const res = await fetch('/admin/me');
@@ -148,6 +200,9 @@
     });
     qsa('.panel').forEach((p) => p.classList.add('hidden'));
     qs(`#panel-${name}`)?.classList.remove('hidden');
+    try {
+      localStorage.setItem('adminTab', name);
+    } catch {}
     if (name === 'dashboard') loadDashboard();
     if (name === 'issues') loadIssues();
     if (name === 'devices') loadDevices();
@@ -157,7 +212,6 @@
     if (name === 'archive') loadArchive();
   }
 
-  
   const sortState = {
     issues: { key: 'id', dir: 'desc' },
     devices: { key: 'id', dir: 'desc' },
@@ -167,30 +221,53 @@
     archive: { key: 'id', dir: 'desc' },
   };
 
+  // Sort-Settings aus localStorage laden
+  (function loadSavedSorts() {
+    const load = (key) => {
+      try {
+        const raw = localStorage.getItem(`adminSort_${key}`);
+        if (!raw) return;
+        const val = JSON.parse(raw);
+        if (val && typeof val.key === 'string' && (val.dir === 'asc' || val.dir === 'desc')) {
+          sortState[key] = { key: val.key, dir: val.dir };
+        }
+      } catch {}
+    };
+    ['issues', 'devices', 'news', 'coords', 'pulls', 'archive'].forEach(load);
+  })();
+
   function applySortIndicators(tableId, { key, dir }) {
     qsa(`#${tableId} thead th[data-sort]`).forEach((th) => {
       th.classList.remove('sorted-asc', 'sorted-desc');
-      if (th.dataset.sort === key) th.classList.add(dir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      th.setAttribute('aria-sort', 'none');
+      if (th.dataset.sort === key) {
+        const isAsc = dir === 'asc';
+        th.classList.add(isAsc ? 'sorted-asc' : 'sorted-desc');
+        th.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
+      }
     });
   }
 
-  function sortItems(items, { key, dir }) {
-    const copy = [...(items || [])];
-    const mul = dir === 'asc' ? 1 : -1;
-    return copy.sort((a, b) => {
-      const va = a?.[key];
-      const vb = b?.[key];
-      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * mul;
-      return String(va ?? '').localeCompare(String(vb ?? ''), 'de', { numeric: true }) * mul;
-    });
+  // Serverseitiges Sortieren; clientseitiges Sortieren wird nicht mehr benötigt
+  function sortItems(items) {
+    return items || [];
   }
 
-  
   async function loadPulls() {
+    const tb = qs('#pullsTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="9">Laden…</td></tr>';
     const q = (qs('#pullsSearch')?.value || '').trim();
     const url = new URL('/admin/api/proposals', location.origin);
+    const pg = state.paging.pulls;
     url.searchParams.set('status', 'pending');
     if (q) url.searchParams.set('q', q);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stPulls = sortState.pulls;
+    if (stPulls?.key) {
+      url.searchParams.set('sortBy', stPulls.key);
+      url.searchParams.set('sortDir', stPulls.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -202,9 +279,17 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.pulls);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.pulls = items;
     const tbody = qs('#pullsTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('pullsTable', sortState.pulls);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="9" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
     for (const d of items) {
       const notesCount = Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0;
       const rootsCount = Array.isArray(d.root_links) ? d.root_links.length : d.root_links ? 1 : 0;
@@ -223,13 +308,43 @@
         </td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#pullsPageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="pullsPageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#pullsPageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#pullsReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#pullsPrev');
+    const next = qs('#pullsNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
   async function loadArchive() {
+    const tb = qs('#archiveTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="6">Laden…</td></tr>';
     const q = (qs('#archiveSearch')?.value || '').trim();
     const url = new URL('/admin/api/proposals', location.origin);
+    const pg = state.paging.archive;
     url.searchParams.set('status', 'rejected');
     if (q) url.searchParams.set('q', q);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stArchive = sortState.archive;
+    if (stArchive?.key) {
+      url.searchParams.set('sortBy', stArchive.key);
+      url.searchParams.set('sortDir', stArchive.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -241,9 +356,17 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.archive);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.archive = items;
     const tbody = qs('#archiveTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('archiveTable', sortState.archive);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
     for (const d of items) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${d.id}</td>
@@ -254,13 +377,42 @@
         <td>${escapeHtml(d.rejected_at || '')}</td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#archivePageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="archivePageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#archivePageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#archiveReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#archivePrev');
+    const next = qs('#archiveNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
-  
   async function loadDevices() {
+    const tb = qs('#devTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="12">Laden…</td></tr>';
     const q = (qs('#devSearch')?.value || '').trim();
     const url = new URL('/admin/api/devices', location.origin);
+    const pg = state.paging.devices;
     if (q) url.searchParams.set('q', q);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stDevs = sortState.devices;
+    if (stDevs?.key) {
+      url.searchParams.set('sortBy', stDevs.key);
+      url.searchParams.set('sortDir', stDevs.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -280,9 +432,17 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.devices);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.devices = items;
     const tbody = qs('#devTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('devTable', sortState.devices);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="12" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
     for (const d of items) {
       const tr = document.createElement('tr');
       const notesCount = Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0;
@@ -307,6 +467,26 @@
         </td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#devPageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="devPageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#devPageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#devReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#devPrev');
+    const next = qs('#devNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
   function openDevDialog(data) {
@@ -360,7 +540,7 @@
       manufacturer_url: form.manufacturer_url.value.trim() || null,
       notes,
       root_links: rootLinks,
-      
+
       name: form.model.value.trim(),
     };
     if (!payload.model) {
@@ -392,11 +572,20 @@
     }
   }
 
-  
   async function loadNews() {
+    const tb = qs('#newsTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="9">Laden…</td></tr>';
     const q = (qs('#newsSearch')?.value || '').trim();
     const url = new URL('/admin/api/news', location.origin);
+    const pg = state.paging.news;
     if (q) url.searchParams.set('q', q);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stNews = sortState.news;
+    if (stNews?.key) {
+      url.searchParams.set('sortBy', stNews.key);
+      url.searchParams.set('sortDir', stNews.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -413,9 +602,17 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.news);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.news = items;
     const tbody = qs('#newsTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('newsTable', sortState.news);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="9" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
     for (const n of items) {
       const tr = document.createElement('tr');
       const tags = Array.isArray(n.tags) ? n.tags.join(', ') : n.tags || '';
@@ -433,6 +630,26 @@
         </td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#newsPageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="newsPageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#newsPageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#newsReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#newsPrev');
+    const next = qs('#newsNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
   function openNewsDialog(data) {
@@ -521,6 +738,47 @@
     return String(s).replace(/["'`<>\s]/g, '_');
   }
 
+  // CSV Export Helpers (CSP-safe)
+  function csvEscapeCell(v) {
+    const s = v == null ? '' : String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function toCSV(headers, rows) {
+    const head = headers.map(([h]) => csvEscapeCell(h)).join(',');
+    const body = (rows || [])
+      .map((row) => headers.map(([, get]) => csvEscapeCell(get(row))).join(','))
+      .join('\n');
+    return '\uFEFF' + head + (body ? '\n' + body : '');
+  }
+  function downloadText(filename, text, mime = 'text/csv;charset=utf-8') {
+    try {
+      const blob = new Blob([text], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    } catch {}
+  }
+  function todayStr() {
+    try {
+      return new Date().toISOString().slice(0, 10);
+    } catch {
+      return 'export';
+    }
+  }
+  function exportCSV(prefix, headers, rows) {
+    const csv = toCSV(headers, rows);
+    downloadText(`${prefix}-${todayStr()}.csv`, csv);
+    showToast('CSV exportiert', 'success');
+  }
+
   function attachEvents() {
     // Tabs
     qsa('.tab').forEach((btn) => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
@@ -536,7 +794,68 @@
 
     // Devices
     qs('#devRefresh')?.addEventListener('click', loadDevices);
-    qs('#devSearch')?.addEventListener('change', loadDevices);
+    qs('#devExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (d) => d.id],
+        ['Model', (d) => d.model || d.name || ''],
+        ['Brand', (d) => d.brand || ''],
+        ['Type', (d) => d.type || ''],
+        ['OS', (d) => d.os || ''],
+        ['Compatible', (d) => (d.compatible ? 'Yes' : 'No')],
+        ['PriceRange', (d) => d.price_range || ''],
+        ['PoGoComp', (d) => d.pogo_comp || ''],
+        ['ManufacturerURL', (d) => d.manufacturer_url || ''],
+        ['NotesCount', (d) => (Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0)],
+        [
+          'RootLinksCount',
+          (d) => (Array.isArray(d.root_links) ? d.root_links.length : d.root_links ? 1 : 0),
+        ],
+      ];
+      exportCSV('devices', headers, state.current.devices || []);
+    });
+    qs('#devReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_devices');
+        localStorage.removeItem('adminSort_devices');
+        localStorage.setItem('adminPS_devices', '25');
+      } catch {}
+      const s = qs('#devSearch');
+      if (s) s.value = '';
+      const ps = qs('#devPageSize');
+      if (ps) ps.value = '25';
+      sortState.devices = { key: 'id', dir: 'desc' };
+      const pg = state.paging.devices;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadDevices();
+    });
+    const debounce = (fn, ms = 300) => {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+      };
+    };
+    const onDevSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_devices', (qs('#devSearch')?.value || '').trim());
+      } catch {}
+      state.paging.devices.offset = 0;
+      loadDevices();
+    });
+    qs('#devSearch')?.addEventListener('input', onDevSearch);
+    qs('#devPrev')?.addEventListener('click', () => {
+      const pg = state.paging.devices;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadDevices();
+    });
+    qs('#devNext')?.addEventListener('click', () => {
+      const pg = state.paging.devices;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadDevices();
+      }
+    });
     qs('#devNew')?.addEventListener('click', () => openDevDialog(null));
     qs('#devCancel')?.addEventListener('click', () => qs('#devDialog')?.close());
     qs('#devSave')?.addEventListener('click', (e) => {
@@ -570,7 +889,55 @@
 
     // News
     qs('#newsRefresh')?.addEventListener('click', loadNews);
-    qs('#newsSearch')?.addEventListener('change', loadNews);
+    qs('#newsExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (n) => n.id],
+        ['Slug', (n) => n.slug || ''],
+        ['Datum', (n) => n.date || ''],
+        ['Titel', (n) => n.title || ''],
+        ['Excerpt', (n) => n.excerpt || ''],
+        ['PublishedAt', (n) => n.published_at || ''],
+        ['UpdatedAt', (n) => n.updated_at_ext || ''],
+        ['Tags', (n) => (Array.isArray(n.tags) ? n.tags.join('|') : n.tags || '')],
+      ];
+      exportCSV('news', headers, state.current.news || []);
+    });
+    qs('#newsReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_news');
+        localStorage.removeItem('adminSort_news');
+        localStorage.setItem('adminPS_news', '25');
+      } catch {}
+      const s = qs('#newsSearch');
+      if (s) s.value = '';
+      const ps = qs('#newsPageSize');
+      if (ps) ps.value = '25';
+      sortState.news = { key: 'id', dir: 'desc' };
+      const pg = state.paging.news;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadNews();
+    });
+    const onNewsSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_news', (qs('#newsSearch')?.value || '').trim());
+      } catch {}
+      state.paging.news.offset = 0;
+      loadNews();
+    });
+    qs('#newsSearch')?.addEventListener('input', onNewsSearch);
+    qs('#newsPrev')?.addEventListener('click', () => {
+      const pg = state.paging.news;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadNews();
+    });
+    qs('#newsNext')?.addEventListener('click', () => {
+      const pg = state.paging.news;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadNews();
+      }
+    });
     qs('#newsNew')?.addEventListener('click', () => openNewsDialog(null));
     qs('#newsCancel')?.addEventListener('click', () => qs('#newsDialog')?.close());
     qs('#newsSave')?.addEventListener('click', (e) => {
@@ -605,8 +972,63 @@
 
     // Coords
     qs('#coordsRefresh')?.addEventListener('click', loadCoords);
-    qs('#coordsSearch')?.addEventListener('change', loadCoords);
-    qs('#coordsCategory')?.addEventListener('change', loadCoords);
+    qs('#coordsExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (c) => c.id],
+        ['Kategorie', (c) => c.category || ''],
+        ['Name', (c) => c.name || ''],
+        ['Lat', (c) => c.lat],
+        ['Lng', (c) => c.lng],
+        ['Tags', (c) => (Array.isArray(c.tags) ? c.tags.join('|') : c.tags || '')],
+      ];
+      exportCSV('coords', headers, state.current.coords || []);
+    });
+    qs('#coordsReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_coords');
+        localStorage.removeItem('adminCat_coords');
+        localStorage.removeItem('adminSort_coords');
+        localStorage.setItem('adminPS_coords', '25');
+      } catch {}
+      const s = qs('#coordsSearch');
+      if (s) s.value = '';
+      const cat = qs('#coordsCategory');
+      if (cat) cat.value = '';
+      const ps = qs('#coordsPageSize');
+      if (ps) ps.value = '25';
+      sortState.coords = { key: 'id', dir: 'desc' };
+      const pg = state.paging.coords;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadCoords();
+    });
+    const onCoordsSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_coords', (qs('#coordsSearch')?.value || '').trim());
+      } catch {}
+      state.paging.coords.offset = 0;
+      loadCoords();
+    });
+    qs('#coordsSearch')?.addEventListener('input', onCoordsSearch);
+    qs('#coordsCategory')?.addEventListener('change', () => {
+      try {
+        localStorage.setItem('adminCat_coords', (qs('#coordsCategory')?.value || '').trim());
+      } catch {}
+      state.paging.coords.offset = 0;
+      loadCoords();
+    });
+    qs('#coordsPrev')?.addEventListener('click', () => {
+      const pg = state.paging.coords;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadCoords();
+    });
+    qs('#coordsNext')?.addEventListener('click', () => {
+      const pg = state.paging.coords;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadCoords();
+      }
+    });
     qs('#coordsNew')?.addEventListener('click', () => openCoordsDialog(null));
     qs('#coordsCancel')?.addEventListener('click', () => qs('#coordsDialog')?.close());
     qs('#coordsSave')?.addEventListener('click', (e) => {
@@ -671,6 +1093,9 @@
         const st = sortState.devices;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_devices', JSON.stringify(st));
+        } catch {}
         loadDevices();
       })
     );
@@ -680,6 +1105,9 @@
         const st = sortState.news;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_news', JSON.stringify(st));
+        } catch {}
         loadNews();
       })
     );
@@ -689,13 +1117,67 @@
         const st = sortState.coords;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_coords', JSON.stringify(st));
+        } catch {}
         loadCoords();
       })
     );
 
     // Pulls
     qs('#pullsRefresh')?.addEventListener('click', loadPulls);
-    qs('#pullsSearch')?.addEventListener('change', loadPulls);
+    qs('#pullsExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (d) => d.id],
+        ['Model', (d) => d.model || ''],
+        ['Brand', (d) => d.brand || ''],
+        ['Type', (d) => d.type || ''],
+        ['OS', (d) => d.os || ''],
+        ['Compatible', (d) => (d.compatible ? 'Yes' : 'No')],
+        ['NotesCount', (d) => (Array.isArray(d.notes) ? d.notes.length : d.notes ? 1 : 0)],
+        [
+          'RootLinksCount',
+          (d) => (Array.isArray(d.root_links) ? d.root_links.length : d.root_links ? 1 : 0),
+        ],
+      ];
+      exportCSV('pulls', headers, state.current.pulls || []);
+    });
+    qs('#pullsReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_pulls');
+        localStorage.removeItem('adminSort_pulls');
+        localStorage.setItem('adminPS_pulls', '25');
+      } catch {}
+      const s = qs('#pullsSearch');
+      if (s) s.value = '';
+      const ps = qs('#pullsPageSize');
+      if (ps) ps.value = '25';
+      sortState.pulls = { key: 'id', dir: 'desc' };
+      const pg = state.paging.pulls;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadPulls();
+    });
+    const onPullsSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_pulls', (qs('#pullsSearch')?.value || '').trim());
+      } catch {}
+      state.paging.pulls.offset = 0;
+      loadPulls();
+    });
+    qs('#pullsSearch')?.addEventListener('input', onPullsSearch);
+    qs('#pullsPrev')?.addEventListener('click', () => {
+      const pg = state.paging.pulls;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadPulls();
+    });
+    qs('#pullsNext')?.addEventListener('click', () => {
+      const pg = state.paging.pulls;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadPulls();
+      }
+    });
     qs('#pullsTable')?.addEventListener('click', async (e) => {
       const t = e.target.closest('button');
       if (!t) return;
@@ -713,7 +1195,7 @@
               : tAdmin('toast_proposal_accepted')
           );
           await loadPulls();
-          
+
           switchTab('devices');
           await loadDevices();
         } catch (e) {
@@ -741,30 +1223,270 @@
         const st = sortState.pulls;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_pulls', JSON.stringify(st));
+        } catch {}
         loadPulls();
       })
     );
 
-    
     qs('#archiveRefresh')?.addEventListener('click', loadArchive);
-    qs('#archiveSearch')?.addEventListener('change', loadArchive);
+    qs('#archiveExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (d) => d.id],
+        ['Model', (d) => d.model || ''],
+        ['Brand', (d) => d.brand || ''],
+        ['Type', (d) => d.type || ''],
+        ['OS', (d) => d.os || ''],
+        ['RejectedAt', (d) => d.rejected_at || ''],
+      ];
+      exportCSV('archive', headers, state.current.archive || []);
+    });
+    qs('#archiveReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_archive');
+        localStorage.removeItem('adminSort_archive');
+        localStorage.setItem('adminPS_archive', '25');
+      } catch {}
+      const s = qs('#archiveSearch');
+      if (s) s.value = '';
+      const ps = qs('#archivePageSize');
+      if (ps) ps.value = '25';
+      sortState.archive = { key: 'id', dir: 'desc' };
+      const pg = state.paging.archive;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadArchive();
+    });
+    const onArchiveSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_archive', (qs('#archiveSearch')?.value || '').trim());
+      } catch {}
+      state.paging.archive.offset = 0;
+      loadArchive();
+    });
+    qs('#archiveSearch')?.addEventListener('input', onArchiveSearch);
+    qs('#archivePrev')?.addEventListener('click', () => {
+      const pg = state.paging.archive;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadArchive();
+    });
+    qs('#archiveNext')?.addEventListener('click', () => {
+      const pg = state.paging.archive;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadArchive();
+      }
+    });
     qsa('#archiveTable thead th[data-sort]').forEach((th) =>
       th.addEventListener('click', () => {
         const key = th.dataset.sort;
         const st = sortState.archive;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_archive', JSON.stringify(st));
+        } catch {}
         loadArchive();
       })
     );
 
-    
-    qs('#dashRefresh')?.addEventListener('click', loadDashboard);
+    // Page size selectors
+    qs('#devPageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.devices;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_devices', String(pg.limit));
+      } catch {}
+      loadDevices();
+    });
+    qs('#newsPageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.news;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_news', String(pg.limit));
+      } catch {}
+      loadNews();
+    });
+    qs('#coordsPageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.coords;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_coords', String(pg.limit));
+      } catch {}
+      loadCoords();
+    });
+    qs('#issuesPageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.issues;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_issues', String(pg.limit));
+      } catch {}
+      loadIssues();
+    });
+    qs('#pullsPageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.pulls;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_pulls', String(pg.limit));
+      } catch {}
+      loadPulls();
+    });
+    qs('#archivePageSize')?.addEventListener('change', (e) => {
+      const pg = state.paging.archive;
+      pg.limit = Math.max(1, Number(e.target.value || 25));
+      pg.offset = 0;
+      try {
+        localStorage.setItem('adminPS_archive', String(pg.limit));
+      } catch {}
+      loadArchive();
+    });
 
-    
+    qs('#dashRefresh')?.addEventListener('click', loadDashboard);
+    qs('#dashResetAll')?.addEventListener('click', () => {
+      try {
+        // Entferne alle gespeicherten Präferenzen
+        const keys = [
+          'adminTab',
+          'adminCat_coords',
+          'adminStatus_issues',
+          'adminQ_devices',
+          'adminQ_news',
+          'adminQ_coords',
+          'adminQ_issues',
+          'adminQ_pulls',
+          'adminQ_archive',
+          'adminSort_devices',
+          'adminSort_news',
+          'adminSort_coords',
+          'adminSort_issues',
+          'adminSort_pulls',
+          'adminSort_archive',
+          'adminPS_devices',
+          'adminPS_news',
+          'adminPS_coords',
+          'adminPS_issues',
+          'adminPS_pulls',
+          'adminPS_archive',
+        ];
+        keys.forEach((k) => localStorage.removeItem(k));
+      } catch {}
+
+      // UI Felder zurücksetzen
+      const setVal = (sel, v) => {
+        const el = qs(sel);
+        if (el) el.value = v;
+      };
+      setVal('#devSearch', '');
+      setVal('#newsSearch', '');
+      setVal('#coordsSearch', '');
+      setVal('#coordsCategory', '');
+      setVal('#issuesSearch', '');
+      setVal('#issuesStatus', '');
+      setVal('#pullsSearch', '');
+      setVal('#archiveSearch', '');
+      setVal('#devPageSize', '25');
+      setVal('#newsPageSize', '25');
+      setVal('#coordsPageSize', '25');
+      setVal('#issuesPageSize', '25');
+      setVal('#pullsPageSize', '25');
+      setVal('#archivePageSize', '25');
+
+      // State zurücksetzen
+      sortState.devices = { key: 'id', dir: 'desc' };
+      sortState.news = { key: 'id', dir: 'desc' };
+      sortState.coords = { key: 'id', dir: 'desc' };
+      sortState.issues = { key: 'id', dir: 'desc' };
+      sortState.pulls = { key: 'id', dir: 'desc' };
+      sortState.archive = { key: 'id', dir: 'desc' };
+      const resetPg = (pg) => {
+        pg.limit = 25;
+        pg.offset = 0;
+        pg.lastCount = 0;
+        pg.hasMore = false;
+        pg.total = 0;
+      };
+      resetPg(state.paging.devices);
+      resetPg(state.paging.news);
+      resetPg(state.paging.coords);
+      resetPg(state.paging.issues);
+      resetPg(state.paging.pulls);
+      resetPg(state.paging.archive);
+
+      // Aktiven Tab ermitteln und neu laden
+      const active = document.querySelector('.tab.active')?.dataset.tab;
+      if (active === 'devices') loadDevices();
+      else if (active === 'news') loadNews();
+      else if (active === 'coords') loadCoords();
+      else if (active === 'issues') loadIssues();
+      else if (active === 'pulls') loadPulls();
+      else if (active === 'archive') loadArchive();
+      else loadDashboard();
+      showToast('Zurückgesetzt', 'success');
+    });
+
     qs('#issuesRefresh')?.addEventListener('click', loadIssues);
-    qs('#issuesSearch')?.addEventListener('change', loadIssues);
-    qs('#issuesStatus')?.addEventListener('change', loadIssues);
+    qs('#issuesExport')?.addEventListener('click', () => {
+      const headers = [
+        ['ID', (i) => i.id],
+        ['Titel', (i) => i.title || ''],
+        ['Status', (i) => i.status || ''],
+        ['Tags', (i) => (Array.isArray(i.tags) ? i.tags.join('|') : i.tags || '')],
+        ['UpdatedAt', (i) => i.updated_at || ''],
+      ];
+      exportCSV('issues', headers, state.current.issues || []);
+    });
+    qs('#issuesReset')?.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('adminQ_issues');
+        localStorage.removeItem('adminStatus_issues');
+        localStorage.removeItem('adminSort_issues');
+        localStorage.setItem('adminPS_issues', '25');
+      } catch {}
+      const s = qs('#issuesSearch');
+      if (s) s.value = '';
+      const st = qs('#issuesStatus');
+      if (st) st.value = '';
+      const ps = qs('#issuesPageSize');
+      if (ps) ps.value = '25';
+      sortState.issues = { key: 'id', dir: 'desc' };
+      const pg = state.paging.issues;
+      pg.limit = 25;
+      pg.offset = 0;
+      loadIssues();
+    });
+    const onIssuesSearch = debounce(() => {
+      try {
+        localStorage.setItem('adminQ_issues', (qs('#issuesSearch')?.value || '').trim());
+      } catch {}
+      state.paging.issues.offset = 0;
+      loadIssues();
+    });
+    qs('#issuesSearch')?.addEventListener('input', onIssuesSearch);
+    qs('#issuesStatus')?.addEventListener('change', () => {
+      try {
+        localStorage.setItem('adminStatus_issues', (qs('#issuesStatus')?.value || '').trim());
+      } catch {}
+      state.paging.issues.offset = 0;
+      loadIssues();
+    });
+    qs('#issuesPrev')?.addEventListener('click', () => {
+      const pg = state.paging.issues;
+      pg.offset = Math.max(0, pg.offset - pg.limit);
+      loadIssues();
+    });
+    qs('#issuesNext')?.addEventListener('click', () => {
+      const pg = state.paging.issues;
+      if (pg.hasMore) {
+        pg.offset += pg.limit;
+        loadIssues();
+      }
+    });
     qs('#issuesNew')?.addEventListener('click', () => openIssuesDialog(null));
     qs('#issuesCancel')?.addEventListener('click', () => qs('#issuesDialog')?.close());
     qs('#issuesSave')?.addEventListener('click', (e) => {
@@ -794,18 +1516,20 @@
         const st = sortState.issues;
         st.dir = st.key === key && st.dir === 'asc' ? 'desc' : 'asc';
         st.key = key;
+        try {
+          localStorage.setItem('adminSort_issues', JSON.stringify(st));
+        } catch {}
         loadIssues();
       })
     );
 
-    
     const initDialogClose = (dlg) => {
       if (!dlg) return;
-      
+
       dlg.addEventListener('click', (e) => {
         if (e.target === dlg) dlg.close();
       });
-      
+
       dlg.addEventListener('mousedown', (e) => {
         const rect = dlg.getBoundingClientRect();
         const inside =
@@ -822,13 +1546,22 @@
     initDialogClose(qs('#issuesDialog'));
   }
 
-  
   async function loadCoords() {
+    const tb = qs('#coordsTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="7">Laden…</td></tr>';
     const q = (qs('#coordsSearch')?.value || '').trim();
     const category = (qs('#coordsCategory')?.value || '').trim();
     const url = new URL('/admin/api/coords', location.origin);
+    const pg = state.paging.coords;
     if (q) url.searchParams.set('q', q);
     if (category) url.searchParams.set('category', category);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stCoords = sortState.coords;
+    if (stCoords?.key) {
+      url.searchParams.set('sortBy', stCoords.key);
+      url.searchParams.set('sortDir', stCoords.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -848,9 +1581,17 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.coords);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.coords = items;
     const tbody = qs('#coordsTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('coordsTable', sortState.coords);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="7" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
     for (const c of items) {
       const tr = document.createElement('tr');
       const tags = Array.isArray(c.tags) ? c.tags.join(', ') : c.tags || '';
@@ -862,6 +1603,26 @@
       </td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#coordsPageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="coordsPageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#coordsPageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#coordsReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#coordsPrev');
+    const next = qs('#coordsNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
   // Dashboard
@@ -897,19 +1658,35 @@
         const j = await up.json();
         const state = j.state || 'unknown';
         const ratio = Number.isFinite(j.uptimeRatio) ? `${j.uptimeRatio.toFixed(2)}%` : '–';
-        qs('#dashUptimeStatus') && (qs('#dashUptimeStatus').textContent = state);
+        const statusEl = qs('#dashUptimeStatus');
+        if (statusEl) {
+          statusEl.textContent = state;
+          statusEl.classList.remove('text-emerald-400', 'text-yellow-400', 'text-red-400');
+          if (state === 'up') statusEl.classList.add('text-emerald-400');
+          else if (state === 'degraded') statusEl.classList.add('text-yellow-400');
+          else if (state === 'down') statusEl.classList.add('text-red-400');
+        }
         qs('#dashUptimeRatio') && (qs('#dashUptimeRatio').textContent = ratio);
       }
     } catch {}
   }
 
-  
   async function loadIssues() {
+    const tb = qs('#issuesTable tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="6">Laden…</td></tr>';
     const q = (qs('#issuesSearch')?.value || '').trim();
     const status = (qs('#issuesStatus')?.value || '').trim();
     const url = new URL('/admin/api/issues', location.origin);
+    const pg = state.paging.issues;
     if (q) url.searchParams.set('q', q);
     if (status) url.searchParams.set('status', status);
+    url.searchParams.set('limit', String(pg.limit));
+    url.searchParams.set('offset', String(pg.offset));
+    const stIssues = sortState.issues;
+    if (stIssues?.key) {
+      url.searchParams.set('sortBy', stIssues.key);
+      url.searchParams.set('sortDir', stIssues.dir);
+    }
     const res = await fetch(url);
     if (res.status === 401) {
       location.href = '/login.html';
@@ -921,15 +1698,41 @@
     }
     const json = await res.json();
     const items = sortItems(json.items, sortState.issues);
+    pg.lastCount = items.length;
+    pg.hasMore = !!json.hasMore;
+    pg.total = Number(json.total || 0);
+    state.current.issues = items;
     const tbody = qs('#issuesTable tbody');
     tbody.innerHTML = '';
     applySortIndicators('issuesTable', sortState.issues);
+    if (items.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="text-slate-400 text-center py-6">Keine Einträge gefunden</td></tr>';
+    }
+    const statusPill = (s) => {
+      const st = String(s || '').toLowerCase();
+      let cls = 'text-slate-300 border-slate-700';
+      let label = st || '';
+      if (st === 'open') {
+        cls = 'text-yellow-400 border-yellow-500';
+      } else if (st === 'in_progress') {
+        cls = 'text-sky-400 border-sky-500';
+        label = 'in_progress';
+      } else if (st === 'resolved') {
+        cls = 'text-emerald-400 border-emerald-500';
+      } else if (st === 'blocked') {
+        cls = 'text-red-400 border-red-500';
+      } else if (st === 'closed') {
+        cls = 'text-slate-400 border-slate-700';
+      }
+      return `<span class="pill border ${cls}">${escapeHtml(label)}</span>`;
+    };
     for (const it of items) {
       const tr = document.createElement('tr');
       const tags = Array.isArray(it.tags) ? it.tags.join(', ') : it.tags || '';
       tr.innerHTML = `<td>${it.id}</td>
         <td>${escapeHtml(it.title || '')}</td>
-        <td>${escapeHtml(it.status || '')}</td>
+        <td>${statusPill(it.status)}</td>
         <td>${escapeHtml(tags)}</td>
         <td>${escapeHtml(it.updated_at || '')}</td>
         <td>
@@ -938,6 +1741,26 @@
         </td>`;
       tbody.appendChild(tr);
     }
+    const page = Math.floor(pg.offset / pg.limit) + 1;
+    const info = qs('#issuesPageInfo');
+    const totalCount = pg.total || items.length;
+    const pages = totalCount > 0 ? Math.max(1, Math.ceil(totalCount / pg.limit)) : page;
+    if (info) {
+      const base = `Seite ${page}${totalCount ? ' von ' + pages : ''} · ${totalCount} Einträge`;
+      if (totalCount === 0) {
+        info.innerHTML = `${base} · <a href="#" id="issuesPageResetLink">Filter zurücksetzen</a>`;
+        info.querySelector('#issuesPageResetLink')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          qs('#issuesReset')?.click();
+        });
+      } else {
+        info.textContent = base;
+      }
+    }
+    const prev = qs('#issuesPrev');
+    const next = qs('#issuesNext');
+    if (prev) prev.disabled = pg.offset <= 0;
+    if (next) next.disabled = pg.total ? pg.offset + pg.limit >= pg.total : !pg.hasMore;
   }
 
   function openIssuesDialog(data) {
@@ -980,18 +1803,6 @@
     try {
       if (id) {
         await putJson(`/admin/api/issues/${id}`, payload, { csrf: state.csrf });
-        qs('#dashUniquesToday') &&
-          (qs('#dashUniquesToday').textContent = String(data.visitors?.uniqueToday ?? '–'));
-        qs('#dashUniques7') &&
-          (qs('#dashUniques7').textContent = String(data.visitors?.unique7d ?? '–'));
-        qs('#dashUniques30') &&
-          (qs('#dashUniques30').textContent = String(data.visitors?.unique30d ?? '–'));
-        
-        const days = data.visitors?.series7?.days || [];
-        const hits7 = data.visitors?.series7?.hits || [];
-        const uniq7 = data.visitors?.series7?.uniques || [];
-        drawSparkline('#dashSparkHits', hits7, { color: '#3b82f6', height: 40, days });
-        drawSparkline('#dashSparkUniques', uniq7, { color: '#22c55e', height: 40, days });
       } else {
         await postJson('/admin/api/issues', payload, { csrf: state.csrf });
       }
@@ -1003,15 +1814,7 @@
     }
   }
 
-  
-  const el = qs('#dashUptimeStatus');
-  if (el) {
-    let color = '#94a3b8';
-    if (state === 'up') color = '#22c55e';
-    else if (state === 'degraded') color = '#f59e0b';
-    else if (state === 'down') color = '#ef4444';
-    el.style.color = color;
-  }
+  // Removed inline style color manipulation for CSP; color is set in loadDashboard via classes.
   async function deleteIssue(id) {
     if (!confirm('Wirklich löschen?')) return;
     try {
@@ -1119,8 +1922,44 @@
       const u = await ensureMe();
       if (!u) return;
       attachEvents();
-      
-      switchTab('dashboard');
+
+      // Init page size selects from saved values
+      const setIf = (sel, val) => {
+        const el = qs(sel);
+        if (el) el.value = String(val);
+      };
+      setIf('#devPageSize', state.paging.devices.limit);
+      setIf('#newsPageSize', state.paging.news.limit);
+      setIf('#coordsPageSize', state.paging.coords.limit);
+      setIf('#issuesPageSize', state.paging.issues.limit);
+      setIf('#pullsPageSize', state.paging.pulls.limit);
+      setIf('#archivePageSize', state.paging.archive.limit);
+
+      // Wiederherstellen: Suchfelder/Filter
+      try {
+        const setVal = (sel, key) => {
+          const v = localStorage.getItem(key);
+          if (v != null) {
+            const el = qs(sel);
+            if (el) el.value = v;
+          }
+        };
+        setVal('#devSearch', 'adminQ_devices');
+        setVal('#newsSearch', 'adminQ_news');
+        setVal('#coordsSearch', 'adminQ_coords');
+        setVal('#coordsCategory', 'adminCat_coords');
+        setVal('#issuesSearch', 'adminQ_issues');
+        setVal('#issuesStatus', 'adminStatus_issues');
+        setVal('#pullsSearch', 'adminQ_pulls');
+        setVal('#archiveSearch', 'adminQ_archive');
+      } catch {}
+
+      let initialTab = 'dashboard';
+      try {
+        const saved = localStorage.getItem('adminTab');
+        if (saved) initialTab = saved;
+      } catch {}
+      switchTab(initialTab);
     }
   });
 })();

@@ -1,0 +1,142 @@
+import { getPool } from '../mysql.js';
+
+const p = () => getPool();
+
+export async function listNews({ q, limit = 50, offset = 0, sortBy, sortDir } = {}) {
+  const params = [];
+  let sql = `SELECT id, slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags,
+                    created_at, updated_at
+             FROM news`;
+  if (q) {
+    sql += ' WHERE title LIKE ? OR excerpt LIKE ? OR content LIKE ?';
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
+  const off = Math.max(0, Number(offset) || 0);
+  const cols = {
+    id: 'id',
+    slug: 'slug',
+    date: 'date',
+    title: 'title',
+    published_at: 'published_at',
+    updated_at_ext: 'updated_at_ext',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const [rows] = await p().execute(sql, params);
+  const parseJson = (v) => {
+    if (v == null) return null;
+    if (typeof v === 'string') {
+      try {
+        return JSON.parse(v);
+      } catch {
+        return null;
+      }
+    }
+    return v;
+  };
+  return rows.map((r) => ({ ...r, tags: parseJson(r.tags) }));
+}
+
+export async function countNews({ q } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM news';
+  if (q) {
+    sql += ' WHERE title LIKE ? OR excerpt LIKE ? OR content LIKE ?';
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
+}
+
+export async function getNews(id) {
+  const [rows] = await p().execute(
+    `SELECT id, slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags,
+            created_at, updated_at
+     FROM news WHERE id = ?`,
+    [id]
+  );
+  const r = rows[0];
+  if (!r) return null;
+  let tags = null;
+  if (r.tags != null) {
+    if (typeof r.tags === 'string') {
+      try {
+        tags = JSON.parse(r.tags);
+      } catch {
+        tags = null;
+      }
+    } else {
+      tags = r.tags;
+    }
+  }
+  return { ...r, tags };
+}
+
+export async function createNews(payload) {
+  const {
+    slug,
+    date,
+    title,
+    excerpt,
+    content,
+    image_url,
+
+    published = 0,
+    published_at,
+    updated_at,
+    updated_at_ext,
+    tags,
+  } = payload || {};
+  const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : tags || null;
+  const [res] = await p().execute(
+    `INSERT INTO news (slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      slug || null,
+      date || null,
+      title,
+      excerpt || null,
+      content,
+      image_url || null,
+      published ? 1 : 0,
+      published_at || null,
+      updated_at_ext || updated_at || null,
+      tagsJson,
+    ]
+  );
+  return await getNews(res.insertId);
+}
+
+export async function updateNews(id, payload) {
+  const fields = [];
+  const params = [];
+  const set = (col, val, transform = (x) => x) => {
+    if (val !== undefined) {
+      fields.push(`${col} = ?`);
+      params.push(transform(val));
+    }
+  };
+  set('slug', payload.slug);
+  set('date', payload.date);
+  set('title', payload.title);
+  set('excerpt', payload.excerpt);
+  set('content', payload.content);
+  set('image_url', payload.image_url);
+  set('published', payload.published, (v) => (v ? 1 : 0));
+  set('published_at', payload.published_at);
+  set('updated_at_ext', payload.updated_at_ext ?? payload.updated_at);
+  set('tags', payload.tags, (v) => (Array.isArray(v) ? JSON.stringify(v) : v || null));
+  if (!fields.length) return await getNews(id);
+  params.push(id);
+  await p().execute(`UPDATE news SET ${fields.join(', ')} WHERE id = ?`, params);
+  return await getNews(id);
+}
+
+export async function deleteNews(id) {
+  const [res] = await p().execute('DELETE FROM news WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+}

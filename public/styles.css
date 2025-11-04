@@ -1,3 +1,6 @@
+/* Error toast positioning and animations */
+.error-toast { position: fixed; top: 20px; right: 20px; z-index: 9999; opacity: 0; transform: translateX(100%); transition: all 0.3s ease-in-out; }
+.error-toast.show { opacity: 1 !important; transform: translateX(0) !important; }
 @import 'tailwindcss';
 
 

@@ -1,0 +1,5 @@
+/* Local/system font stack to avoid external Google Fonts and align with strict CSP */
+:root, html, body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}

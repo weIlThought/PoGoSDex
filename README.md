@@ -1,8 +1,63 @@
-PoGoSDex - PogoSDex-like design (Railway-ready). Deploy using Docker on Railway.
+PoGoSDex – PogoSDex-like Design (Railway-/Docker-ready)
+
+Dieses Projekt besteht aus einem schlanken Express-Backend und einem statischen Frontend, das mit Vite als Multi-Page-App gebaut wird. Der Server dient im Betrieb bevorzugt die gebauten Dateien aus `dist/` aus, fällt aber automatisch auf `public/` zurück, wenn kein Build vorhanden ist.
+
+Kurzübersicht:
+
+- Frontend: Vanilla JS mit ES Modules; zentraler Einstieg: `public/js/bootstrap.js`
+- Build: Vite 5 Multi-Page (index/privacy/tos) nach `dist/`
+- CSS: Tailwind v4 CLI (öffentliches `public/output.css`, Admin `server/admin/admin.css`)
+- Backend: Node.js + Express 5; modulare Routen unter `server/routes/*`
+- Docker: Multi-Stage Build, Runtime als non-root, Healthcheck `/healthz`
+
+## Entwicklung & Build
+
+### Lokale Entwicklung (vollständig, inkl. API)
+
+In zwei bis drei Terminals (PowerShell):
+
+```powershell
+# 1) Abhängigkeiten installieren
+npm ci
+
+# 2) Öffentliche CSS im Watch-Modus
+npm run dev:css
+
+# 3) Optional: Admin-CSS im Watch-Modus
+npm run dev:admin
+
+# 4) Express-Server starten (liefert public/ und APIs)
+npm start
+```
+
+Öffne anschließend http://localhost:3000. Der Server liefert die HTML-Dateien aus `public/` (oder `dist/`, falls vorhanden) und die API-Endpunkte.
+
+Alternative (Frontend-only Vorschau mit Vite):
+
+```powershell
+npm run dev
+```
+
+Das startet Vite (root `public/`). Diese Vorschau hat keine Backend-API und dient v. a. dem schnellen Frontend-Test.
+
+### Produktion-Build
+
+```powershell
+# Tailwind-CSS minifizieren
+npm run build:css; npm run build:admin
+
+# Vite Multi-Page Build nach dist/
+npm run build
+
+# Server starten – bevorzugt dist/
+npm start
+```
+
+Der Express-Server prüft beim Start, ob `dist/index.html` existiert. Falls ja, werden statische Dateien aus `dist/` bedient; andernfalls aus `public/`.
 
 ## Deployment & Cache-Busting
 
-This project uses simple query-string cache busting for `output.css` and `main.js` in the static HTML files (`public/index.html`, `public/privacy.html`, `public/tos.html`).
+Das Projekt nutzt einfache Query-String-Versionierung für `output.css` und den ESM-Einstieg `js/bootstrap.js` in den statischen HTML-Dateien (`public/index.html`, `public/privacy.html`, `public/tos.html`).
 
 ### Bump asset version
 
@@ -18,9 +73,9 @@ npm run bump:assets
 node scripts/bump-asset-version.mjs 20251101
 ```
 
-This replaces `/output.css?v=...` and `/main.js?v=...` in the HTML files.
+This replaces `/output.css?v=...` and `/js/bootstrap.js?v=...` in the HTML files.
 
-### Cloudflare cache purge (recommended after deploy)
+### Cloudflare Cache Purge (empfohlen nach Deploy)
 
 After a deploy or version bump, purge cached HTML/CSS/JS so clients get the latest files.
 
@@ -35,9 +90,9 @@ Options:
   - `https://<your-domain>/privacy.html`
   - `https://<your-domain>/tos.html`
   - `https://<your-domain>/output.css?v=<newVersion>`
-  - `https://<your-domain>/main.js?v=<newVersion>`
+  - `https://<your-domain>/js/bootstrap.js?v=<newVersion>`
 
-2. Cloudflare API (PowerShell example)
+2. Cloudflare API (PowerShell-Beispiel)
 
 Create an API Token with “Zone.Cache Purge” permissions for your zone, then:
 
@@ -60,7 +115,7 @@ $urls = @(
 	"https://<your-domain>/privacy.html",
 	"https://<your-domain>/tos.html",
 	"https://<your-domain>/output.css?v=<newVersion>",
-	"https://<your-domain>/main.js?v=<newVersion>"
+  "https://<your-domain>/js/bootstrap.js?v=<newVersion>"
 )
 
 Invoke-RestMethod -Method POST `
@@ -70,28 +125,36 @@ Invoke-RestMethod -Method POST `
 	-Body (@{ files = $urls } | ConvertTo-Json)
 ```
 
-### Browser Hard Reload
+### Browser-Hard-Reload
 
 To bypass local cache during verification:
 
 - Windows: Ctrl + Shift + R (oder Strg+F5 in vielen Browsern)
 - Öffne DevTools → Network → Disable cache (aktiv während DevTools geöffnet)
 
-### Post-deploy checks
+### Post-Deploy-Checks
 
 - In DevTools → Network prüfen, dass `index.html`, `privacy.html`, `tos.html` die URLs
   mit `?v=<newVersion>` für `main.js` und `output.css` referenzieren.
 - In der Konsole verifizieren, dass keine alten Fehler (z. B. `LANG_LOCK` ReferenceError) auftauchen.
 
-## CSP Hinweise
+## Frontend-Einstiegspunkt & CSP-Hinweise
 
-Die App sendet eine strikte Content-Security-Policy:
+Die Website lädt den modularen Einstiegspunkt `js/bootstrap.js` (ESM). Alle Seiten (Home, Privacy, ToS) verwenden denselben Orchestrator. Der frühere `public/main.js` ist obsolet.
 
-- `script-src 'self' https://cdn.jsdelivr.net` (DOMPurify via jsDelivr)
-- `style-src 'self' 'unsafe-inline' https:` (für Google Fonts CSS)
-- `font-src 'self' https://fonts.gstatic.com data:`
+Der Server sendet eine strikte Content-Security-Policy (konkret in `server/server.js` erzeugt):
 
-Inline-Injections von Drittanbietern (z. B. Schutz-/Analyse-Snippets) werden blockiert. Das ist erwartetes Verhalten und beeinträchtigt die Funktion nicht, solange die Kern-Skripte/CSS aus `self` und die erlaubten CDNs geladen werden.
+- `default-src 'self'`
+- `base-uri 'self'`; `form-action 'self'`
+- `script-src 'self'`
+- `connect-src 'self' data: https://api.uptimerobot.com`
+- `img-src 'self' data:`
+- `style-src 'self'`
+- `font-src 'self' data:`
+- `frame-ancestors 'none'`; `object-src 'none'`
+- Reporting: `Report-To`/`report-uri /csp-report`
+
+Hinweis: Externe Inline-Snippets werden blockiert. Falls zusätzliche CDNs nötig werden, müssen die CSP-Quellen serverseitig erweitert werden.
 
 ## Troubleshooting (häufige Muster)
 
@@ -102,7 +165,7 @@ Inline-Injections von Drittanbietern (z. B. Schutz-/Analyse-Snippets) werden blo
 - ToS/Privacy Inhalte überschrieben:
   - Beide Seiten sind mit `data-no-i18n` versehen bzw. i18n ist entsprechend zurückhaltend — falls Texte trotzdem verändert werden, prüfe individuelle Markup-Attribute.
 
-## Adminpanel (Login, CRUD für Devices/News)
+## Adminpanel (Login, CRUD für Devices/News/Coords/Issues/Proposals)
 
 Dieses Repository enthält ein schlankes Adminpanel mit sicherem Login, JWT-Cookies und CSRF-Schutz. Es nutzt eine MySQL-Datenbank (z. B. über Railway).
 
@@ -118,6 +181,9 @@ Dieses Repository enthält ein schlankes Adminpanel mit sicherem Login, JWT-Cook
 - CRUD-API (auth + CSRF):
   - Devices: `GET /admin/api/devices`, `POST /admin/api/devices`, `PUT /admin/api/devices/:id`, `DELETE /admin/api/devices/:id`
   - News: `GET /admin/api/news`, `POST /admin/api/news`, `PUT /admin/api/news/:id`, `DELETE /admin/api/news/:id`
+  - Coords: `GET /admin/api/coords`, `GET /admin/api/coords/:id`, `POST /admin/api/coords`, `PUT /admin/api/coords/:id`, `DELETE /admin/api/coords/:id`
+  - Issues: `GET /admin/api/issues`, `GET /admin/api/issues/:id`, `POST /admin/api/issues`, `PUT /admin/api/issues/:id`, `DELETE /admin/api/issues/:id`
+  - Proposals: `GET /admin/api/proposals`, `GET /admin/api/proposals/:id`, `POST /admin/api/proposals/:id/approve`, `POST /admin/api/proposals/:id/reject`
 
 ### Sicherheit
 
@@ -152,6 +218,13 @@ npm run hash:pw -- admin123
 - Railway-Keys werden unterstützt, falls gesetzt: `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `RAILWAY_PRIVATE_DOMAIN`, `RAILWAY_TCP_PROXY_DOMAIN`, `RAILWAY_TCP_PROXY_PORT`, `MYSQL_ROOT_PASSWORD`
 - `JWT_SECRET` – starker geheimer Schlüssel für JWT
 - (optional) `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` – initiales Admin-Seed
+- (optional) `ALLOWED_ORIGIN` – CORS-Origin (z. B. `https://example.com`); in Production nicht `*` lassen
+- (optional) `TRUST_PROXY` – z. B. `loopback` oder Zählwert für Forwarded-IPs
+- (optional) `FETCH_TIMEOUT_MS` – Default-Timeout für externe Fetches
+- (optional) `ASSET_VERSION` – Version für Cache-Busting in HTML
+- (optional) `TURNSTILE_SECRET` – aktiviert Cloudflare Turnstile-Validierung für öffentliche Vorschläge
+- (optional) UptimeRobot: `UPTIMEROBOT_API_KEY`, `UPTIMEROBOT_MONITOR_ID`
+- (optional) Analytics Hashing: `ANALYTICS_SALT` (für anonyme Session-Hashes)
 
 Hinweis: In Railway kannst du ENV-Referenzen wie `${{VAR}}` verwenden. Lokale `.env`-Dateien erweitern solche Referenzen nicht automatisch; verwende dort konkret aufgelöste Werte oder eine vollständige `MYSQL_URL`.
 
@@ -185,3 +258,29 @@ npm run build:admin
 ```
 
 Hinweis: Die Tailwind-Content-Globs scannen auch `server/**/*.{html,js,...}` – Admin-HTML/-JS wird also berücksichtigt.
+
+## Status & Metriken
+
+- Health: `GET /healthz` oder `GET /api/health`
+- Uptime (UptimeRobot):
+  - Neu: `GET /status/uptime` (ETag + Cache-Control, zusammengefasstes Objekt)
+  - Legacy: `GET /api/uptime` (kompatibel, liefert `{ uptime: number|null }`)
+
+## Tests
+
+```powershell
+npm test
+```
+
+Aktuell enthalten: Projekt-Gesundheit und Uptime-Endpoint-Checks. Geplant: Unit-Tests für Validatoren und Repositories.
+
+## Docker
+
+Multi-Stage Image mit Build (Tailwind + Vite) und kleinem Runtime-Layer. Beispiel:
+
+```powershell
+docker build -t pogosdex:latest .
+docker run --rm -p 3000:3000 --env-file .env pogosdex:latest
+```
+
+Der Container startet als `node`-User, lauscht auf Port 3000 und besitzt einen Healthcheck (`/healthz`).

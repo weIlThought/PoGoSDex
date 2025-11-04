@@ -6,11 +6,12 @@
     <title>Admin • PoGoSDex</title>
     <link rel="icon" href="/assets/favicon.ico" />
     <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin-override.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="brand" style="display: inline-flex; align-items: center; gap: 8px">
-        <img src="/assets/logo.png" alt="PoGoSDex" style="height: 24px; width: auto" />
+      <div class="brand inline-flex items-center gap-2">
+        <img src="/assets/logo.png" alt="PoGoSDex" class="h-6 w-auto" />
         <span>PoGoSDex Admin</span>
       </div>
       <nav class="actions">
@@ -38,6 +39,7 @@
             <h2>Dashboard</h2>
             <div class="tools">
               <button id="dashRefresh" class="btn">Neu laden</button>
+              <button id="dashResetAll" class="btn danger">Alles zurücksetzen</button>
             </div>
           </div>
           <div class="section">
@@ -149,31 +151,43 @@
                 <option value="closed">Closed</option>
               </select>
               <input id="issuesSearch" type="search" placeholder="Suche…" />
+              <button id="issuesReset" class="btn">Zurücksetzen</button>
               <button id="issuesRefresh" class="btn">Neu laden</button>
+              <button id="issuesExport" class="btn">Export CSV</button>
               <button id="issuesNew" class="btn primary">Neu</button>
             </div>
           </div>
           <table class="table" id="issuesTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="title">Titel</th>
-                <th data-sort="status">Status</th>
-                <th>Tags</th>
-                <th data-sort="updated_at">UpdatedAt</th>
-                <th>Aktionen</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="title">Titel</th>
+                <th class="sticky top-0" data-sort="status">Status</th>
+                <th class="sticky top-0">Tags</th>
+                <th class="sticky top-0" data-sort="updated_at">UpdatedAt</th>
+                <th class="sticky top-0">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="issuesPageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="issuesPageSize">Pro Seite:</label>
+              <select id="issuesPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="issuesPrev" class="btn" disabled>Zurück</button>
+              <button id="issuesNext" class="btn">Weiter</button>
+            </div>
+          </div>
           <dialog id="issuesDialog" class="modal">
             <form id="issuesForm" method="dialog" class="form modal-form">
               <h3 id="issuesDialogTitle" class="modal-title">Issue</h3>
-              <div
-                id="issuesDialogId"
-                class="text-sm"
-                style="color: #94a3b8; margin-bottom: 6px"
-              ></div>
+              <div id="issuesDialogId" class="text-sm text-slate-400 mb-1.5"></div>
               <input type="hidden" name="id" />
               <label><span>Titel</span><input name="title" required /></label>
               <label>
@@ -181,6 +195,8 @@
                 <select name="status">
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="blocked">Blocked</option>
                   <option value="closed">Closed</option>
                 </select>
               </label>
@@ -203,37 +219,49 @@
             <h2>Devices</h2>
             <div class="tools">
               <input id="devSearch" type="search" placeholder="Suche…" />
+              <button id="devReset" class="btn">Zurücksetzen</button>
               <button id="devRefresh" class="btn">Neu laden</button>
+              <button id="devExport" class="btn">Export CSV</button>
               <button id="devNew" class="btn primary">Neu</button>
             </div>
           </div>
           <table class="table" id="devTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="model">Model</th>
-                <th data-sort="brand">Brand</th>
-                <th data-sort="type">Type</th>
-                <th data-sort="os">OS</th>
-                <th data-sort="compatible">Compatible</th>
-                <th data-sort="price_range">PriceRange</th>
-                <th data-sort="pogo_comp">PoGoComp</th>
-                <th data-sort="manufacturer_url">Manufacturer</th>
-                <th>Notes</th>
-                <th>RootLinks</th>
-                <th>Aktionen</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="model">Model</th>
+                <th class="sticky top-0" data-sort="brand">Brand</th>
+                <th class="sticky top-0" data-sort="type">Type</th>
+                <th class="sticky top-0" data-sort="os">OS</th>
+                <th class="sticky top-0" data-sort="compatible">Compatible</th>
+                <th class="sticky top-0" data-sort="price_range">PriceRange</th>
+                <th class="sticky top-0" data-sort="pogo_comp">PoGoComp</th>
+                <th class="sticky top-0" data-sort="manufacturer_url">Manufacturer</th>
+                <th class="sticky top-0">Notes</th>
+                <th class="sticky top-0">RootLinks</th>
+                <th class="sticky top-0">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="devPageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="devPageSize">Pro Seite:</label>
+              <select id="devPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="devPrev" class="btn" disabled>Zurück</button>
+              <button id="devNext" class="btn">Weiter</button>
+            </div>
+          </div>
           <dialog id="devDialog" class="modal">
             <form id="devForm" method="dialog" class="form modal-form">
               <h3 id="devDialogTitle" class="modal-title">Device</h3>
-              <div
-                id="devDialogId"
-                class="text-sm"
-                style="color: #94a3b8; margin-bottom: 6px"
-              ></div>
+              <div id="devDialogId" class="text-sm text-slate-400 mb-1.5"></div>
               <input type="hidden" name="id" />
               <label><span>Model</span><input name="model" required /></label>
               <label><span>Brand</span><input name="brand" /></label>
@@ -279,34 +307,46 @@
             <h2>News</h2>
             <div class="tools">
               <input id="newsSearch" type="search" placeholder="Suche…" />
+              <button id="newsReset" class="btn">Zurücksetzen</button>
               <button id="newsRefresh" class="btn">Neu laden</button>
+              <button id="newsExport" class="btn">Export CSV</button>
               <button id="newsNew" class="btn primary">Neu</button>
             </div>
           </div>
           <table class="table" id="newsTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="slug">Slug</th>
-                <th data-sort="date">Datum</th>
-                <th data-sort="title">Titel</th>
-                <th data-sort="excerpt">Excerpt</th>
-                <th data-sort="published_at">PublishedAt</th>
-                <th data-sort="updated_at_ext">UpdatedAt</th>
-                <th>Tags</th>
-                <th>Aktionen</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="slug">Slug</th>
+                <th class="sticky top-0" data-sort="date">Datum</th>
+                <th class="sticky top-0" data-sort="title">Titel</th>
+                <th class="sticky top-0" data-sort="excerpt">Excerpt</th>
+                <th class="sticky top-0" data-sort="published_at">PublishedAt</th>
+                <th class="sticky top-0" data-sort="updated_at_ext">UpdatedAt</th>
+                <th class="sticky top-0">Tags</th>
+                <th class="sticky top-0">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="newsPageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="newsPageSize">Pro Seite:</label>
+              <select id="newsPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="newsPrev" class="btn" disabled>Zurück</button>
+              <button id="newsNext" class="btn">Weiter</button>
+            </div>
+          </div>
           <dialog id="newsDialog" class="modal">
             <form id="newsForm" method="dialog" class="form modal-form">
               <h3 id="newsDialogTitle" class="modal-title">News</h3>
-              <div
-                id="newsDialogId"
-                class="text-sm"
-                style="color: #94a3b8; margin-bottom: 6px"
-              ></div>
+              <div id="newsDialogId" class="text-sm text-slate-400 mb-1.5"></div>
               <input type="hidden" name="id" />
               <label><span>Slug (ID)</span><input name="slug" placeholder="pgsharp-1-47" /></label>
               <label><span>Datum</span><input name="date" type="date" /></label>
@@ -343,32 +383,44 @@
                 <option value="raid_spots">Raid Spots</option>
               </select>
               <input id="coordsSearch" type="search" placeholder="Suche…" />
+              <button id="coordsReset" class="btn">Zurücksetzen</button>
               <button id="coordsRefresh" class="btn">Neu laden</button>
+              <button id="coordsExport" class="btn">Export CSV</button>
               <button id="coordsNew" class="btn primary">Neu</button>
             </div>
           </div>
           <table class="table" id="coordsTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="category">Kategorie</th>
-                <th data-sort="name">Name</th>
-                <th data-sort="lat">Lat</th>
-                <th data-sort="lng">Lng</th>
-                <th>Tags</th>
-                <th>Aktionen</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="category">Kategorie</th>
+                <th class="sticky top-0" data-sort="name">Name</th>
+                <th class="sticky top-0" data-sort="lat">Lat</th>
+                <th class="sticky top-0" data-sort="lng">Lng</th>
+                <th class="sticky top-0">Tags</th>
+                <th class="sticky top-0">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="coordsPageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="coordsPageSize">Pro Seite:</label>
+              <select id="coordsPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="coordsPrev" class="btn" disabled>Zurück</button>
+              <button id="coordsNext" class="btn">Weiter</button>
+            </div>
+          </div>
           <dialog id="coordsDialog" class="modal">
             <form id="coordsForm" method="dialog" class="form modal-form">
               <h3 id="coordsDialogTitle" class="modal-title">Coord</h3>
-              <div
-                id="coordsDialogId"
-                class="text-sm"
-                style="color: #94a3b8; margin-bottom: 6px"
-              ></div>
+              <div id="coordsDialogId" class="text-sm text-slate-400 mb-1.5"></div>
               <input type="hidden" name="id" />
               <label>
                 <span>Kategorie</span>
@@ -398,25 +450,41 @@
             <h2>Pull Requests</h2>
             <div class="tools">
               <input id="pullsSearch" type="search" placeholder="Suche…" />
+              <button id="pullsReset" class="btn">Zurücksetzen</button>
               <button id="pullsRefresh" class="btn">Neu laden</button>
+              <button id="pullsExport" class="btn">Export CSV</button>
             </div>
           </div>
           <table class="table" id="pullsTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="model">Model</th>
-                <th data-sort="brand">Brand</th>
-                <th data-sort="type">Type</th>
-                <th data-sort="os">OS</th>
-                <th data-sort="compatible">Compatible</th>
-                <th>Notes</th>
-                <th>RootLinks</th>
-                <th>Aktionen</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="model">Model</th>
+                <th class="sticky top-0" data-sort="brand">Brand</th>
+                <th class="sticky top-0" data-sort="type">Type</th>
+                <th class="sticky top-0" data-sort="os">OS</th>
+                <th class="sticky top-0" data-sort="compatible">Compatible</th>
+                <th class="sticky top-0">Notes</th>
+                <th class="sticky top-0">RootLinks</th>
+                <th class="sticky top-0">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="pullsPageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="pullsPageSize">Pro Seite:</label>
+              <select id="pullsPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="pullsPrev" class="btn" disabled>Zurück</button>
+              <button id="pullsNext" class="btn">Weiter</button>
+            </div>
+          </div>
         </section>
 
         <section id="panel-archive" class="panel hidden" role="tabpanel">
@@ -424,22 +492,38 @@
             <h2>Archiv</h2>
             <div class="tools">
               <input id="archiveSearch" type="search" placeholder="Suche…" />
+              <button id="archiveReset" class="btn">Zurücksetzen</button>
               <button id="archiveRefresh" class="btn">Neu laden</button>
+              <button id="archiveExport" class="btn">Export CSV</button>
             </div>
           </div>
           <table class="table" id="archiveTable">
             <thead>
               <tr>
-                <th data-sort="id">ID</th>
-                <th data-sort="model">Model</th>
-                <th data-sort="brand">Brand</th>
-                <th data-sort="type">Type</th>
-                <th data-sort="os">OS</th>
-                <th data-sort="rejected_at">RejectedAt</th>
+                <th class="sticky top-0" data-sort="id">ID</th>
+                <th class="sticky top-0" data-sort="model">Model</th>
+                <th class="sticky top-0" data-sort="brand">Brand</th>
+                <th class="sticky top-0" data-sort="type">Type</th>
+                <th class="sticky top-0" data-sort="os">OS</th>
+                <th class="sticky top-0" data-sort="rejected_at">RejectedAt</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-sm text-slate-400" id="archivePageInfo"></div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-slate-400" for="archivePageSize">Pro Seite:</label>
+              <select id="archivePageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <button id="archivePrev" class="btn" disabled>Zurück</button>
+              <button id="archiveNext" class="btn">Weiter</button>
+            </div>
+          </div>
         </section>
       </section>
     </main>

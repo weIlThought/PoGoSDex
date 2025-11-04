@@ -45,6 +45,14 @@ jobs:
           echo "Running ESLint..."
           npm run lint || true
 
+      - name: 🏗️ Build CSS (public)
+        run: |
+          npm run build:css
+
+      - name: 🏗️ Build CSS (admin)
+        run: |
+          npm run build:admin
+
       - name: 🧪 Run Jest tests
         run: |
           echo "Running tests..."

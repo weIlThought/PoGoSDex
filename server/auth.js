@@ -10,7 +10,6 @@ const COOKIE_NAME = 'admintoken';
 const CSRF_COOKIE = 'csrf_token';
 
 export function authMiddleware(app) {
-  
   app.use(cookieParser());
 }
 
@@ -38,16 +37,16 @@ export function issueAuthCookies(res, user) {
   const token = signToken({ id: user.id, username: user.username });
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 12, 
+    maxAge: 1000 * 60 * 60 * 12,
     path: '/',
   });
-  
+
   const csrf = crypto.randomBytes(16).toString('hex');
   res.cookie(CSRF_COOKIE, csrf, {
     httpOnly: false,
-    sameSite: 'lax',
+    sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 12,
     path: '/',
@@ -100,7 +99,7 @@ export async function handleLogin(req, res) {
     res.json({ ok: true, user: { id: user.id, username: user.username }, csrf });
   } catch (e) {
     console.error('[auth] handleLogin error:', e);
-    
+
     return res.status(503).json({ error: 'Login temporarily unavailable', code: 'DB_UNAVAILABLE' });
   }
 }
@@ -111,7 +110,6 @@ export function handleLogout(req, res) {
 }
 
 export function meHandler(req, res) {
-  
   const { csrf } = issueAuthCookies(res, { id: req.user.id, username: req.user.username });
   res.json({ user: req.user, csrf });
 }

@@ -23,6 +23,12 @@ import {
   meHandler,
 } from './auth.js';
 import { validateData } from './validate-data.js';
+import {
+  validateDevicePayload,
+  validateNewsPayload,
+  validateCoordPayload,
+  validateIssuePayload,
+} from './validators.js';
 import fetch from 'node-fetch';
 
 import {
@@ -51,6 +57,7 @@ export async function createServer() {
   const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   const trustProxyInput = (process.env.TRUST_PROXY || '').trim().toLowerCase();
   let trustProxy = false;
+  const DEFAULT_FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || 8000);
   // Static asset version for cache-busting in HTML templates
   const assetVersion = process.env.ASSET_VERSION || String(Math.floor(Date.now() / 1000));
 
@@ -77,7 +84,7 @@ export async function createServer() {
   });
 
   const app = express();
-  
+
   authMiddleware(app);
 
   app.set('trust proxy', trustProxy || 1);
@@ -88,20 +95,22 @@ export async function createServer() {
     const nonce = crypto.randomBytes(16).toString('base64');
     res.locals.cspNonce = nonce;
 
+    // Admin and public UIs are free of inline styles; disallow 'unsafe-inline' for style-src
+    const styleSrc = "style-src 'self'";
     const cspDirectives = [
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
-      
-      "script-src 'self' https://cdn.jsdelivr.net",
-      
-      "connect-src 'self' data: https://api.uptimerobot.com https://cdn.jsdelivr.net",
-      
+
+      "script-src 'self'",
+
+      "connect-src 'self' data: https://api.uptimerobot.com",
+
       "img-src 'self' data:",
-      
-      "style-src 'self' 'unsafe-inline' https:",
-      
-      "font-src 'self' https://fonts.gstatic.com data:",
+
+      styleSrc,
+
+      "font-src 'self' data:",
       "frame-ancestors 'none'",
       "object-src 'none'",
       'report-to csp-endpoint',
@@ -109,6 +118,9 @@ export async function createServer() {
     ].join('; ');
 
     res.setHeader('Content-Security-Policy', cspDirectives);
+    // Additional security headers not covered by helmet defaults
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     res.setHeader(
       'Report-To',
       JSON.stringify({
@@ -121,23 +133,51 @@ export async function createServer() {
     next();
   });
 
-  app.get('/api/pgsharp/version', async (req, res) => {
+  // Small helper to fetch with timeout and a consistent UA
+  async function fetchWithTimeout(
+    url,
+    { timeoutMs = DEFAULT_FETCH_TIMEOUT_MS, headers = {}, ...opts } = {}
+  ) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(new Error('timeout')), Math.max(1, timeoutMs));
     try {
-      const result = await getPgsharpVersionCached();
-      res.json(result);
-    } catch (e) {
-      res.status(500).json({ ok: false, error: String(e) });
+      const ua = `PoGoSDex/1.0 (+https://github.com/weIlThought/PoGoSDex)`;
+      const res = await fetch(url, {
+        ...opts,
+        headers: { 'User-Agent': ua, ...headers },
+        signal: controller.signal,
+      });
+      return res;
+    } finally {
+      clearTimeout(id);
     }
-  });
+  }
 
-  app.get('/api/pokeminers/version', async (_req, res) => {
-    try {
-      const result = await getPokeminersVersionCached();
-      res.json(result);
-    } catch (e) {
-      res.status(500).json({ ok: false, error: String(e) });
+  // Shared UptimeRobot request helper
+  async function requestUptimeRobot({ apiKey, monitorId, ratios = '1-7-30', validate = true }) {
+    const params = new URLSearchParams();
+    params.append('api_key', apiKey);
+    params.append('format', 'json');
+    params.append('logs', '0');
+    params.append('custom_uptime_ratios', ratios);
+    if (monitorId) params.append('monitors', monitorId);
+
+    const response = await fetchWithTimeout('https://api.uptimerobot.com/v2/getMonitors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      body: params,
+    });
+    if (!response.ok) throw new Error(`UptimeRobot HTTP ${response.status}`);
+    const json = await response.json();
+    if (validate) {
+      if (!json || json.stat !== 'ok' || !Array.isArray(json.monitors)) {
+        throw new Error('Invalid UptimeRobot payload');
+      }
     }
-  });
+    return json;
+  }
+
+  // Version routes are registered via routes/public.js
 
   app.use(
     helmet({
@@ -145,6 +185,9 @@ export async function createServer() {
     })
   );
 
+  if (process.env.NODE_ENV === 'production' && allowedOrigin === '*') {
+    logger.warn('[security] CORS origin is * in production. Set ALLOWED_ORIGIN to your domain.');
+  }
   app.use(
     cors({
       origin: allowedOrigin === '*' ? true : allowedOrigin.split(','),
@@ -158,7 +201,7 @@ export async function createServer() {
       stream: {
         write: (message) => logger.info(message.trim()),
       },
-      skip: () => isTest, 
+      skip: () => isTest,
     })
   );
 
@@ -222,7 +265,6 @@ export async function createServer() {
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  
   const loginLimiter = rateLimit({
     windowMs: 10 * 60 * 1000,
     limit: 20,
@@ -245,7 +287,6 @@ export async function createServer() {
   });
   app.get('/admin/me', requireAuth, meHandler);
 
-  
   app.get('/healthz', async (_req, res) => {
     try {
       const p = getPool();
@@ -255,7 +296,7 @@ export async function createServer() {
       res.status(503).json({ ok: false, db: false });
     }
   });
-  
+
   app.get('/api/health', async (_req, res) => {
     try {
       const p = getPool();
@@ -266,108 +307,15 @@ export async function createServer() {
     }
   });
 
-  app.get('/status/uptime', async (_req, res) => {
-    if (!uptimeApiKey) {
-      return res.status(501).json({ error: 'Uptime monitoring not configured' });
-    }
+  // Uptime routes are registered via routes/status.js
 
-    const now = Date.now();
-    if (uptimeCache.payload && now - uptimeCache.timestamp < 3 * 60 * 1000) {
-      return res.json(uptimeCache.payload);
-    }
-
-    try {
-      const params = new URLSearchParams();
-      params.append('api_key', uptimeApiKey);
-      params.append('format', 'json');
-      params.append('logs', '0');
-      params.append('custom_uptime_ratios', '1-7-30');
-      if (uptimeMonitorId) {
-        
-        params.append('monitors', uptimeMonitorId);
-      }
-
-      const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params,
-      });
-
-      if (!response.ok) {
-        throw new Error(`UptimeRobot HTTP ${response.status}`);
-      }
-
-      const json = await response.json();
-      if (json.stat !== 'ok' || !Array.isArray(json.monitors)) {
-        throw new Error('Invalid UptimeRobot payload');
-      }
-
-      if (!json.monitors.length) {
-        
-        const payload = { state: 'unknown', statusCode: null, uptimeRatio: null, checkedAt: null };
-        uptimeCache.payload = payload;
-        uptimeCache.timestamp = now;
-        return res.json(payload);
-      }
-
-      const monitor = json.monitors[0];
-      const statusCode = Number(monitor.status);
-      
-      let uptimeRatio = Number(monitor.all_time_uptime_ratio);
-      if (!Number.isFinite(uptimeRatio) && typeof monitor.custom_uptime_ratio === 'string') {
-        const parts = monitor.custom_uptime_ratio
-          .split('-')
-          .map((s) => parseFloat(String(s).trim()))
-          .filter((n) => Number.isFinite(n));
-        if (parts.length) {
-          uptimeRatio = parts[parts.length - 1];
-        }
-      }
-
-      let state = 'unknown';
-      
-      if (statusCode === 2) state = 'up';
-      else if (statusCode === 9) state = 'degraded';
-      else if ([0, 1, 8].includes(statusCode)) state = 'down';
-
-      const payload = {
-        state,
-        statusCode,
-        uptimeRatio: Number.isFinite(uptimeRatio) ? uptimeRatio : null,
-        checkedAt: monitor.create_datetime ? monitor.create_datetime * 1000 : null,
-      };
-
-      uptimeCache.payload = payload;
-      uptimeCache.timestamp = now;
-
-      return res.json(payload);
-    } catch (error) {
-      return res.status(502).json({ error: 'Failed to fetch uptime status' });
-    }
-  });
-
-  app.get('/api/uptime', async (req, res) => {
-    try {
-      const apiKey = process.env.UPTIMEROBOT_API_KEY;
-      const monitorID = '801563784';
-      const response = await fetch(`https://api.uptimerobot.com/v2/getMonitors`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `api_key=${apiKey}&monitors=${monitorID}&format=json`,
-      });
-      const data = await response.json();
-      const uptime = data.monitors?.[0]?.all_time_uptime_ratio;
-      if (uptime) {
-        res.json({ uptime: parseFloat(uptime) });
-      } else {
-        res.json({ uptime: null });
-      }
-    } catch (e) {
-      res.json({ uptime: null });
-    }
-  });
-
-  const staticRoot = path.resolve(__dirname, '..', 'public');
+  const distRoot = path.resolve(__dirname, '..', 'dist');
+  const publicRoot = path.resolve(__dirname, '..', 'public');
+  let staticRoot = publicRoot;
+  try {
+    await fs.promises.access(path.join(distRoot, 'index.html'), fs.constants.R_OK);
+    staticRoot = distRoot; // bevorzugt dist/, wenn vorhanden
+  } catch {}
   const htmlCache = new Map();
   const fsp = fs.promises;
   await Promise.all(
@@ -390,7 +338,6 @@ export async function createServer() {
     })
   );
 
-  
   const adminDir = path.join(__dirname, 'admin');
   app.get('/login.html', async (req, res) => {
     try {
@@ -401,7 +348,7 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
-  
+
   app.get('/login.js', async (req, res) => {
     try {
       const file = path.join(adminDir, 'login.js');
@@ -431,7 +378,7 @@ export async function createServer() {
       res.status(404).send('Not found');
     }
   });
-  
+
   app.get('/admin.css', async (req, res) => {
     try {
       const file = path.join(adminDir, 'admin.css');
@@ -443,9 +390,6 @@ export async function createServer() {
     }
   });
 
-  
-  
-
   app.use(
     '/lang',
     express.static(path.resolve(__dirname, '..', 'lang'), {
@@ -453,20 +397,6 @@ export async function createServer() {
       maxAge: '1h',
     })
   );
-
-  app.use(
-    express.static(staticRoot, {
-      index: false,
-      extensions: ['html'],
-      etag: true,
-      maxAge: '12h',
-      setHeaders(res) {
-        res.setHeader('Cache-Control', 'public, max-age=43200, immutable');
-      },
-    })
-  );
-
-  
 
   logger.info(`[startup] staticRoot=${staticRoot}`);
   try {
@@ -483,7 +413,6 @@ export async function createServer() {
         return res.status(404).send('Not found');
       }
 
-      
       try {
         const dnt = (req.get('dnt') || req.get('DNT') || '').toString() === '1';
         const cookiesHeader = req.get('cookie') || '';
@@ -493,7 +422,7 @@ export async function createServer() {
           await p.execute(
             'INSERT INTO visitors (day, hits) VALUES (CURRENT_DATE(), 1) ON DUPLICATE KEY UPDATE hits = hits + 1'
           );
-          
+
           const ua = req.get('user-agent') || '';
           const ip = req.ip || '';
           const salt = process.env.ANALYTICS_SALT || process.env.SESSION_SALT || 'pgsdex';
@@ -505,21 +434,18 @@ export async function createServer() {
             [h]
           );
         }
-      } catch (e) {
-        
-      }
+      } catch (e) {}
 
       let out = content
         .replace(/{{CSP_NONCE}}/g, res.locals.cspNonce || '')
         .replace(/{{ASSET_VERSION}}/g, assetVersion);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      
+
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.send(out);
     });
   }
 
-  
   const parsePagination = (req) => {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)));
     const offset = Math.max(0, Number(req.query.offset || 0));
@@ -527,632 +453,82 @@ export async function createServer() {
     return { limit, offset, q };
   };
 
-  const { listDevices, getDevice, createDevice, updateDevice, deleteDevice } = await import(
-    './repositories.js'
+  const { listDevices, countDevices, getDevice, createDevice, updateDevice, deleteDevice } =
+    await import('./repositories/devices.js');
+  const { listNews, countNews, getNews, createNews, updateNews, deleteNews } = await import(
+    './repositories/news.js'
   );
-  const { listNews, getNews, createNews, updateNews, deleteNews } = await import(
-    './repositories.js'
+  const { listCoords, countCoords, getCoord, createCoord, updateCoord, deleteCoord } = await import(
+    './repositories/coords.js'
   );
-  const { listCoords, getCoord, createCoord, updateCoord, deleteCoord } = await import(
-    './repositories.js'
-  );
-  const { listIssues, getIssue, createIssue, updateIssue, deleteIssue } = await import(
-    './repositories.js'
+  const { listIssues, countIssues, getIssue, createIssue, updateIssue, deleteIssue } = await import(
+    './repositories/issues.js'
   );
   const {
     createDeviceProposal,
     listDeviceProposals,
+    countDeviceProposals,
     getDeviceProposal,
     approveDeviceProposal,
     rejectDeviceProposal,
-  } = await import('./repositories.js');
+  } = await import('./repositories/proposals.js');
 
-  
-  
-  app.get('/api/devices', async (req, res) => {
-    try {
-      const { q, limit, offset } = parsePagination(req);
-      const rows = await listDevices({ q, limit: Math.min(200, limit), offset });
-      const items = rows.map((r) => ({
-        id: r.id,
-        
-        model: r.model || r.name || '',
-        brand: r.brand || '',
-        type: r.type || '',
-        os: r.os || '',
-        compatible: !!r.compatible,
-        notes: Array.isArray(r.notes) ? r.notes : r.notes ? [r.notes] : [],
-        rootLinks: Array.isArray(r.root_links) ? r.root_links : r.root_links ? [r.root_links] : [],
-        priceRange: r.price_range || null,
-        // Zusammenfassung, damit das Frontend weiterhin "PoGO Compatibility" darstellen kann
-        pogo: r.pogo_comp || null,
-        pgsharp: null,
-      }));
-      res.json(items);
-    } catch (e) {
-      console.error('[api] public devices failed:', e && e.message ? e.message : e);
-      res.status(500).json([]);
-    }
+  // Register modularized routes
+  const { registerPublicRoutes } = await import('./routes/public.js');
+  const { registerAdminRoutes } = await import('./routes/admin.js');
+  const { registerStatusRoutes } = await import('./routes/status.js');
+
+  registerPublicRoutes(app, {
+    isTest,
+    parsePagination,
+    fetchWithTimeout,
+    getPgsharpVersionCached,
+    getPokeminersVersionCached,
+    repos: {
+      devices: { listDevices },
+      news: { listNews },
+      coords: { listCoords },
+      issues: { listIssues },
+      proposals: { createDeviceProposal },
+    },
   });
 
-  app.get('/api/news', async (req, res) => {
-    try {
-      const { q, limit, offset } = parsePagination(req);
-      const rows = await listNews({ q, limit: Math.min(200, limit), offset });
-      const published = rows.filter((n) => Number(n.published) === 1);
-      const items = published.map((n) => ({
-        id: n.id,
-        slug: n.slug || null,
-        date: n.date || null,
-        title: n.title,
-        excerpt: n.excerpt || null,
-        content: n.content || '',
-        tags: Array.isArray(n.tags) ? n.tags : n.tags ? [n.tags] : [],
-        publishedAt: n.published_at || null,
-        updatedAt: n.updated_at_ext || null,
-      }));
-      res.json(items);
-    } catch (e) {
-      console.error('[api] public news failed:', e && e.message ? e.message : e);
-      res.status(500).json([]);
-    }
+  registerAdminRoutes(app, {
+    requireAuth,
+    requireCsrf,
+    parsePagination,
+    validators: {
+      validateDevicePayload,
+      validateNewsPayload,
+      validateCoordPayload,
+      validateIssuePayload,
+    },
+    repos: {
+      devices: { listDevices, countDevices, createDevice, updateDevice, deleteDevice },
+      news: { listNews, countNews, updateNews, deleteNews, createNews },
+      coords: { listCoords, countCoords, getCoord, createCoord, updateCoord, deleteCoord },
+      issues: { listIssues, countIssues, getIssue, createIssue, updateIssue, deleteIssue },
+      proposals: {
+        listDeviceProposals,
+        countDeviceProposals,
+        getDeviceProposal,
+        approveDeviceProposal,
+        rejectDeviceProposal,
+      },
+    },
+    getPool,
   });
 
-  // Public Issues for Overview
-  app.get('/api/issues', async (req, res) => {
-    try {
-      const q = (req.query.q || '').toString().trim() || undefined;
-      // Allow optional status filter; if not provided, default to open + in_progress
-      const statusQuery = (req.query.status || '').toString().trim();
-      let statuses = undefined;
-      if (statusQuery) {
-        statuses = statusQuery;
-      }
-      const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
-      const offset = Math.max(0, Number(req.query.offset || 0));
-
-      // If multiple statuses needed, we simply filter after fetch for now
-      const items = await listIssues({ q, status: statuses, limit, offset });
-      // Map to public-safe shape
-      const out = items.map((it) => ({
-        id: it.id,
-        title: it.title,
-        content: it.content || '',
-        status: it.status || 'open',
-        tags: Array.isArray(it.tags) ? it.tags : it.tags ? [it.tags] : [],
-        createdAt: it.created_at || null,
-        updatedAt: it.updated_at || null,
-      }));
-      res.json(out);
-    } catch (e) {
-      console.error('[api] public issues failed:', e && e.message ? e.message : e);
-      res.status(500).json([]);
-    }
+  registerStatusRoutes(app, {
+    uptimeApiKey,
+    uptimeMonitorId,
+    requestUptimeRobot,
   });
 
-  app.get('/api/coords', async (req, res) => {
-    try {
-      const q = (req.query.q || '').toString().trim() || undefined;
-      const category = (req.query.category || '').toString().trim() || undefined;
-      const limit = Math.min(500, Math.max(1, Number(req.query.limit || 200)));
-      const offset = Math.max(0, Number(req.query.offset || 0));
-      const rows = await listCoords({ q, category, limit, offset });
-      const items = rows.map((r) => ({
-        id: r.id,
-        category: r.category,
-        name: r.name,
-        lat: r.lat,
-        lng: r.lng,
-        note: r.note || null,
-        tags: Array.isArray(r.tags) ? r.tags : r.tags ? [r.tags] : [],
-      }));
-      res.json(items);
-    } catch (e) {
-      console.error('[api] public coords failed:', e && e.message ? e.message : e);
-      res.status(500).json([]);
-    }
-  });
+  // Public routes are registered via routes/public.js
 
-  // Public: Neue Geräte-Vorschläge einreichen (mit Rate-Limits, Honeypot, optional Captcha)
-  if (!isTest) {
-    const proposalLimiterShort = rateLimit({ windowMs: 10 * 60 * 1000, limit: 5 }); // 5 / 10min
-    const proposalLimiterDay = rateLimit({ windowMs: 24 * 60 * 60 * 1000, limit: 50 }); // 50 / Tag
-    app.post(
-      '/api/device-proposals',
-      proposalLimiterShort,
-      proposalLimiterDay,
-      async (req, res) => {
-        try {
-          const {
-            brand,
-            model,
-            os,
-            type,
-            compatible,
-            priceRange,
-            pogo,
-            manufacturerUrl,
-            notes,
-            rootLinks,
-            hp,
-            cfTurnstileToken,
-          } = req.body || {};
-          
-          if (typeof hp === 'string' && hp.trim() !== '') {
-            return res.status(200).json({ ok: true });
-          }
-          // Optional: Cloudflare Turnstile
-          if (process.env.TURNSTILE_SECRET) {
-            if (!cfTurnstileToken || typeof cfTurnstileToken !== 'string') {
-              return res.status(400).json({ error: 'captcha required' });
-            }
-            try {
-              const verifyRes = await fetch(
-                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                  body: new URLSearchParams({
-                    secret: process.env.TURNSTILE_SECRET,
-                    response: cfTurnstileToken,
-                    remoteip: req.ip || '',
-                  }),
-                }
-              );
-              const verifyJson = await verifyRes.json();
-              if (!verifyJson.success) return res.status(400).json({ error: 'captcha failed' });
-            } catch {
-              return res.status(400).json({ error: 'captcha verify error' });
-            }
-          }
-          
-          if (!model || typeof model !== 'string' || model.trim().length < 2) {
-            return res.status(400).json({ error: 'model required' });
-          }
-          const created = await createDeviceProposal({
-            brand,
-            model: model.trim(),
-            os,
-            type,
-            compatible: !!compatible,
-            price_range: priceRange,
-            pogo_comp: pogo,
-            manufacturer_url: manufacturerUrl,
-            notes: Array.isArray(notes)
-              ? notes
-              : typeof notes === 'string'
-              ? notes
-                  .split(',')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              : [],
-            root_links: Array.isArray(rootLinks)
-              ? rootLinks
-              : typeof rootLinks === 'string'
-              ? rootLinks
-                  .split(',')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              : [],
-          });
-          res.status(201).json({ ok: true, id: created.id });
-        } catch (e) {
-          res.status(400).json({ error: 'invalid payload' });
-        }
-      }
-    );
-  } else {
-    
-    app.post('/api/device-proposals', async (req, res) => {
-      try {
-        const created = await createDeviceProposal(req.body || {});
-        res.status(201).json({ ok: true, id: created.id });
-      } catch (e) {
-        res.status(400).json({ error: 'invalid payload' });
-      }
-    });
-  }
+  // Admin routes are registered via routes/admin.js
 
-  
-  app.get('/admin/api/devices', requireAuth, async (req, res) => {
-    try {
-      const rows = await listDevices(parsePagination(req));
-      res.json({ items: rows });
-    } catch (e) {
-      console.error('[api] listDevices failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to list devices' });
-    }
-  });
-  app.post('/admin/api/devices', requireAuth, requireCsrf, async (req, res) => {
-    const {
-      name,
-      description,
-      image_url,
-      status,
-      model,
-      brand,
-      type,
-      os,
-      compatible,
-      notes,
-      manufacturer_url,
-      root_links,
-      price_range,
-      pogo_comp,
-    } = req.body || {};
-    
-    const deviceName =
-      name && typeof name === 'string' ? name.trim() : model && String(model).trim();
-    if (!deviceName) return res.status(400).json({ error: 'model or name required' });
-    try {
-      const created = await createDevice({
-        name: deviceName,
-        description,
-        image_url,
-        status,
-        model,
-        brand,
-        type,
-        os,
-        compatible,
-        notes,
-        manufacturer_url,
-        root_links,
-        price_range,
-        pogo_comp,
-      });
-      res.status(201).json(created);
-    } catch (e) {
-      console.error('[api] createDevice failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to create device' });
-    }
-  });
-  app.put('/admin/api/devices/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const updated = await updateDevice(id, req.body || {});
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      console.error('[api] updateDevice failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to update device' });
-    }
-  });
-  app.delete('/admin/api/devices/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const ok = await deleteDevice(id);
-      if (!ok) return res.status(404).json({ error: 'not found' });
-      res.json({ ok: true });
-    } catch (e) {
-      console.error('[api] deleteDevice failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to delete device' });
-    }
-  });
-
-  
-  app.get('/admin/api/news', requireAuth, async (req, res) => {
-    try {
-      const rows = await listNews(parsePagination(req));
-      res.json({ items: rows });
-    } catch (e) {
-      console.error('[api] listNews failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to list news' });
-    }
-  });
-  app.post('/admin/api/news', requireAuth, requireCsrf, async (req, res) => {
-    const {
-      id: slug,
-      slug: slugAlt,
-      date,
-      title,
-      excerpt,
-      content,
-      image_url,
-      published,
-      publishedAt,
-      updatedAt,
-      tags,
-    } = req.body || {};
-    if (!title || typeof title !== 'string')
-      return res.status(400).json({ error: 'title required' });
-    if (!content || typeof content !== 'string')
-      return res.status(400).json({ error: 'content required' });
-    try {
-      const created = await createNews({
-        slug: slugAlt || slug || null,
-        date: date || null,
-        title: title.trim(),
-        excerpt: excerpt || null,
-        content,
-        image_url: image_url || null,
-        published,
-        published_at: publishedAt || null,
-        updated_at_ext: updatedAt || null,
-        tags,
-      });
-      res.status(201).json(created);
-    } catch (e) {
-      console.error('[api] createNews failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to create news' });
-    }
-  });
-  app.put('/admin/api/news/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const {
-        id: slug,
-        slug: slugAlt,
-        date,
-        title,
-        excerpt,
-        content,
-        image_url,
-        published,
-        publishedAt,
-        updatedAt,
-        tags,
-      } = req.body || {};
-      const updated = await updateNews(id, {
-        slug: slugAlt || slug,
-        date,
-        title,
-        excerpt,
-        content,
-        image_url,
-        published,
-        published_at: publishedAt,
-        updated_at_ext: updatedAt,
-        tags,
-      });
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      console.error('[api] updateNews failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to update news' });
-    }
-  });
-  app.delete('/admin/api/news/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const ok = await deleteNews(id);
-      if (!ok) return res.status(404).json({ error: 'not found' });
-      res.json({ ok: true });
-    } catch (e) {
-      console.error('[api] deleteNews failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to delete news' });
-    }
-  });
-
-  
-  app.get('/admin/api/coords', requireAuth, async (req, res) => {
-    try {
-      const { q, limit, offset } = parsePagination(req);
-      const category = (req.query.category || '').toString().trim() || undefined;
-      const rows = await listCoords({ q, category, limit, offset });
-      res.json({ items: rows });
-    } catch (e) {
-      console.error('[api] listCoords failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to list coords' });
-    }
-  });
-  app.get('/admin/api/coords/:id', requireAuth, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const row = await getCoord(id);
-      if (!row) return res.status(404).json({ error: 'not found' });
-      res.json(row);
-    } catch (e) {
-      console.error('[api] getCoord failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to get coord' });
-    }
-  });
-
-  
-  app.get('/admin/api/issues', requireAuth, async (req, res) => {
-    try {
-      const { q, limit, offset } = parsePagination(req);
-      const status = (req.query.status || '').toString().trim() || undefined;
-      const items = await listIssues({ q, status, limit, offset });
-      res.json({ items });
-    } catch (e) {
-      console.error('[api] listIssues failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to list issues' });
-    }
-  });
-  app.get('/admin/api/issues/:id', requireAuth, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const row = await getIssue(id);
-      if (!row) return res.status(404).json({ error: 'not found' });
-      res.json(row);
-    } catch (e) {
-      console.error('[api] getIssue failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to get issue' });
-    }
-  });
-  app.post('/admin/api/issues', requireAuth, requireCsrf, async (req, res) => {
-    try {
-      const { title, content, status, tags } = req.body || {};
-      if (!title || typeof title !== 'string')
-        return res.status(400).json({ error: 'title required' });
-      if (!content || typeof content !== 'string')
-        return res.status(400).json({ error: 'content required' });
-      const created = await createIssue({ title: title.trim(), content, status, tags });
-      res.status(201).json(created);
-    } catch (e) {
-      console.error('[api] createIssue failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to create issue' });
-    }
-  });
-  app.put('/admin/api/issues/:id', requireAuth, requireCsrf, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const { title, content, status, tags } = req.body || {};
-      const updated = await updateIssue(id, { title, content, status, tags });
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      console.error('[api] updateIssue failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to update issue' });
-    }
-  });
-  app.delete('/admin/api/issues/:id', requireAuth, requireCsrf, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const ok = await deleteIssue(id);
-      if (!ok) return res.status(404).json({ error: 'not found' });
-      res.json({ ok: true });
-    } catch (e) {
-      console.error('[api] deleteIssue failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to delete issue' });
-    }
-  });
-
-  
-  app.get('/admin/api/dashboard', requireAuth, async (_req, res) => {
-    try {
-      const p = getPool();
-      const [[devices], [news], [coords], [issues]] = await Promise.all([
-        p.execute('SELECT COUNT(*) AS c FROM devices').then(([r]) => r),
-        p.execute('SELECT COUNT(*) AS c FROM news').then(([r]) => r),
-        p.execute('SELECT COUNT(*) AS c FROM coords').then(([r]) => r),
-        p.execute('SELECT COUNT(*) AS c FROM issues').then(([r]) => r),
-      ]);
-      const [[visTodayRow], [vis7Row], [vis30Row], [visTotalRow], [visDaysRow]] = await Promise.all(
-        [
-          p
-            .execute('SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day = CURRENT_DATE()')
-            .then(([r]) => r),
-          p
-            .execute(
-              'SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 6 DAY)'
-            )
-            .then(([r]) => r),
-          p
-            .execute(
-              'SELECT COALESCE(SUM(hits),0) AS v FROM visitors WHERE day >= (CURRENT_DATE() - INTERVAL 29 DAY)'
-            )
-            .then(([r]) => r),
-          p.execute('SELECT COALESCE(SUM(hits),0) AS v FROM visitors').then(([r]) => r),
-          p.execute('SELECT COUNT(*) AS v FROM visitors').then(([r]) => r),
-        ]
-      );
-      res.json({
-        counts: {
-          devices: Number(devices.c || 0),
-          news: Number(news.c || 0),
-          coords: Number(coords.c || 0),
-          issues: Number(issues.c || 0),
-        },
-        visitors: {
-          today: Number(visTodayRow.v || 0),
-          last7d: Number(vis7Row.v || 0),
-          last30d: Number(vis30Row.v || 0),
-          totalHits: Number(visTotalRow.v || 0),
-          totalDays: Number(visDaysRow.v || 0),
-        },
-      });
-    } catch (e) {
-      console.error('[api] dashboard failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to load dashboard' });
-    }
-  });
-  app.post('/admin/api/coords', requireAuth, requireCsrf, async (req, res) => {
-    const { category = 'top10', name, lat, lng, note, tags } = req.body || {};
-    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
-    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng)))
-      return res.status(400).json({ error: 'lat/lng required' });
-    if (!['top10', 'notable', 'raid_spots'].includes(category))
-      return res.status(400).json({ error: 'invalid category' });
-    try {
-      const created = await createCoord({ category, name: name.trim(), lat, lng, note, tags });
-      res.status(201).json(created);
-    } catch (e) {
-      console.error('[api] createCoord failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to create coord' });
-    }
-  });
-  app.put('/admin/api/coords/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const updated = await updateCoord(id, req.body || {});
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      console.error('[api] updateCoord failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to update coord' });
-    }
-  });
-  app.delete('/admin/api/coords/:id', requireAuth, requireCsrf, async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-    try {
-      const ok = await deleteCoord(id);
-      if (!ok) return res.status(404).json({ error: 'not found' });
-      res.json({ ok: true });
-    } catch (e) {
-      console.error('[api] deleteCoord failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to delete coord' });
-    }
-  });
-
-  
-  app.get('/admin/api/proposals', requireAuth, async (req, res) => {
-    try {
-      const { q, limit, offset } = parsePagination(req);
-      const status = (req.query.status || '').toString().trim() || undefined;
-      const items = await listDeviceProposals({ status, q, limit, offset });
-      res.json({ items });
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to list proposals' });
-    }
-  });
-  app.get('/admin/api/proposals/:id', requireAuth, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const row = await getDeviceProposal(id);
-      if (!row) return res.status(404).json({ error: 'not found' });
-      res.json(row);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to get proposal' });
-    }
-  });
-  app.post('/admin/api/proposals/:id/approve', requireAuth, requireCsrf, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      
-      const updated = await approveDeviceProposal(id, null);
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to approve proposal' });
-    }
-  });
-  app.post('/admin/api/proposals/:id/reject', requireAuth, requireCsrf, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
-      const updated = await rejectDeviceProposal(id, null);
-      if (!updated) return res.status(404).json({ error: 'not found' });
-      res.json(updated);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to reject proposal' });
-    }
-  });
-
-  
   if (!isTest) {
     schedulePgsharpAutoRefresh(logger);
     schedulePokeminersAutoRefresh(logger);

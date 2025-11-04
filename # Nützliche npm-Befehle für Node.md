@@ -1,69 +1,78 @@
-# Nützliche npm-Befehle für Node.js-Projekte
+# Nützliche npm-Befehle für dieses Projekt (Windows PowerShell)
 
 ## Installation & Initialisierung
 
-```sh
-npm init -y
-# Erstellt eine neue package.json mit Standardwerten
+```powershell
+# Abhängigkeiten für Root + Workspaces (server) installieren
+npm ci
 
-npm install
-# Installiert alle Abhängigkeiten aus der package.json im aktuellen Ordner
-
+# Optional: Nur im Unterordner "server" installieren
 npm install --prefix server
-# Installiert alle Abhängigkeiten im Unterordner "server"
-
-npm install <paketname>
-# Installiert ein bestimmtes Paket im aktuellen Ordner
-
-npm install <paketname> --workspace=server
-# Installiert ein Paket gezielt im Workspace "server" (bei Workspaces)
-
-npm install --force
-# Erzwingt die Installation aller Abhängigkeiten, auch bei Konflikten
 ```
 
 ## Pakete & Abhängigkeiten prüfen
 
-```sh
-npm ls <paketname>
+```powershell
 # Zeigt an, ob und wo ein Paket installiert ist
+npm ls <paketname>
 
-npm fund
 # Zeigt an, welche Pakete um Unterstützung bitten
+npm fund
 ```
 
 ## Cache & Fehlerbehebung
 
-```sh
+```powershell
+# npm-Cache leeren
 npm cache clean --force
-# Leert den npm-Cache
 
-del package-lock.json
-# Löscht die package-lock.json (Windows)
+# package-lock.json löschen (PowerShell)
+Remove-Item -Force package-lock.json
+```
 
-rm package-lock.json
-# Löscht die package-lock.json (Linux/Mac)
+## Projekt-spezifische Skripte
+
+```powershell
+# Frontend-Dev-Server (Vite, nur statische Vorschau)
+npm run dev
+
+# Produktion-Build (Vite Multi-Page nach dist/)
+npm run build
+
+# Express-Server starten (liefert public/ oder dist/ + APIs)
+npm start
+
+# Öffentliche CSS beobachten/minifizieren (Tailwind v4)
+npm run dev:css
+npm run build:css
+
+# Admin-CSS beobachten/minifizieren
+npm run dev:admin
+npm run build:admin
+
+# Cache-Busting-Version in HTMLs hochzählen
+npm run bump:assets
+
+# Linting
+npm run lint
+npm run lint:fix
+
+# Tests (Jest + Supertest)
+npm test
 ```
 
 ## Sonstiges
 
-```sh
-npm run <scriptname>
-# Führt ein Skript aus der package.json aus
-
+```powershell
+# Veraltete Pakete anzeigen / Updates ausführen
 npm outdated
-# Zeigt veraltete Pakete an
-
 npm update
-# Aktualisiert alle Pakete auf die neueste erlaubte Version
 
+# Tailwind CSS direkt per CLI bauen (falls benötigt)
 npx --yes @tailwindcss/cli -i ./public/styles.css -o ./public/output.css --minify
-
 npx --yes @tailwindcss/cli -i .\server\admin\styles.css -o .\server\admin\admin.css --minify
-# styles.css to output.css
 ```
 
 ---
 
-**Tipp:**  
-Immer im richtigen Ordner arbeiten (`cd <ordner>`) und bei Workspaces Installationen bevorzugt im Projekt-Root ausführen!
+Tipp: Bei Workspaces Installationen bevorzugt im Projekt-Root ausführen. Für reine Frontend-Vorschauen `npm run dev` nutzen; für vollständige Tests mit API den Express-Server via `npm start` starten (ggf. parallel `dev:css`/`dev:admin`).

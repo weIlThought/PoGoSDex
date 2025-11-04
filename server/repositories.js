@@ -2,8 +2,7 @@ import { getPool } from './mysql.js';
 
 const p = () => getPool();
 
-
-export async function listDevices({ q, limit = 50, offset = 0 } = {}) {
+export async function listDevices({ q, limit = 50, offset = 0, sortBy, sortDir } = {}) {
   const params = [];
   let sql = `SELECT id, name, description, image_url, status,
                     model, brand, type, os, compatible, notes, manufacturer_url, root_links,
@@ -17,7 +16,22 @@ export async function listDevices({ q, limit = 50, offset = 0 } = {}) {
   }
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
   const off = Math.max(0, Number(offset) || 0);
-  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const cols = {
+    id: 'id',
+    name: 'name',
+    model: 'model',
+    brand: 'brand',
+    type: 'type',
+    os: 'os',
+    compatible: 'compatible',
+    price_range: 'price_range',
+    pogo_comp: 'pogo_comp',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseJson = (v) => {
     if (v == null) return null;
@@ -35,6 +49,18 @@ export async function listDevices({ q, limit = 50, offset = 0 } = {}) {
     notes: parseJson(r.notes),
     root_links: parseJson(r.root_links),
   }));
+}
+
+export async function countDevices({ q } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM devices';
+  if (q) {
+    sql +=
+      ' WHERE name LIKE ? OR description LIKE ? OR model LIKE ? OR brand LIKE ? OR type LIKE ? OR os LIKE ?';
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
 }
 
 export async function getDevice(id) {
@@ -138,8 +164,7 @@ export async function deleteDevice(id) {
   return res.affectedRows > 0;
 }
 
-
-export async function listNews({ q, limit = 50, offset = 0 } = {}) {
+export async function listNews({ q, limit = 50, offset = 0, sortBy, sortDir } = {}) {
   const params = [];
   let sql = `SELECT id, slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags,
                     created_at, updated_at
@@ -150,7 +175,19 @@ export async function listNews({ q, limit = 50, offset = 0 } = {}) {
   }
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
   const off = Math.max(0, Number(offset) || 0);
-  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const cols = {
+    id: 'id',
+    slug: 'slug',
+    date: 'date',
+    title: 'title',
+    published_at: 'published_at',
+    updated_at_ext: 'updated_at_ext',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseJson = (v) => {
     if (v == null) return null;
@@ -164,6 +201,17 @@ export async function listNews({ q, limit = 50, offset = 0 } = {}) {
     return v;
   };
   return rows.map((r) => ({ ...r, tags: parseJson(r.tags) }));
+}
+
+export async function countNews({ q } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM news';
+  if (q) {
+    sql += ' WHERE title LIKE ? OR excerpt LIKE ? OR content LIKE ?';
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
 }
 
 export async function getNews(id) {
@@ -198,10 +246,10 @@ export async function createNews(payload) {
     excerpt,
     content,
     image_url,
-    
+
     published = 0,
     published_at,
-    updated_at, 
+    updated_at,
     updated_at_ext,
     tags,
   } = payload || {};
@@ -255,8 +303,7 @@ export async function deleteNews(id) {
   return res.affectedRows > 0;
 }
 
-
-export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
+export async function listCoords({ q, category, limit = 50, offset = 0, sortBy, sortDir } = {}) {
   const params = [];
   let sql = 'SELECT id, category, name, lat, lng, note, tags, created_at, updated_at FROM coords';
   const where = [];
@@ -271,7 +318,18 @@ export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
   const off = Math.max(0, Number(offset) || 0);
-  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const cols = {
+    id: 'id',
+    category: 'category',
+    name: 'name',
+    lat: 'lat',
+    lng: 'lng',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseTags = (t) => {
     if (t == null) return null;
@@ -282,10 +340,27 @@ export async function listCoords({ q, category, limit = 50, offset = 0 } = {}) {
         return null;
       }
     }
-    
+
     return t;
   };
   return rows.map((r) => ({ ...r, tags: parseTags(r.tags) }));
+}
+
+export async function countCoords({ q, category } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM coords';
+  const where = [];
+  if (category) {
+    where.push('category = ?');
+    params.push(category);
+  }
+  if (q) {
+    where.push('(name LIKE ? OR note LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
 }
 
 export async function getCoord(id) {
@@ -367,8 +442,7 @@ export async function deleteCoord(id) {
   return res.affectedRows > 0;
 }
 
-
-export async function listIssues({ q, status, limit = 50, offset = 0 } = {}) {
+export async function listIssues({ q, status, limit = 50, offset = 0, sortBy, sortDir } = {}) {
   const params = [];
   let sql = 'SELECT id, title, content, status, tags, created_at, updated_at FROM issues';
   const where = [];
@@ -383,7 +457,16 @@ export async function listIssues({ q, status, limit = 50, offset = 0 } = {}) {
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
   const off = Math.max(0, Number(offset) || 0);
-  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const cols = {
+    id: 'id',
+    title: 'title',
+    status: 'status',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseTags = (t) => {
     if (t == null) return null;
@@ -397,6 +480,23 @@ export async function listIssues({ q, status, limit = 50, offset = 0 } = {}) {
     return t;
   };
   return rows.map((r) => ({ ...r, tags: parseTags(r.tags) }));
+}
+
+export async function countIssues({ q, status } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM issues';
+  const where = [];
+  if (status) {
+    where.push('status = ?');
+    params.push(status);
+  }
+  if (q) {
+    where.push('(title LIKE ? OR content LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
 }
 
 export async function getIssue(id) {
@@ -470,7 +570,6 @@ export async function deleteIssue(id) {
   return res.affectedRows > 0;
 }
 
-
 export async function createDeviceProposal(payload = {}) {
   const {
     brand,
@@ -528,7 +627,14 @@ export async function getDeviceProposal(id) {
   return { ...r, notes: parse(r.notes), root_links: parse(r.root_links) };
 }
 
-export async function listDeviceProposals({ status, q, limit = 50, offset = 0 } = {}) {
+export async function listDeviceProposals({
+  status,
+  q,
+  limit = 50,
+  offset = 0,
+  sortBy,
+  sortDir,
+} = {}) {
   const params = [];
   let sql = `SELECT id, brand, model, os, type, compatible, price_range, pogo_comp, manufacturer_url, notes, root_links, status, device_id, approved_by, approved_at, rejected_at, created_at, updated_at FROM device_proposals`;
   const where = [];
@@ -543,7 +649,19 @@ export async function listDeviceProposals({ status, q, limit = 50, offset = 0 } 
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
   const off = Math.max(0, Number(offset) || 0);
-  sql += ` ORDER BY updated_at DESC, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const cols = {
+    id: 'id',
+    brand: 'brand',
+    model: 'model',
+    os: 'os',
+    type: 'type',
+    status: 'status',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  };
+  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
+  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parse = (v) => {
     if (v == null) return null;
@@ -559,11 +677,28 @@ export async function listDeviceProposals({ status, q, limit = 50, offset = 0 } 
   return rows.map((r) => ({ ...r, notes: parse(r.notes), root_links: parse(r.root_links) }));
 }
 
+export async function countDeviceProposals({ status, q } = {}) {
+  const params = [];
+  let sql = 'SELECT COUNT(*) AS c FROM device_proposals';
+  const where = [];
+  if (status) {
+    where.push('status = ?');
+    params.push(status);
+  }
+  if (q) {
+    where.push('(brand LIKE ? OR model LIKE ? OR os LIKE ? OR type LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  const [rows] = await p().execute(sql, params);
+  return Number(rows[0]?.c || 0);
+}
+
 export async function approveDeviceProposal(id, approvedByUserId = null) {
   const prop = await getDeviceProposal(id);
   if (!prop) return null;
-  if (prop.status !== 'pending') return prop; 
-  
+  if (prop.status !== 'pending') return prop;
+
   const [ins] = await p().execute(
     `INSERT INTO devices (name, model, brand, type, os, compatible, notes, manufacturer_url, root_links, price_range, pogo_comp, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,

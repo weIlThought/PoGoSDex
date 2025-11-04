@@ -1,3 +1,4 @@
+import { Debug } from './js/debug.js';
 function qs(s) {
   return document.querySelector(s);
 }
@@ -20,10 +21,8 @@ function sanitizeAndEscape(input, options = {}) {
       .replace(/'/g, '&#039;');
   }
 
-  
   return sanitizeHtml(input);
 }
-
 
 function esc(t) {
   return sanitizeAndEscape(t);
@@ -33,32 +32,40 @@ function escapeHtml(s) {
   return sanitizeAndEscape(s);
 }
 
-
 const CONFIG = {
-  
-  FOCUS_DELAY: 0, 
-  CLOCK_UPDATE_INTERVAL: 1000, 
-  API_REFRESH_INTERVAL: 30 * 60 * 1000, 
-  TIMEZONE_OFFSET_MS: 60 * 60 * 1000, 
+  FOCUS_DELAY: 0,
+  CLOCK_UPDATE_INTERVAL: 1000,
+  API_REFRESH_INTERVAL: 30 * 60 * 1000,
+  TIMEZONE_OFFSET_MS: 60 * 60 * 1000,
 
-  
-  HEADER_SHRINK_THRESHOLD: 64, 
+  HEADER_SHRINK_THRESHOLD: 64,
 
-  
   DEBUG: false,
-  LANG_LOCK: true, 
+  LANG_LOCK: true,
 
-  
   SUPPORTED_LANGS: ['en', 'de', 'es', 'fr', 'it', 'pt', 'ru'],
 };
 
-
 class DataLoader {
+  static _cache = new Map();
+  static _ttl = 60 * 1000; // 60s client-side cache
   static async loadJSON(url, fallbackValue = null, errorContext = 'data') {
     try {
+      // Respect manual no-cache via URL parameter
+      const noCache = /[?&](?:nocache|ts|_)=/i.test(String(url));
+      if (!noCache) {
+        const c = DataLoader._cache.get(url);
+        if (c && Date.now() - c.time < DataLoader._ttl) {
+          return c.value;
+        }
+      }
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      return await res.json();
+      const json = await res.json();
+      try {
+        if (!noCache) DataLoader._cache.set(url, { time: Date.now(), value: json });
+      } catch {}
+      return json;
     } catch (e) {
       console.error(`Failed to load ${errorContext} from ${url}:`, e);
       if (fallbackValue !== null) {
@@ -82,7 +89,6 @@ class DataLoader {
   }
 }
 
-
 class DOMCache {
   constructor() {
     this.cache = new Map();
@@ -92,15 +98,12 @@ class DOMCache {
   init() {
     if (this.initialized) return;
 
-    
     const elements = {
-      
       overviewSection: '#overviewSection',
       devicesSection: '#devicesSection',
       newsSection: '#newsSection',
       pgsharpSection: '#pgsharpSection',
 
-      
       modalBackdrop: '#modalBackdrop',
       coordsModalBackdrop: '#coordsModalBackdrop',
       newsModalBackdrop: '#newsModalBackdrop',
@@ -108,7 +111,6 @@ class DOMCache {
       coordsModalClose: '#coordsModalClose',
       closeNewsModal: '#closeNewsModal',
 
-      
       modalTitle: '#modalTitle',
       modalMeta: '#modalMeta',
       modalDesc: '#modalDesc',
@@ -117,27 +119,23 @@ class DOMCache {
       modalPriceRange: '#modalPriceRange',
       modalPoGoComp: '#modalPoGoComp',
 
-      
       coordsModalTitle: '#coordsModalTitle',
       coordsModalMeta: '#coordsModalMeta',
       coordsModalNote: '#coordsModalNote',
       coordsModalTags: '#coordsModalTags',
       coordsModalMaps: '#coordsModalMaps',
 
-      
       newsModalTitle: '#newsModalTitle',
       newsModalMeta: '#newsModalMeta',
       newsModalBody: '#newsModalBody',
       newsModalTagsWrap: '#newsModalTagsWrap',
       newsModalTags: '#newsModalTags',
 
-      
       searchInput: '#searchInput',
       newsSearchInput: '#newsSearchInput',
       newsTagFilter: '#newsTagFilter',
       newsWrap: '#newsWrap',
 
-      
       coordsTime: '#coords-time',
     };
 
@@ -154,15 +152,12 @@ class DOMCache {
     return this.cache.get(key);
   }
 
-  
   query(selector) {
     return document.querySelector(selector);
   }
 }
 
-
 const domCache = new DOMCache();
-
 
 class DeviceFilter {
   constructor() {
@@ -287,34 +282,28 @@ class EventManager {
   }
 
   setupGlobalDelegation() {
-    
     document.addEventListener('click', (e) => {
       this.handleGlobalClick(e);
     });
 
-    
     document.addEventListener('change', (e) => {
       this.handleGlobalChange(e);
     });
 
-    
     document.addEventListener('input', (e) => {
       this.handleGlobalInput(e);
     });
 
-    
     document.addEventListener('keydown', (e) => {
       this.handleGlobalKeydown(e);
     });
 
-    
     document.addEventListener('submit', (e) => {
       this.handleGlobalSubmit(e);
     });
   }
 
   setupGlobalKeyboardHandlers() {
-    
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.handleEscapeKey(e);
@@ -374,7 +363,6 @@ class EventManager {
   handleGlobalKeydown(e) {
     const target = e.target;
 
-    
     if ((e.key === 'Enter' || e.key === ' ') && target.matches('[role="button"]')) {
       e.preventDefault();
       target.click();
@@ -392,21 +380,18 @@ class EventManager {
   }
 
   handleEscapeKey(e) {
-    
-    coordsModalManager.close();
-    newsModalManager.close();
+    try {
+      newsModalManager.close();
+    } catch {}
     if (typeof closeModal === 'function') closeModal();
   }
 
-  
   handleCloseModal(target, param) {
-    if (param === 'coords') coordsModalManager.close();
-    else if (param === 'news') newsModalManager.close();
+    if (param === 'news') newsModalManager.close();
     else if (typeof closeModal === 'function') closeModal();
   }
 
   handleOpenModal(target, param) {
-    
     debug('Open modal:', param);
   }
 
@@ -415,7 +400,6 @@ class EventManager {
   }
 
   handleCopyJson(target, param) {
-    
     debug('Copy JSON for:', param);
   }
 
@@ -425,11 +409,7 @@ class EventManager {
 
     if (modal) {
       modal.classList.toggle('hidden', !isOpen);
-      if (isOpen) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
-      }
+      document.body.classList.toggle('overflow-hidden', isOpen);
     }
   }
 
@@ -714,17 +694,7 @@ class ErrorHandler {
       closeBtn.addEventListener('click', () => this.dismissToast(toast));
     }
 
-    // Position toast
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.3s ease-in-out;
-    `;
-
+    // Position toast via CSS class (no inline styles for stricter CSP)
     toast.classList.add('error-toast');
 
     return toast;
@@ -742,8 +712,6 @@ class ErrorHandler {
 
   dismissToast(toast) {
     toast.classList.remove('show');
-    toast.style.transform = 'translateX(100%)';
-    toast.style.opacity = '0';
 
     setTimeout(() => {
       if (toast.parentNode) {
@@ -767,15 +735,7 @@ class ErrorHandler {
 // Global error handler instance
 const errorHandler = new ErrorHandler();
 
-// Add CSS for error toasts
-const toastStyles = document.createElement('style');
-toastStyles.textContent = `
-  .error-toast.show {
-    opacity: 1 !important;
-    transform: translateX(0) !important;
-  }
-`;
-document.head.appendChild(toastStyles);
+// CSS for error toasts moved to public/styles.css to avoid inline styles
 
 // Performance Monitoring and Metrics System
 class PerformanceMonitor {
@@ -1009,7 +969,7 @@ class PerformanceMonitor {
     const avgUsed =
       memoryEntries.reduce((sum, entry) => sum + entry.used, 0) / memoryEntries.length;
     return {
-      averageUsed: Math.round(avgUsed / 1024 / 1024), 
+      averageUsed: Math.round(avgUsed / 1024 / 1024),
       entries: memoryEntries.length,
     };
   }
@@ -1023,7 +983,6 @@ class PerformanceMonitor {
   }
 
   logPerformanceReport() {
-    
     if (!CONFIG.DEBUG) return;
 
     const summary = this.getPerformanceSummary();
@@ -1072,23 +1031,33 @@ class PerformanceMonitor {
   }
 }
 
-
 const performanceMonitor = new PerformanceMonitor();
-
 
 window.measurePerformance = (name, fn) => performanceMonitor.measureFunction(name, fn);
 window.measureAsyncPerformance = (name, fn) => performanceMonitor.measureAsyncFunction(name, fn);
 window.getPerformanceMetrics = () => performanceMonitor.getMetrics();
 window.exportPerformanceReport = () => performanceMonitor.exportMetrics();
 
-
 function debug(...args) {
+  try {
+    if (
+      typeof window !== 'undefined' &&
+      window.__Debug &&
+      typeof window.__Debug.log === 'function'
+    ) {
+      window.__Debug.log(...args);
+      return;
+    }
+  } catch {}
   if (CONFIG.DEBUG) console.log(...args);
 }
 
+// Initialize central Debug state based on CONFIG.DEBUG
+try {
+  Debug.enable(!!CONFIG.DEBUG);
+} catch {}
 
 function sanitizeHtml(html) {
-  
   try {
     if (
       typeof window !== 'undefined' &&
@@ -1097,9 +1066,7 @@ function sanitizeHtml(html) {
     ) {
       try {
         return window.DOMPurify.sanitize(html);
-      } catch (e) {
-        
-      }
+      } catch (e) {}
     }
 
     const template = document.createElement('template');
@@ -1135,10 +1102,12 @@ let news = [];
 let newsSearch = '';
 let newsSelectedTags = new Set();
 let issues = [];
+let devicesLoaded = false;
+let newsLoaded = false;
+let pgsharpInitialized = false;
 
 const newsSearchInput = qs('#newsSearchInput');
 const newsTagFilterWrap = qs('#newsTagFilter');
-
 
 class ModalManager {
   constructor(backdropId, closeButtonId, focusElementId = null) {
@@ -1170,14 +1139,13 @@ class ModalManager {
     this.backdrop.setAttribute('aria-hidden', 'false');
     this.backdrop.classList.remove('hidden');
     this.backdrop.classList.add('flex');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => this.focusElement?.focus(), CONFIG.FOCUS_DELAY);
   }
 
   close() {
     if (!this.backdrop) return;
-    
-    
+
     try {
       const restore =
         this.lastFocus ||
@@ -1189,19 +1157,16 @@ class ModalManager {
       } else if (restore && typeof restore.focus === 'function') {
         restore.focus();
       }
-      
+
       if (restore === document.body) {
         setTimeout(() => document.body.removeAttribute('tabindex'), 0);
       }
-    } catch (e) {
-      
-    }
+    } catch (e) {}
 
-    
     this.backdrop.setAttribute('aria-hidden', 'true');
     this.backdrop.classList.add('hidden');
     this.backdrop.classList.remove('flex');
-    document.body.style.overflow = '';
+    document.body.classList.remove('overflow-hidden');
   }
 }
 
@@ -1220,7 +1185,6 @@ let dateFormatter = new Intl.DateTimeFormat(currentLang, {
 function t(key, fallback) {
   return (i18n && i18n[key]) || fallback || key;
 }
-
 
 function filterNews(items) {
   return items.filter((item) => {
@@ -1296,7 +1260,6 @@ function bindNewsCardEvents(article, item, content) {
   });
 }
 
-
 function renderNews(items) {
   return performanceMonitor.measureFunction('renderNews', () => {
     const wrap = domCache.get('newsWrap');
@@ -1350,7 +1313,6 @@ let activeSection = 'overview';
 let navButtons = [];
 
 function showSection(name = 'overview') {
-  
   showSectionByName(name);
 }
 function bindNavigation() {
@@ -1376,7 +1338,6 @@ async function loadNews() {
     if (activeSection === 'news') renderNews(news);
   });
 }
-
 
 function generateIssueItem(item) {
   const li = document.createElement('li');
@@ -1615,10 +1576,43 @@ function renderDevices(list) {
     card.addEventListener('click', () => openModal(d));
     container.appendChild(card);
   });
+
+  // ensure sentinel for virtual scrolling exists
+  setupDeviceVirtualScroll();
 }
 
 function hydrateGrid() {
   renderDevices(devices);
+}
+
+// Basic virtual scroller: progressively renders more cards as user scrolls to the bottom
+let deviceObserver;
+function setupDeviceVirtualScroll() {
+  const container = qs('[data-devices-grid]');
+  if (!container) return;
+  let sentinel = document.getElementById('gridSentinel');
+  if (!sentinel) {
+    sentinel = document.createElement('div');
+    sentinel.id = 'gridSentinel';
+    sentinel.className = 'col-span-full h-4';
+    container.appendChild(sentinel);
+  }
+  if (deviceObserver) return; // already observing
+  deviceObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting) {
+        // Increase limit in chunks to avoid large DOM updates
+        const prev = deviceRenderLimit;
+        deviceRenderLimit = Math.min(devices.length, deviceRenderLimit + 50);
+        if (deviceRenderLimit !== prev) {
+          renderDevices(deviceFilter.filterDevices());
+        }
+      }
+    },
+    { rootMargin: '200px' }
+  );
+  deviceObserver.observe(sentinel);
 }
 
 function openModal(d) {
@@ -1656,7 +1650,7 @@ function openModal(d) {
   qs('#modalPriceRange').textContent = d.priceRange || dash();
   const pogoDetails = [d.pogo, d.pgsharp].filter(Boolean).join(' • ');
   qs('#modalPoGoComp').textContent = pogoDetails || dash();
-  document.body.style.overflow = 'hidden';
+  document.body.classList.add('overflow-hidden');
   // focus the close button for keyboard users
   setTimeout(() => qs('#closeModal')?.focus(), 0);
 }
@@ -1684,7 +1678,7 @@ function closeModal() {
   if (mb) mb.setAttribute('aria-hidden', 'true');
   mb.classList.add('hidden');
   mb.classList.remove('flex');
-  document.body.style.overflow = '';
+  document.body.classList.remove('overflow-hidden');
 }
 
 // Modal event handlers now managed by EventManager and data-action attributes
@@ -1841,6 +1835,8 @@ function setupDeviceBuilder() {
 }
 
 function init() {
+  // If the News section is handled by the ES module, skip legacy listeners to avoid double-binding
+  if (window.__esmNews) return;
   newsSearchInput?.addEventListener('input', (evt) => {
     newsSearch = evt.target.value.trim().toLowerCase();
     renderNews(news);
@@ -1873,228 +1869,7 @@ function init() {
   }
 }
 
-const COORDS_DEBUG = false;
-function clog(...args) {
-  if (COORDS_DEBUG) console.log('[coords]', ...args);
-}
-function cerr(...args) {
-  console.error('[coords]', ...args);
-}
-
-let coordsData = [];
-let coordsFilterTag = null;
-
-// `flattenCoords` was removed because it's not used — keep helper small and avoid unused-vars lint errors.
-
-async function loadCoords() {
-  debug('📡 Lade /api/coords ...');
-  try {
-    const res = await fetch(`/api/coords?ts=${Date.now()}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-
-    clog('json empfangen:', json);
-
-    const coords = Array.isArray(json) ? json : [];
-    if (!coords.length) {
-      console.warn(t('coords_load_none', '⚠️ No coordinates found in coords.json.'));
-      return;
-    }
-
-    coordsData = coords;
-    debug(`[coords] ${coords.length} Einträge geladen.`);
-
-    renderCoords(coordsData);
-    renderCoordsTags(coordsData);
-  } catch (err) {
-    console.error('[coords] Failed to load:', err);
-  }
-}
-
-function formatLocalTimeAtLng(lng) {
-  if (typeof lng !== 'number' || Number.isNaN(lng)) return '—';
-  const hoursOffset = Math.round(lng / 15);
-  const now = new Date();
-  const local = new Date(now.getTime() + hoursOffset * CONFIG.TIMEZONE_OFFSET_MS);
-  try {
-    return local.toLocaleTimeString(currentLang, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  } catch (e) {
-    return local.toTimeString().split(' ')[0];
-  }
-}
-
-function renderCoordsTags(list) {
-  const wrap = qs('#coords-tags');
-  if (!wrap) return;
-  const tags = Array.from(
-    new Set((list || []).flatMap((c) => (c.tags || []).map((t) => t.trim())))
-  ).sort((a, b) => a.localeCompare(b));
-  const allBtn = document.createElement('button');
-  allBtn.type = 'button';
-  allBtn.dataset.tag = '';
-  allBtn.textContent = t('coords_filter_all', 'All');
-  allBtn.className =
-    'px-3 py-1 text-xs rounded-full border mr-2 ' +
-    (!coordsFilterTag ? 'bg-emerald-600 border-emerald-400' : 'bg-slate-800 border-slate-700');
-  wrap.innerHTML = '';
-  wrap.appendChild(allBtn);
-
-  tags.forEach((tag) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.dataset.tag = tag;
-    btn.textContent = tag;
-    btn.className =
-      'px-3 py-1 text-xs rounded-full border mr-2 ' +
-      (coordsFilterTag === tag
-        ? 'bg-emerald-600 border-emerald-400'
-        : 'bg-slate-800 border-slate-700');
-    wrap.appendChild(btn);
-  });
-
-  wrap.onclick = (evt) => {
-    const btn = evt.target.closest('button[data-tag]');
-    if (!btn) return;
-    const tag = btn.dataset.tag || null;
-    coordsFilterTag = tag || null;
-    Array.from(wrap.querySelectorAll('button[data-tag]')).forEach((b) => {
-      const isActive = (b.dataset.tag || '') === (coordsFilterTag || '');
-      b.classList.toggle('bg-emerald-600', isActive);
-      b.classList.toggle('border-emerald-400', isActive);
-      b.classList.toggle('bg-slate-800', !isActive);
-      b.classList.toggle('border-slate-700', !isActive);
-    });
-    renderCoords(coordsData);
-  };
-}
-
-function renderCoords(list) {
-  const container = document.getElementById('coords-list');
-  if (!container) {
-    console.warn('⚠️ Kein #coords-list Element gefunden');
-    return;
-  }
-  const filtered =
-    coordsFilterTag && coordsFilterTag.length
-      ? (list || []).filter(
-          (c) => Array.isArray(c.tags) && c.tags.some((t) => t === coordsFilterTag)
-        )
-      : list || [];
-
-  if (!filtered.length) {
-    container.innerHTML = sanitizeHtml(
-      `<div class="text-slate-400 py-4">${t(
-        'no_coords_found',
-        'Keine Koordinaten gefunden.'
-      )}</div>`
-    );
-    return;
-  }
-
-  container.innerHTML = sanitizeHtml(
-    filtered
-      .map((c, idx) => {
-        const localTime = typeof c.lng === 'number' ? formatLocalTimeAtLng(c.lng) : '—';
-        const tagsHtml = (c.tags || [])
-          .map(
-            (tag) =>
-              `<span class="px-2 py-0.5 mr-1 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-                tag
-              )}</span>`
-          )
-          .join('');
-        return `
-      <div data-idx="${idx}" class="py-3 border-b border-slate-700 cursor-pointer">
-        <div class="flex items-baseline justify-between">
-          <div class="font-semibold text-slate-200">${esc(c.name || '(Unbenannt)')}</div>
-          <div class="text-xs text-slate-400 ml-4">${esc(localTime)}</div>
-        </div>
-        <div class="text-slate-400 text-sm mt-1">${esc(String(c.lat ?? '—'))}, ${esc(
-          String(c.lng ?? '—')
-        )}</div>
-        <div class="mt-2">${tagsHtml}</div>
-        ${c.note ? `<div class="text-xs text-slate-500 italic mt-2">${esc(c.note)}</div>` : ''}
-      </div>
-    `;
-      })
-      .join('')
-  );
-
-  // Attach click handlers using the data-idx attribute (avoid relying on legacy class names)
-  Array.from(container.querySelectorAll('[data-idx]')).forEach((el) => {
-    const i = Number(el.getAttribute('data-idx'));
-    el.addEventListener('click', () => {
-      const item = filtered[i];
-      if (item) openCoordsModal(item);
-    });
-  });
-}
-
-function openCoordsModal(item) {
-  if (!coordsModalManager.backdrop) {
-    console.error('openCoordsModal: modal backdrop not found');
-    return;
-  }
-
-  
-  qs('#coordsModalTitle').textContent = item.name || '—';
-  qs('#coordsModalMeta').textContent = `Lat: ${item.lat ?? '—'} • Lng: ${item.lng ?? '—'}`;
-  qs('#coordsModalNote').textContent = item.note || '';
-
-  const tagsWrap = qs('#coordsModalTags');
-  if (tagsWrap) {
-    tagsWrap.innerHTML = sanitizeHtml(
-      (item.tags || [])
-        .map(
-          (t) =>
-            `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 border border-slate-700">${esc(
-              t
-            )}</span>`
-        )
-        .join(' ')
-    );
-  }
-
-  const mapsLink = qs('#coordsModalMaps');
-  if (mapsLink) {
-    if (typeof item.lat !== 'undefined' && typeof item.lng !== 'undefined') {
-      mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        item.lat + ',' + item.lng
-      )}`;
-    } else {
-      mapsLink.removeAttribute('href');
-    }
-  }
-
-  coordsModalManager.open();
-}
-
-
-
-
-const coordsModalManager = new ModalManager('#coordsModalBackdrop', '#coordsModalClose');
 const newsModalManager = new ModalManager('#newsModalBackdrop', '#closeNewsModal');
-
-function updateCoordsTime() {
-  const el = qs('#coords-time');
-  if (!el) return;
-  function tick() {
-    const now = new Date();
-    
-    const label = t('coords_time_label', 'Current time');
-    const suffix = t('coords_time_user_suffix', 'Local time');
-    el.textContent = `${label}: ${now.toLocaleTimeString()} (${suffix})`;
-  }
-  tick();
-  if (!updateCoordsTime._interval)
-    updateCoordsTime._interval = setInterval(tick, CONFIG.CLOCK_UPDATE_INTERVAL);
-}
 
 const newsModalTitle = () => domCache.get('newsModalTitle');
 const newsModalMeta = () => domCache.get('newsModalMeta');
@@ -2114,7 +1889,6 @@ function openNewsModal(original, translated = {}) {
     tags: original.tags || [],
   };
 
-  
   newsModalTitle().textContent = merged.title;
 
   const pub = merged.publishedAt ? dateFormatter.format(new Date(merged.publishedAt)) : dash();
@@ -2215,11 +1989,9 @@ function showSectionByName(name) {
   document.querySelectorAll('main section[id$="Section"], main .page, .page').forEach((s) => {
     if (s === target) {
       s.classList.remove('hidden');
-      s.style.display = '';
       s.setAttribute('aria-hidden', 'false');
     } else {
       s.classList.add('hidden');
-      s.style.display = 'none';
       s.setAttribute('aria-hidden', 'true');
     }
   });
@@ -2233,41 +2005,45 @@ function showSectionByName(name) {
   }
 
   if (plain === 'devices' && typeof loadDevices === 'function') {
-    loadDevices().catch((e) => console.error('loadDevices:', e));
+    if (!devicesLoaded) {
+      loadDevices()
+        .then(() => {
+          devicesLoaded = true;
+          setupDeviceVirtualScroll();
+        })
+        .catch((e) => console.error('loadDevices:', e));
+    } else {
+      setupDeviceVirtualScroll();
+    }
   }
   if (plain === 'pgsharp') {
     const pg = document.getElementById('pgsharpSection');
     if (pg) {
       pg.classList.remove('hidden');
-      pg.style.display = '';
     }
-    if (typeof setupPgSharpTabs === 'function') {
-      try {
-        setupPgSharpTabs();
-      } catch (e) {
-        console.error('setupPgSharpTabs', e);
-      }
-    }
-  }
-  if (plain === 'news' && typeof window.initNewsFilters === 'function') {
-    try {
-      
-      window.initNewsFilters();
-    } catch (e) {
-      console.warn('initNewsFilters', e);
+    if (!pgsharpInitialized) {
+      import('/js/pgsharp-init.js')
+        .then((m) => {
+          if (typeof m.initPgsharp === 'function') m.initPgsharp();
+          pgsharpInitialized = true;
+        })
+        .catch((e) => {
+          console.error('pgsharp-init load failed', e);
+        });
     }
   }
-
-  
-  if (plain === 'news' && Array.isArray(news)) {
-    try {
-      renderNews(news);
-    } catch (e) {
-      console.error('renderNews on section switch failed:', e);
+  if (plain === 'news') {
+    // Prefer the ES module version for News (lazy-loaded on first visit)
+    if (!window.__esmNews) {
+      import('/js/section-news.js')
+        .then((m) => {
+          if (typeof m.initNews === 'function') m.initNews();
+          window.__esmNews = true;
+        })
+        .catch((e) => console.error('section-news init failed:', e));
     }
   }
 
-  
   const buttons = document.querySelectorAll('[data-section]');
   buttons.forEach((btn) => {
     const isActive = btn.getAttribute('data-section') === plain;
@@ -2280,7 +2056,6 @@ function showSectionByName(name) {
 
   activeSection = plain;
 
-  
   const overviewActive = plain === 'overview';
   const legal = document.getElementById('legalSection');
   const status = document.getElementById('statusSection');
@@ -2288,11 +2063,9 @@ function showSectionByName(name) {
     if (!el) return;
     if (overviewActive) {
       el.classList.remove('hidden');
-      el.style.display = '';
       el.setAttribute('aria-hidden', 'false');
     } else {
       el.classList.add('hidden');
-      el.style.display = 'none';
       el.setAttribute('aria-hidden', 'true');
     }
   });
@@ -2313,7 +2086,6 @@ window.addEventListener('load', () => {
   if (h) showSectionByName(h);
   else showSectionByName('overview');
 });
-
 
 (function setupHeaderShrink() {
   const header = document.querySelector('header');
@@ -2342,11 +2114,9 @@ window.addEventListener('load', () => {
     }
   }
   window.addEventListener('scroll', update, { passive: true });
-  
+
   update();
 })();
-
-
 
 async function loadPokeminersVersion() {
   const pkApkEl = document.getElementById('pk-apk');
@@ -2368,7 +2138,6 @@ async function loadPokeminersVersion() {
 }
 
 async function loadPgsharpVersion() {
-  
   const pgRoot = document.getElementById('pgsharpSection');
   if (!pgRoot) return;
   const pgPageEl = document.getElementById('pg-page');
@@ -2425,7 +2194,7 @@ async function loadPgsharpVersion() {
   }
 }
 
-window.loadCoords = loadCoords;
+// Coords logic migrated to ESM (section-coords.js)
 
 setupDeviceBuilder();
 
@@ -2433,27 +2202,22 @@ if (document.getElementById('overviewSection')) {
   showSectionByName(activeSection);
 }
 loadLang(currentLang).then(() => {
-  loadDevices();
-  loadNews();
+  // Lazy: only load issues for Overview; other sections fetch on first visit
   loadIssues();
   init();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  
   domCache.init();
   eventManager.init();
 
-  
   ErrorHandler.enhanceDataLoader();
 
-  
   deviceFilter.init(devices);
 
   hydrateTranslations();
   hydrateGrid();
 
-  
   const hasOverview = !!document.getElementById('overviewSection');
   const hasPgsharp = !!document.getElementById('pgsharpSection');
   const hasStatus = !!document.getElementById('statusCard');
@@ -2461,13 +2225,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (hasOverview) {
     bindNavigation();
   }
-  if (hasPgsharp) {
-    setupPgSharpTabs();
-    updateCoordsTime();
-    loadCoords();
-  }
+  // PGSharp is now initialized lazily when tab is opened (see showSectionByName)
   if (hasStatus) {
-    
     initServiceStatus();
   }
 
@@ -2487,12 +2246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (hasPgsharp) {
-    loadPgsharpVersion();
-    loadPokeminersVersion();
-    setInterval(loadPgsharpVersion, CONFIG.API_REFRESH_INTERVAL);
-    setInterval(loadPokeminersVersion, CONFIG.API_REFRESH_INTERVAL);
-  }
+  // PGSharp version polling moved to lazy init
 
   // Wire up device details modal close interactions (button + backdrop)
   const deviceDetailsBackdrop = document.getElementById('modalBackdrop');
@@ -2574,18 +2328,16 @@ async function fetchServiceStatus() {
       throw new Error('Invalid payload');
     setStatusUI({ state: data.state || 'unknown', uptimeRatio: data.uptimeRatio ?? null });
   } catch (err) {
-    
     setStatusUI({ state: 'unknown', uptimeRatio: null });
     debug('Service status fetch failed:', err);
   }
 }
 
 function initServiceStatus() {
-  
   const indicator = document.getElementById('statusIndicator');
   if (indicator) indicator.classList.add('animate-pulse');
   fetchServiceStatus();
-  
+
   if (!initServiceStatus._interval) {
     initServiceStatus._interval = setInterval(fetchServiceStatus, 3 * 60 * 1000);
   }

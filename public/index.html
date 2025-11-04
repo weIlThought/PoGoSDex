@@ -4,10 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-i18n="page_title">PoGoSDex – Devices & PGSharp Info</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta name="description" content="A searchable collection of phones and tablets compatible with Pokémon GO." />
   <link rel="stylesheet" href="/output.css?v=20251101" />
+  <link rel="stylesheet" href="/fonts.css?v=20251101" />
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   </head>
   <body class="min-h-full bg-linear-to-b from-slate-900 to-slate-800 text-slate-100 antialiased">
@@ -299,7 +298,7 @@
             </div>
             <form id="deviceBuilderForm" class="grid md:grid-cols-2 gap-3" autocomplete="off">
               
-              <input type="text" id="builderHP" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden" />
+              <input type="text" id="builderHP" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderBrand" placeholder="Brand" data-i18n-target="placeholder" data-i18n="placeholder_brand" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderModel" placeholder="Model" data-i18n-target="placeholder" data-i18n="placeholder_model" required />
               <input class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full text-sm text-slate-100" type="text" id="builderOs" placeholder="Operating System" data-i18n-target="placeholder" data-i18n="placeholder_os" />
@@ -319,7 +318,7 @@
             <p id="deviceBuilderStatus" class="text-sm text-slate-400" data-i18n="device_proposal_empty"> Fülle das Formular aus und sende deinen Vorschlag ab. </p>
           </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
-        <script src="/main.js?v=20251101"></script>
+        <!-- Orchestrator script uses ESM modules in /js/* -->
+        <script type="module" src="/js/bootstrap.js?v=20251101"></script>
   </body>
 </html>
