@@ -141,6 +141,15 @@
 
   const state = {
     csrf: null,
+    // Holds the currently loaded table data so export buttons and other UI can access it safely
+    current: {
+      devices: [],
+      news: [],
+      coords: [],
+      issues: [],
+      pulls: [],
+      archive: [],
+    },
     paging: {
       devices: {
         limit: loadSavedPageSize('devices'),
