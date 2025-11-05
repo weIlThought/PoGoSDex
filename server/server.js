@@ -390,6 +390,18 @@ export async function createServer() {
     }
   });
 
+  // Optional Admin-Overrides stylesheet (served from server/admin/admin-override.css)
+  app.get('/admin-override.css', async (req, res) => {
+    try {
+      const file = path.join(adminDir, 'admin-override.css');
+      res.type('text/css');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.sendFile(file);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+
   app.use(
     '/lang',
     express.static(path.resolve(__dirname, '..', 'lang'), {
