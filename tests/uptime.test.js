@@ -17,11 +17,7 @@ async function makeServerWithMock({ mockResponses = [], apiKey = 'test-key' } = 
   });
 
   
-  const { default: mockedFetch } = await jest.unstable_mockModule('node-fetch', () => ({
-    default: fetchMock,
-  }));
-  
-  void mockedFetch;
+  jest.spyOn(global, 'fetch').mockImplementation(fetchMock);
 
   
   if (apiKey === null) {
@@ -154,3 +150,4 @@ describe('GET /api/uptime', () => {
     expect(res2.body).toEqual({ uptime: null });
   });
 });
+

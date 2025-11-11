@@ -52,7 +52,7 @@
     "axios": "^1.13.1",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "node-fetch": "^3.3.2",
+
     "steno": "^4.0.2"
   },
   "eslintConfig": {

@@ -29,7 +29,6 @@ import {
   validateCoordPayload,
   validateIssuePayload,
 } from './validators.js';
-import fetch from 'node-fetch';
 
 import {
   getPokeminersVersionCached,
