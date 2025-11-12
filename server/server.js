@@ -499,6 +499,12 @@ export async function createServer() {
   const { registerPublicRoutes } = await import('./routes/public.js');
   const { registerAdminRoutes } = await import('./routes/admin.js');
   const { registerStatusRoutes } = await import('./routes/status.js');
+  const { registerDiscordWebhookRoutes } = await import('./routes/discord-webhook.js');
+  const { registerDiscordEventsRoutes } = await import('./routes/discord-events.js');
+  const { rawBodyParser } = await import('./middleware/raw-body.js');
+
+  // Raw body parser für Discord Events (muss vor express.json() sein)
+  app.use(rawBodyParser);
 
   registerPublicRoutes(app, {
     isTest,
@@ -546,6 +552,12 @@ export async function createServer() {
     uptimeMonitorId,
     requestUptimeRobot,
   });
+
+  // Register Discord Webhook routes (custom webhooks)
+  registerDiscordWebhookRoutes(app, logger);
+
+  // Register Discord Events routes (official Discord webhook events)
+  registerDiscordEventsRoutes(app, logger);
 
   // Public routes are registered via routes/public.js
 
