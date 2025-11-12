@@ -1,18 +1,30 @@
 import { getPool } from '../mysql.js';
+import { PAGINATION, SORT } from '../config/constants.js';
+import { parseJsonField, stringifyJsonField } from '../utils/json.js';
 
 const p = () => getPool();
 
-export async function listNews({ q, limit = 50, offset = 0, sortBy, sortDir } = {}) {
+export async function listNews({
+  q,
+  limit = PAGINATION.DEFAULT_LIMIT,
+  offset = 0,
+  sortBy,
+  sortDir,
+} = {}) {
   const params = [];
   let sql = `SELECT id, slug, date, title, excerpt, content, image_url, published, published_at, updated_at_ext, tags,
                     created_at, updated_at
              FROM news`;
   if (q) {
-    sql += ' WHERE title LIKE ? OR excerpt LIKE ? OR content LIKE ?';
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    sql += ' WHERE MATCH(title, excerpt, content) AGAINST (? IN NATURAL LANGUAGE MODE)';
+    params.push(q);
   }
-  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
-  const off = Math.max(0, Number(offset) || 0);
+  const lim = Math.max(
+    PAGINATION.MIN_LIMIT,
+    Math.min(PAGINATION.MAX_LIMIT, Number(limit) || PAGINATION.DEFAULT_LIMIT)
+  );
+  const off = Math.max(PAGINATION.MIN_OFFSET, Number(offset) || 0);
   const cols = {
     id: 'id',
     slug: 'slug',
@@ -23,30 +35,20 @@ export async function listNews({ q, limit = 50, offset = 0, sortBy, sortDir } = 
     updated_at: 'updated_at',
     created_at: 'created_at',
   };
-  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
-  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const col = cols[String(sortBy || '').toLowerCase()] || SORT.DEFAULT_COLUMN;
+  const dir = String(sortDir || '').toUpperCase() === 'ASC' ? 'ASC' : SORT.DEFAULT_DIRECTION;
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
+  params.push(lim, off);
   const [rows] = await p().execute(sql, params);
-  const parseJson = (v) => {
-    if (v == null) return null;
-    if (typeof v === 'string') {
-      try {
-        return JSON.parse(v);
-      } catch {
-        return null;
-      }
-    }
-    return v;
-  };
-  return rows.map((r) => ({ ...r, tags: parseJson(r.tags) }));
+  return rows.map((r) => ({ ...r, tags: parseJsonField(r.tags) }));
 }
 
 export async function countNews({ q } = {}) {
   const params = [];
   let sql = 'SELECT COUNT(*) AS c FROM news';
   if (q) {
-    sql += ' WHERE title LIKE ? OR excerpt LIKE ? OR content LIKE ?';
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    sql += ' WHERE MATCH(title, excerpt, content) AGAINST (? IN NATURAL LANGUAGE MODE)';
+    params.push(q);
   }
   const [rows] = await p().execute(sql, params);
   return Number(rows[0]?.c || 0);

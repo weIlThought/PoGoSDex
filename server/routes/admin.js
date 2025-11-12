@@ -1,3 +1,19 @@
+import rateLimit from 'express-rate-limit';
+import { sanitizeError } from '../utils/errors.js';
+import { RATE_LIMIT } from '../config/constants.js';
+
+// Rate limiter for admin login endpoint (already handled in server.js, this is for reference)
+
+// Rate limiter for admin API endpoints (CRUD operations)
+const adminApiLimiter = rateLimit({
+  windowMs: RATE_LIMIT.ADMIN_API.WINDOW_MS,
+  max: RATE_LIMIT.ADMIN_API.MAX_REQUESTS,
+  message: { error: 'Too many requests, please slow down' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test', // Skip in tests
+});
+
 export function registerAdminRoutes(app, deps) {
   const { requireAuth, requireCsrf, parsePagination, validators, repos, getPool } = deps;
 
@@ -18,6 +34,9 @@ export function registerAdminRoutes(app, deps) {
   const { validateDevicePayload, validateNewsPayload, validateCoordPayload, validateIssuePayload } =
     validators;
 
+  // Apply rate limiting to all admin API endpoints (use regex pattern for Express 5)
+  app.use(/^\/admin\/api/, adminApiLimiter);
+
   // Devices
   app.get('/admin/api/devices', requireAuth, async (req, res) => {
     try {
@@ -33,7 +52,8 @@ export function registerAdminRoutes(app, deps) {
       res.json({ items, hasMore, total });
     } catch (e) {
       console.error('[api] listDevices failed:', e && e.message ? e.message : e);
-      res.status(500).json({ error: 'Failed to list devices' });
+      const message = sanitizeError(e, 'Failed to list devices');
+      res.status(500).json({ error: message });
     }
   });
   app.post('/admin/api/devices', requireAuth, requireCsrf, async (req, res) => {

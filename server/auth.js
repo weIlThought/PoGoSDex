@@ -4,7 +4,21 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import { getPool } from './mysql.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-prod';
+// Validate JWT_SECRET at module load time
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'change-me-in-prod' || JWT_SECRET.length < 32) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isTest = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
+
+  if (isProduction) {
+    throw new Error('JWT_SECRET must be set to a secure value (min 32 chars) in production');
+  } else if (!isTest) {
+    console.warn(
+      '⚠️  WARNING: JWT_SECRET is not set or insecure. Set a strong secret in production!'
+    );
+  }
+}
+
 const TOKEN_TTL = process.env.JWT_TTL || '12h';
 const COOKIE_NAME = 'admintoken';
 const CSRF_COOKIE = 'csrf_token';

@@ -11,8 +11,9 @@ export async function listCoords({ q, category, limit = 50, offset = 0, sortBy, 
     params.push(category);
   }
   if (q) {
-    where.push('(name LIKE ? OR note LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    where.push('MATCH(name, note) AGAINST (? IN NATURAL LANGUAGE MODE)');
+    params.push(q);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
@@ -28,7 +29,8 @@ export async function listCoords({ q, category, limit = 50, offset = 0, sortBy, 
   };
   const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
   const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
+  params.push(lim, off);
   const [rows] = await p().execute(sql, params);
   const parseTags = (t) => {
     if (t == null) return null;
@@ -53,8 +55,9 @@ export async function countCoords({ q, category } = {}) {
     params.push(category);
   }
   if (q) {
-    where.push('(name LIKE ? OR note LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    where.push('MATCH(name, note) AGAINST (? IN NATURAL LANGUAGE MODE)');
+    params.push(q);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const [rows] = await p().execute(sql, params);

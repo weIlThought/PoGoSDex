@@ -1,8 +1,16 @@
 import { getPool } from '../mysql.js';
+import { PAGINATION, SORT } from '../config/constants.js';
+import { parseJsonField, stringifyJsonField } from '../utils/json.js';
 
 const p = () => getPool();
 
-export async function listDevices({ q, limit = 50, offset = 0, sortBy, sortDir } = {}) {
+export async function listDevices({
+  q,
+  limit = PAGINATION.DEFAULT_LIMIT,
+  offset = 0,
+  sortBy,
+  sortDir,
+} = {}) {
   const params = [];
   let sql = `SELECT id, name, description, image_url, status,
                     model, brand, type, os, compatible, notes, manufacturer_url, root_links,
@@ -10,12 +18,15 @@ export async function listDevices({ q, limit = 50, offset = 0, sortBy, sortDir }
                     created_at, updated_at
              FROM devices`;
   if (q) {
-    sql +=
-      ' WHERE name LIKE ? OR description LIKE ? OR model LIKE ? OR brand LIKE ? OR type LIKE ? OR os LIKE ?';
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    sql += ' WHERE MATCH(name, description, model, brand) AGAINST (? IN NATURAL LANGUAGE MODE)';
+    params.push(q);
   }
-  const lim = Math.max(1, Math.min(100, Number(limit) || 50));
-  const off = Math.max(0, Number(offset) || 0);
+  const lim = Math.max(
+    PAGINATION.MIN_LIMIT,
+    Math.min(PAGINATION.MAX_LIMIT, Number(limit) || PAGINATION.DEFAULT_LIMIT)
+  );
+  const off = Math.max(PAGINATION.MIN_OFFSET, Number(offset) || 0);
   const cols = {
     id: 'id',
     name: 'name',
@@ -29,25 +40,15 @@ export async function listDevices({ q, limit = 50, offset = 0, sortBy, sortDir }
     updated_at: 'updated_at',
     created_at: 'created_at',
   };
-  const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
-  const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
+  const col = cols[String(sortBy || '').toLowerCase()] || SORT.DEFAULT_COLUMN;
+  const dir = String(sortDir || '').toUpperCase() === 'ASC' ? 'ASC' : SORT.DEFAULT_DIRECTION;
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
+  params.push(lim, off);
   const [rows] = await p().execute(sql, params);
-  const parseJson = (v) => {
-    if (v == null) return null;
-    if (typeof v === 'string') {
-      try {
-        return JSON.parse(v);
-      } catch {
-        return null;
-      }
-    }
-    return v;
-  };
   return rows.map((r) => ({
     ...r,
-    notes: parseJson(r.notes),
-    root_links: parseJson(r.root_links),
+    notes: parseJsonField(r.notes),
+    root_links: parseJsonField(r.root_links),
   }));
 }
 
@@ -55,9 +56,8 @@ export async function countDevices({ q } = {}) {
   const params = [];
   let sql = 'SELECT COUNT(*) AS c FROM devices';
   if (q) {
-    sql +=
-      ' WHERE name LIKE ? OR description LIKE ? OR model LIKE ? OR brand LIKE ? OR type LIKE ? OR os LIKE ?';
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    sql += ' WHERE MATCH(name, description, model, brand) AGAINST (? IN NATURAL LANGUAGE MODE)';
+    params.push(q);
   }
   const [rows] = await p().execute(sql, params);
   return Number(rows[0]?.c || 0);
@@ -74,18 +74,7 @@ export async function getDevice(id) {
   );
   const r = rows[0];
   if (!r) return null;
-  const parseJson = (v) => {
-    if (v == null) return null;
-    if (typeof v === 'string') {
-      try {
-        return JSON.parse(v);
-      } catch {
-        return null;
-      }
-    }
-    return v;
-  };
-  return { ...r, notes: parseJson(r.notes), root_links: parseJson(r.root_links) };
+  return { ...r, notes: parseJsonField(r.notes), root_links: parseJsonField(r.root_links) };
 }
 
 export async function createDevice(payload) {
@@ -105,8 +94,8 @@ export async function createDevice(payload) {
     price_range,
     pogo_comp,
   } = payload || {};
-  const notesJson = Array.isArray(notes) ? JSON.stringify(notes) : notes || null;
-  const rootLinksJson = Array.isArray(root_links) ? JSON.stringify(root_links) : root_links || null;
+  const notesJson = stringifyJsonField(notes);
+  const rootLinksJson = stringifyJsonField(root_links);
   const [res] = await p().execute(
     `INSERT INTO devices (name, description, image_url, status, model, brand, type, os, compatible, notes, manufacturer_url, root_links, price_range, pogo_comp)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -148,9 +137,9 @@ export async function updateDevice(id, payload) {
   set('type', payload.type);
   set('os', payload.os);
   set('compatible', payload.compatible, (v) => (v ? 1 : 0));
-  set('notes', payload.notes, (v) => (Array.isArray(v) ? JSON.stringify(v) : v || null));
+  set('notes', payload.notes, stringifyJsonField);
   set('manufacturer_url', payload.manufacturer_url);
-  set('root_links', payload.root_links, (v) => (Array.isArray(v) ? JSON.stringify(v) : v || null));
+  set('root_links', payload.root_links, stringifyJsonField);
   set('price_range', payload.price_range);
   set('pogo_comp', payload.pogo_comp);
   if (!fields.length) return await getDevice(id);

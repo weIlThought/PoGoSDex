@@ -35,6 +35,8 @@ import {
   schedulePokeminersAutoRefresh,
 } from './scrapers/pokeminers.js';
 import { getPgsharpVersionCached, schedulePgsharpAutoRefresh } from './scrapers/pgsharp.js';
+import { PAGINATION, RATE_LIMIT, TIMEOUT, CACHE } from './config/constants.js';
+import { validateEnvironment } from './utils/env-validation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,11 +54,17 @@ const uptimeCache = {
 
 export async function createServer() {
   const isTest = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
+
+  // Validate environment variables before starting (skip in test mode)
+  if (!isTest) {
+    validateEnvironment();
+  }
+
   const port = Number(process.env.PORT || 3000);
   const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   const trustProxyInput = (process.env.TRUST_PROXY || '').trim().toLowerCase();
   let trustProxy = false;
-  const DEFAULT_FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || 8000);
+  const DEFAULT_FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || TIMEOUT.DEFAULT_FETCH_MS);
   // Static asset version for cache-busting in HTML templates
   const assetVersion = process.env.ASSET_VERSION || String(Math.floor(Date.now() / 1000));
 
@@ -264,11 +272,14 @@ export async function createServer() {
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Stricter rate limiting for login endpoint
   const loginLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    limit: 20,
+    windowMs: RATE_LIMIT.LOGIN.WINDOW_MS,
+    limit: RATE_LIMIT.LOGIN.MAX_ATTEMPTS,
+    message: { error: 'Too many login attempts, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful logins
   });
   app.post('/admin/login', loginLimiter, async (req, res) => {
     try {
@@ -548,6 +559,24 @@ export async function createServer() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // Global error handlers for unhandled rejections and exceptions
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Promise Rejection at:', promise, 'reason:', reason);
+    // In production, consider graceful shutdown or alerting
+    if (process.env.NODE_ENV === 'production') {
+      // Log to monitoring service, then optionally exit
+      console.error('Unhandled rejection in production - consider investigating');
+    }
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    // Uncaught exceptions leave the process in an undefined state
+    // It's best practice to exit and let process manager restart
+    console.error('Process will exit due to uncaught exception');
+    process.exit(1);
+  });
+
   createServer()
     .then(({ app, port, logger }) => {
       app.listen(port, () => {

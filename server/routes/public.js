@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
+import { sanitizeError } from '../utils/errors.js';
 
 export function registerPublicRoutes(app, deps) {
   const {
@@ -25,7 +26,8 @@ export function registerPublicRoutes(app, deps) {
       const result = await getPgsharpVersionCached();
       res.json(result);
     } catch (e) {
-      res.status(500).json({ ok: false, error: String(e) });
+      const message = sanitizeError(e, 'Failed to fetch PGSharp version');
+      res.status(500).json({ ok: false, error: message });
     }
   });
 
@@ -34,7 +36,8 @@ export function registerPublicRoutes(app, deps) {
       const result = await getPokeminersVersionCached();
       res.json(result);
     } catch (e) {
-      res.status(500).json({ ok: false, error: String(e) });
+      const message = sanitizeError(e, 'Failed to fetch Pokeminers version');
+      res.status(500).json({ ok: false, error: message });
     }
   });
 

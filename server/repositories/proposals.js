@@ -75,8 +75,9 @@ export async function listDeviceProposals({
     params.push(status);
   }
   if (q) {
-    where.push('(brand LIKE ? OR model LIKE ? OR os LIKE ? OR type LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    where.push('MATCH(brand, model, os, type) AGAINST (? IN NATURAL LANGUAGE MODE)');
+    params.push(q);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const lim = Math.max(1, Math.min(100, Number(limit) || 50));
@@ -93,7 +94,8 @@ export async function listDeviceProposals({
   };
   const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
   const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
+  params.push(lim, off);
   const [rows] = await p().execute(sql, params);
   const parse = (v) => {
     if (v == null) return null;
@@ -118,8 +120,9 @@ export async function countDeviceProposals({ status, q } = {}) {
     params.push(status);
   }
   if (q) {
-    where.push('(brand LIKE ? OR model LIKE ? OR os LIKE ? OR type LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    // Use FULLTEXT search for better performance
+    where.push('MATCH(brand, model, os, type) AGAINST (? IN NATURAL LANGUAGE MODE)');
+    params.push(q);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   const [rows] = await p().execute(sql, params);
