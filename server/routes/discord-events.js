@@ -2,9 +2,9 @@ import { Router } from 'express';
 import crypto from 'crypto';
 
 /**
- * Discord Webhook Events Handler
- * Implementiert die offizielle Discord Webhook Events API
- * @see https://discord.com/developers/docs/events/webhook-events
+ * Discord Events Handler
+ * Implementiert die offizielle Discord Events API
+ * @see https://discord.com/developers/docs/events/intro
  */
 export function registerDiscordEventsRoutes(app, logger) {
   const router = Router();
@@ -56,10 +56,10 @@ export function registerDiscordEventsRoutes(app, logger) {
   }
 
   /**
-   * Main Discord Events Webhook Endpoint
+   * Main Discord Events Endpoint
    * POST /api/discord-events
    *
-   * Handles all Discord Webhook Events including PING
+   * Handles alle Discord Events inklusive PING
    */
   router.post('/', verifyDiscordSignature, async (req, res) => {
     try {
@@ -71,7 +71,7 @@ export function registerDiscordEventsRoutes(app, logger) {
         return res.status(204).end();
       }
 
-      // Handle webhook events (type 1)
+      // Handle events (type 1)
       if (type === 1 && event) {
         const eventType = event.type;
         const eventData = event.data;
@@ -126,8 +126,8 @@ export function registerDiscordEventsRoutes(app, logger) {
       }
 
       // Unknown type
-      logger.warn(`Unknown Discord webhook type: ${type}`);
-      return res.status(400).json({ error: 'Unknown webhook type' });
+      logger.warn(`Unknown Discord event type: ${type}`);
+      return res.status(400).json({ error: 'Unknown event type' });
     } catch (error) {
       logger.error('Error handling Discord event:', error);
       // Still respond with 204 to prevent retries
@@ -138,7 +138,7 @@ export function registerDiscordEventsRoutes(app, logger) {
   // Mount the router
   app.use('/api/discord-events', router);
 
-  logger.info('✅ Discord Events Webhook registered:');
+  logger.info('✅ Discord Events API registered:');
   logger.info('   - POST /api/discord-events');
 
   if (!PUBLIC_KEY) {
@@ -148,80 +148,4 @@ export function registerDiscordEventsRoutes(app, logger) {
   } else {
     logger.info('🔒 Discord events signature verification enabled');
   }
-}
-
-/**
- * Event Handlers
- */
-
-async function handleApplicationAuthorized(data, logger) {
-  const { user, scopes, integration_type, guild } = data;
-  logger.info(`✅ App authorized by user ${user.id} with scopes: ${scopes.join(', ')}`);
-
-  if (integration_type === 0 && guild) {
-    logger.info(`   Installed to guild: ${guild.name} (${guild.id})`);
-  } else if (integration_type === 1) {
-    logger.info(`   Installed to user account: ${user.username}`);
-  }
-
-  // TODO: Speichere Authorization in Datenbank
-  // TODO: Sende Benachrichtigung an Discord Bot
-}
-
-async function handleApplicationDeauthorized(data, logger) {
-  const { user } = data;
-  logger.info(`❌ App deauthorized by user ${user.id} (${user.username})`);
-
-  // TODO: Entferne Authorization aus Datenbank
-  // TODO: Sende Benachrichtigung an Discord Bot
-}
-
-async function handleEntitlementCreate(data, logger) {
-  const { id, sku_id, user_id, type } = data;
-  logger.info(`💰 Entitlement created: ${id} for user ${user_id}, SKU ${sku_id}`);
-
-  // TODO: Verarbeite Entitlement (Monetization)
-  // TODO: Sende Benachrichtigung an Discord Bot
-}
-
-async function handleLobbyMessageCreate(data, logger) {
-  const { id, lobby_id, author, content } = data;
-  logger.info(`💬 Lobby message created: ${id} in lobby ${lobby_id} by ${author.username}`);
-
-  // TODO: Verarbeite Lobby-Nachricht
-}
-
-async function handleLobbyMessageUpdate(data, logger) {
-  const { id, lobby_id, edited_timestamp } = data;
-  logger.info(`✏️  Lobby message updated: ${id} in lobby ${lobby_id} at ${edited_timestamp}`);
-
-  // TODO: Verarbeite Lobby-Nachricht Update
-}
-
-async function handleLobbyMessageDelete(data, logger) {
-  const { id, lobby_id } = data;
-  logger.info(`🗑️  Lobby message deleted: ${id} from lobby ${lobby_id}`);
-
-  // TODO: Verarbeite Lobby-Nachricht Löschung
-}
-
-async function handleGameDirectMessageCreate(data, logger) {
-  const { id, channel_id, author, content } = data;
-  logger.info(`💬 Game DM created: ${id} in channel ${channel_id} by ${author.username}`);
-
-  // TODO: Verarbeite Game DM
-}
-
-async function handleGameDirectMessageUpdate(data, logger) {
-  const { id, channel_id } = data;
-  logger.info(`✏️  Game DM updated: ${id} in channel ${channel_id}`);
-
-  // TODO: Verarbeite Game DM Update
-}
-
-async function handleGameDirectMessageDelete(data, logger) {
-  const { id, channel_id } = data;
-  logger.info(`🗑️  Game DM deleted: ${id} from channel ${channel_id}`);
-
-  // TODO: Verarbeite Game DM Löschung
 }
