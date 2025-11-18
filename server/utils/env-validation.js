@@ -46,6 +46,16 @@ export function validateEnvironment() {
     warnings.push('ASSET_VERSION not set - cache busting may not work properly');
   }
 
+  // In production, ALLOWED_ORIGIN must be explicitly set and must not be a wildcard
+  if (process.env.NODE_ENV === 'production') {
+    const ao = process.env.ALLOWED_ORIGIN;
+    if (!ao) {
+      errors.push('ALLOWED_ORIGIN is not set - set it to your domain (e.g. https://example.com)');
+    } else if (ao === '*') {
+      errors.push('ALLOWED_ORIGIN must not be "*" in production - set it to your domain');
+    }
+  }
+
   // Throw if critical errors found
   if (errors.length > 0) {
     const message = '❌ Environment validation failed:\n  ' + errors.join('\n  ');
