@@ -39,6 +39,7 @@ export async function listNews({ q, limit = 50, offset = 0, sortBy, sortDir } = 
     return v;
   };
   return rows.map((r) => ({ ...r, tags: parseJson(r.tags) }));
+}
 
 export async function countNews({ q } = {}) {
   const params = [];
@@ -49,6 +50,7 @@ export async function countNews({ q } = {}) {
   }
   const [rows] = await p().execute(sql, params);
   return Number(rows[0]?.c || 0);
+}
 
 export async function getNews(id) {
   const [rows] = await p().execute(
@@ -72,6 +74,7 @@ export async function getNews(id) {
     }
   }
   return { ...r, tags };
+}
 
 export async function createNews(payload) {
   const {
@@ -106,6 +109,7 @@ export async function createNews(payload) {
     ]
   );
   return await getNews(res.insertId);
+}
 
 export async function updateNews(id, payload) {
   const fields = [];
@@ -125,6 +129,7 @@ export async function updateNews(id, payload) {
   set('published', payload.published, (v) => (v ? 1 : 0));
   set('published_at', payload.published_at);
   set('updated_at_ext', payload.updated_at_ext ?? payload.updated_at);
+}
 
 export async function listIssues({ q, status, limit = 50, offset = 0, sortBy, sortDir } = {}) {
   const params = [];
