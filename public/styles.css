@@ -6,7 +6,6 @@
 
 
 
-:root {
   
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
@@ -41,6 +40,27 @@
   
   
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Flickerfreies, adaptives Resizing für Hauptcontainer und Grids */
+main,
+[data-devices-grid],
+#newsWrap,
+#coords-list,
+#issuesList {
+  min-height: 40vh;
+  transition: min-height 0.2s cubic-bezier(.4,0,.2,1), height 0.2s cubic-bezier(.4,0,.2,1);
+  will-change: min-height, height;
+}
+
+@media (max-width: 640px) {
+  main,
+  [data-devices-grid],
+  #newsWrap,
+  #coords-list,
+  #issuesList {
+    min-height: 60vh;
+  }
 }
 
 @layer animations {

@@ -6,6 +6,47 @@ function qsa(s) {
   return Array.from(document.querySelectorAll(s));
 }
 
+// --- Dynamisches, flickerfreies Resizing für Hauptcontainer und Grids ---
+function setupDynamicResizing() {
+  // Alle Hauptcontainer, die dynamisch angepasst werden sollen
+  const mainContainers = [
+    document.querySelector('main'),
+    ...document.querySelectorAll('[data-devices-grid], #newsWrap, #coords-list, #issuesList'),
+  ].filter(Boolean);
+
+  // ResizeObserver für Grids und Hauptbereiche
+  const ro = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      // Optional: weitere Logik für spezielle Container
+      entry.target.style.transition =
+        'min-height 0.2s cubic-bezier(.4,0,.2,1), height 0.2s cubic-bezier(.4,0,.2,1)';
+      // Automatische Anpassung an Viewport
+      if (entry.target === document.querySelector('main')) {
+        entry.target.style.minHeight = window.innerHeight + 'px';
+      }
+    }
+  });
+  mainContainers.forEach((el) => ro.observe(el));
+
+  // Window-Resize: Layout-Shift vermeiden
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      mainContainers.forEach((el) => {
+        el.style.minHeight = window.innerHeight + 'px';
+      });
+    }, 60);
+  });
+}
+
+// Initialisierung nach DOM-Ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupDynamicResizing);
+} else {
+  setupDynamicResizing();
+}
+
 function sanitizeAndEscape(input, options = {}) {
   if (typeof input !== 'string') {
     input = String(input || '');
