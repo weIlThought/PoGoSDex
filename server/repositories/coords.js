@@ -29,8 +29,7 @@ export async function listCoords({ q, category, limit = 50, offset = 0, sortBy, 
   };
   const col = cols[String(sortBy || '').toLowerCase()] || 'updated_at';
   const dir = String(sortDir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
-  params.push(lim, off);
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   const parseTags = (t) => {
     if (t == null) return null;

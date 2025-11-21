@@ -42,8 +42,7 @@ export async function listDevices({
   };
   const col = cols[String(sortBy || '').toLowerCase()] || SORT.DEFAULT_COLUMN;
   const dir = String(sortDir || '').toUpperCase() === 'ASC' ? 'ASC' : SORT.DEFAULT_DIRECTION;
-  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ? OFFSET ?`;
-  params.push(lim, off);
+  sql += ` ORDER BY ${col} ${dir}, id DESC LIMIT ${lim} OFFSET ${off}`;
   const [rows] = await p().execute(sql, params);
   return rows.map((r) => ({
     ...r,
