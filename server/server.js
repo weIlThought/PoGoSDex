@@ -104,12 +104,26 @@ export async function createServer() {
 
     // Admin and public UIs are free of inline styles; disallow 'unsafe-inline' for style-src
     const styleSrc = "style-src 'self'";
+
+    // Build script-src: allow 'self', a per-request nonce for safe inline execution,
+    // and also permit any ALLOWED_ORIGIN hosts (useful when assets are absolute URLs pointing
+    // to the production domain or a CDN). ALLOWED_ORIGIN can be a comma-separated list.
+    const allowedHosts =
+      typeof allowedOrigin === 'string' && allowedOrigin !== '*'
+        ? allowedOrigin
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    const scriptSrcParts = ["'self'", `'nonce-${nonce}'`, ...allowedHosts];
+    const scriptSrc = `script-src ${scriptSrcParts.join(' ')}`;
+
     const cspDirectives = [
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
 
-      "script-src 'self'",
+      scriptSrc,
 
       "connect-src 'self' data: https://api.uptimerobot.com",
 
