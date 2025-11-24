@@ -24,7 +24,7 @@
     "prepare": "node -e \"if (process.env.HUSKY !== '0') { try { require('husky').install(); } catch(e) {} }\""
   },
   "devDependencies": {
-    "vite": "^7.2.2",
+    "vite": "^7.2.4",
     "@tailwindcss/cli": "^4.1.17",
     "eslint": "^9.39.1",
     "fast-glob": "^3.3.3",
