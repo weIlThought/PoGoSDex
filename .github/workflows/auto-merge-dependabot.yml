@@ -1,4 +1,4 @@
-name: Auto-merge Dependabot PRs (Free Plan)
+name: Auto Merge Dependabot (PR + Cron)
 
 on:
   pull_request:
@@ -8,29 +8,100 @@ on:
       - synchronize
       - ready_for_review
 
+  schedule:
+    - cron: "*/30 * * * *"   # alle 30 Minuten prüfen
+
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  merge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+  auto-merge:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repo
+      - name: Install GH CLI
+        run: sudo apt-get install -y gh
+
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Prüft, ob alle Checks grün sind
+      # -------------------------------------------------------------
+      # PR-EVENT-MODUS
+      # Wird ausgeführt, wenn das Event direkt von einem PR kommt
+      # -------------------------------------------------------------
+      - name: Is a PR event?
+        id: is_pr
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "pr_event=true" >> $GITHUB_OUTPUT
+          else
+            echo "pr_event=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Handle PR event
+        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: echo "Handling PR #${{ github.event.pull_request.number }} created by dependabot"
+
+      - name: Comment: Auto-merge gestartet
+        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🔄 **Auto-Merge gestartet**
+            - Warte auf Status-Checks
+            - PR: #${{ github.event.pull_request.number }}
+            - Initiator: Dependabot
+
       - name: Wait for all status checks
+        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         uses: WyriHaximus/github-action-wait-for-status@v1
         with:
-          ignore: 'documentation'
+          ignore: "documentation"
           timeout: 600
 
-      # Mergen, sobald alles grün ist
-      - name: Merge Dependabot PR
+      - name: Merge PR (PR Event)
+        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --admin
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment after merge
+        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ✅ **Auto-Merge erfolgreich abgeschlossen**  
+            - Merge-Commit erstellt  
+            - Alle Checks bestanden  
+            - Keine Konflikte  
+
+
+      # -------------------------------------------------------------
+      # CRON-MODUS
+      # Wird ausgeführt, wenn der Zeitplan (cron) den Workflow triggert
+      # -------------------------------------------------------------
+      - name: Cron run: Find Dependabot PRs
+        if: steps.is_pr.outputs.pr_event == 'false'
+        id: find_prs
+        run: |
+          gh pr list --search "author:dependabot state:open" --json number --jq ".[].number" > prs.txt
+          echo "Gefundene PRs:"
+          cat prs.txt || echo "Keine PRs gefunden"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cron run: Merge found PRs
+        if: steps.is_pr.outputs.pr_event == 'false'
+        run: |
+          while read pr; do
+            echo "Versuche Auto-Merge für PR #$pr"
+            gh pr merge "$pr" --merge --admin || echo "Konnte PR #$pr nicht mergen."
+          done < prs.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
