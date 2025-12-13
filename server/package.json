@@ -26,7 +26,7 @@
     "lowdb": "^7.0.1",
     "morgan": "^1.10.1",
     "mysql2": "^3.15.3",
-    "winston": "^3.18.3"
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
