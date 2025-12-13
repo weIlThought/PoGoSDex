@@ -7,7 +7,6 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-
   schedule:
     - cron: "*/30 * * * *"   # alle 30 Minuten prüfen
 
@@ -21,15 +20,14 @@ jobs:
 
     steps:
       - name: Install GH CLI
-        run: sudo apt-get install -y gh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
 
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # -------------------------------------------------------------
       # PR-EVENT-MODUS
-      # Wird ausgeführt, wenn das Event direkt von einem PR kommt
-      # -------------------------------------------------------------
       - name: Is a PR event?
         id: is_pr
         run: |
@@ -43,7 +41,7 @@ jobs:
         if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         run: echo "Handling PR #${{ github.event.pull_request.number }} created by dependabot"
 
-      - name: Comment: Auto-merge gestartet
+      - name: 'Comment - Auto-merge gestartet'
         if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -59,8 +57,7 @@ jobs:
         if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         uses: WyriHaximus/github-action-wait-for-status@v1
         with:
-          ignore: "documentation"
-          timeout: 600
+          ignoreActions: "documentation"
 
       - name: Merge PR (PR Event)
         if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
@@ -76,27 +73,23 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ✅ **Auto-Merge erfolgreich abgeschlossen**  
-            - Merge-Commit erstellt  
-            - Alle Checks bestanden  
-            - Keine Konflikte  
+            ✅ **Auto-Merge erfolgreich abgeschlossen**
+            - Merge-Commit erstellt
+            - Alle Checks bestanden
+            - Keine Konflikte
 
-
-      # -------------------------------------------------------------
       # CRON-MODUS
-      # Wird ausgeführt, wenn der Zeitplan (cron) den Workflow triggert
-      # -------------------------------------------------------------
-      - name: Cron run: Find Dependabot PRs
+      - name: 'Cron run - Find Dependabot PRs'
         if: steps.is_pr.outputs.pr_event == 'false'
         id: find_prs
         run: |
-          gh pr list --search "author:dependabot state:open" --json number --jq ".[].number" > prs.txt
+          gh pr list --search "author:dependabot state:open" --json number --jq "[].number" > prs.txt
           echo "Gefundene PRs:"
           cat prs.txt || echo "Keine PRs gefunden"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cron run: Merge found PRs
+      - name: 'Cron run - Merge found PRs'
         if: steps.is_pr.outputs.pr_event == 'false'
         run: |
           while read pr; do
