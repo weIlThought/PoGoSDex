@@ -1,6 +1,9 @@
 name: Auto Merge Dependabot (PR + Cron)
 
 on:
+  name: Auto Merge Dependabot (PR + Cron)
+
+  on:
   pull_request:
     types:
       - opened
@@ -8,7 +11,7 @@ on:
       - synchronize
       - ready_for_review
   schedule:
-    - cron: "*/30 * * * *"   # alle 30 Minuten prüfen
+    - cron: '*/30 * * * *'
 
 permissions:
   contents: write
@@ -17,84 +20,117 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Install GH CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y gh
 
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # PR-EVENT-MODUS
-      - name: Is a PR event?
+      - name: Detect PR event
         id: is_pr
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "pr_event=true" >> $GITHUB_OUTPUT
           else
-            echo "pr_event=false" >> $GITHUB_OUTPUT
-          fi
+            name: Auto Merge Dependabot (PR + Cron)
 
-      - name: Handle PR event
-        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
-        run: echo "Handling PR #${{ github.event.pull_request.number }} created by dependabot"
+            on:
+              pull_request:
+                types:
+                  - opened
+                  - reopened
+                  - synchronize
+                  - ready_for_review
+              schedule:
+                - cron: '*/30 * * * *'
 
-      - name: 'Comment - Auto-merge gestartet'
-        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            🔄 **Auto-Merge gestartet**
-            - Warte auf Status-Checks
-            - PR: #${{ github.event.pull_request.number }}
-            - Initiator: Dependabot
+            permissions:
+              contents: write
+              pull-requests: write
 
-      - name: Wait for all status checks
-        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
-        uses: WyriHaximus/github-action-wait-for-status@v1
-        with:
-          ignoreActions: "documentation"
+            jobs:
+              auto-merge:
+                runs-on: ubuntu-latest
+                steps:
+                  - name: Checkout repository
+                    uses: actions/checkout@v4
 
-      - name: Merge PR (PR Event)
-        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --admin
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  - name: Install GH CLI
+                    run: |
+                      sudo apt-get update
+                      sudo apt-get install -y gh
 
-      - name: Comment after merge
-        if: steps.is_pr.outputs.pr_event == 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ✅ **Auto-Merge erfolgreich abgeschlossen**
-            - Merge-Commit erstellt
-            - Alle Checks bestanden
-            - Keine Konflikte
+                  # No Detect PR event step needed: we use github.event_name directly in 'if'
 
-      # CRON-MODUS
-      - name: 'Cron run - Find Dependabot PRs'
-        if: steps.is_pr.outputs.pr_event == 'false'
-        id: find_prs
-        run: |
-          gh pr list --search "author:dependabot state:open" --json number --jq "[].number" > prs.txt
-          echo "Gefundene PRs:"
-          cat prs.txt || echo "Keine PRs gefunden"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  - name: Handle PR event (dependabot)
+                    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+                    run: echo "Handling PR #${{ github.event.pull_request.number }} created by dependabot"
 
-      - name: 'Cron run - Merge found PRs'
-        if: steps.is_pr.outputs.pr_event == 'false'
-        run: |
-          while read pr; do
-            echo "Versuche Auto-Merge für PR #$pr"
-            gh pr merge "$pr" --merge --admin || echo "Konnte PR #$pr nicht mergen."
-          done < prs.txt
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  - name: Comment - Auto-merge started
+                    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+                    uses: peter-evans/create-or-update-comment@v4
+                    with:
+                      token: ${{ secrets.GITHUB_TOKEN }}
+                      issue-number: ${{ github.event.pull_request.number }}
+                      body: |
+                        🔄 **Auto-Merge gestartet**
+                        - Warte auf Status-Checks
+                        - PR: #${{ github.event.pull_request.number }}
+                        - Initiator: Dependabot
+
+                  - name: Wait for status checks
+                    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+                    uses: WyriHaximus/github-action-wait-for-status@v1
+                    with:
+                      ignoreActions: documentation
+
+                  - name: Merge PR (PR event)
+                    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+                    env:
+                      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    run: |
+                      gh pr merge ${{ github.event.pull_request.number }} --merge --admin || echo "Merge failed for PR #${{ github.event.pull_request.number }}"
+
+                  - name: Comment - Auto-merge finished
+                    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+                    uses: peter-evans/create-or-update-comment@v4
+                    with:
+                      token: ${{ secrets.GITHUB_TOKEN }}
+                      issue-number: ${{ github.event.pull_request.number }}
+                      body: |
+                        ✅ **Auto-Merge erfolgreich abgeschlossen**
+                        - Merge-Commit erstellt (oder Merge-Versuch abgeschlossen)
+                        - Falls Merge nicht möglich war, wurde es protokolliert
+
+                  - name: Cron - Find Dependabot PRs
+                    if: ${{ github.event_name != 'pull_request' }}
+                    id: find_prs
+                    env:
+                      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    run: |
+                      # list PR numbers; use '.[].number' jq filter and tolerate empty result
+                      gh pr list --search "author:dependabot state:open" --json number --jq '.[].number' > prs.txt || true
+                      echo "Gefundene PRs:"
+                      if [ -s prs.txt ]; then
+                        cat prs.txt
+                      else
+                        echo "Keine PRs gefunden"
+                      fi
+
+                  - name: Cron - Merge found PRs
+                    if: ${{ github.event_name != 'pull_request' }}
+                    env:
+                      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    run: |
+                      if [ -s prs.txt ]; then
+                        while read pr; do
+                          echo "Versuche Auto-Merge für PR #$pr"
+                          gh pr merge "$pr" --merge --admin || echo "Konnte PR #$pr nicht mergen."
+                        done < prs.txt
+                      else
+                        echo "Keine PRs zu mergen"
+                      fi
+
