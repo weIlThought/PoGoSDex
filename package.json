@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "vite": "^7.2.7",
-    "@tailwindcss/cli": "^4.1.17",
-    "eslint": "^9.39.1",
+    "@tailwindcss/cli": "^4.1.18",
+    "eslint": "^9.39.2",
     "fast-glob": "^3.3.3",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
