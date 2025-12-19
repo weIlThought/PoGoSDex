@@ -26,42 +26,50 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
-      # ===============================
-      # PR EVENT (Dependabot)
-      # ===============================
-      - name: Handle Dependabot PR
+      # ==================================================
+      # PR EVENT – Dependabot + Label "dependencies"
+      # ==================================================
+      - name: Handle Dependabot PR (dependencies only)
         if: >
           github.event_name == 'pull_request' &&
-          github.event.pull_request.user.login == 'dependabot[bot]'
+          github.event.pull_request.user.login == 'dependabot[bot]' &&
+          github.event.pull_request.draft == false &&
+          contains(github.event.pull_request.labels.*.name, 'dependencies')
         run: |
           PR=${{ github.event.pull_request.number }}
-          echo "Handling Dependabot PR #$PR"
+          echo "Handling Dependabot PR #$PR (label: dependencies)"
 
           gh pr comment "$PR" --body "
           🔄 **Auto-Merge gestartet**
-          - Warte auf Status-Checks
+          - Label: dependencies
+          - GitHub prüft automatisch alle Status-Checks
           - PR: #$PR
           "
 
-          echo "Warte auf Status-Checks…"
-          gh pr checks "$PR" --watch
-
           echo "Versuche Merge…"
-          gh pr merge "$PR" --merge --admin \
-            && gh pr comment "$PR" --body "✅ **Auto-Merge erfolgreich abgeschlossen**" \
-            || gh pr comment "$PR" --body "❌ **Auto-Merge fehlgeschlagen – bitte manuell prüfen**"
+          if gh pr merge "$PR" --merge --admin; then
+            gh pr comment "$PR" --body "✅ **Auto-Merge erfolgreich abgeschlossen**"
+          else
+            gh pr comment "$PR" --body "⏳ **Auto-Merge noch nicht möglich**
+            - Status-Checks laufen oder sind fehlgeschlagen
+            - Wird beim nächsten Trigger erneut versucht"
+          fi
 
-      # ===============================
-      # CRON JOB
-      # ===============================
-      - name: Cron – Auto-merge open Dependabot PRs
+      # ==================================================
+      # CRON – Retry für offene Dependabot PRs
+      # ==================================================
+      - name: Cron – Auto-merge open Dependabot PRs (dependencies only)
         if: github.event_name == 'schedule'
         run: |
-          echo "Suche offene Dependabot PRs…"
-          PRS=$(gh pr list --search "author:dependabot state:open" --json number --jq '.[].number')
+          echo "Suche offene Dependabot PRs mit Label 'dependencies'…"
+
+          PRS=$(gh pr list \
+            --search "author:dependabot state:open label:dependencies draft:false" \
+            --json number \
+            --jq '.[].number')
 
           if [ -z "$PRS" ]; then
-            echo "Keine PRs gefunden"
+            echo "Keine passenden PRs gefunden"
             exit 0
           fi
 
@@ -70,12 +78,15 @@ jobs:
 
             gh pr comment "$PR" --body "
             🔄 **Auto-Merge (Cron) gestartet**
-            - Warte auf Status-Checks
+            - Label: dependencies
+            - GitHub prüft automatisch alle Status-Checks
             "
 
-            gh pr checks "$PR" --watch
-
-            gh pr merge "$PR" --merge --admin \
-              && gh pr comment "$PR" --body "✅ **Auto-Merge erfolgreich abgeschlossen**" \
-              || gh pr comment "$PR" --body "❌ **Auto-Merge fehlgeschlagen – bitte manuell prüfen**"
+            if gh pr merge "$PR" --merge --admin; then
+              gh pr comment "$PR" --body "✅ **Auto-Merge erfolgreich abgeschlossen**"
+            else
+              gh pr comment "$PR" --body "⏳ **Auto-Merge noch nicht möglich**
+              - Status-Checks laufen oder sind fehlgeschlagen
+              - Wird automatisch erneut versucht"
+            fi
           done
