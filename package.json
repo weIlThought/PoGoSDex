@@ -47,7 +47,7 @@
   },
   "homepage": "https://github.com/weIlThought/PoGoSDex#readme",
   "dependencies": {
-    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
